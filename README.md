@@ -11,6 +11,41 @@ Build a fast, defensible demo that answers:
 - What exact transcript and audio evidence supports the decision
 - What recurring issues are appearing across calls
 
+## Project Objective
+
+The project objective is to build a proof-of-concept call intelligence system that can process support-call recordings, identify the calls that need manager attention, explain every important AI judgment with transcript and audio evidence, and present the result in a simple operations dashboard.
+
+For this POC, success means:
+
+- a new call can be uploaded and processed
+- the manager can open one call and understand what happened quickly
+- every major conclusion can be traced back to real call evidence
+- the team can demonstrate both business value and technical defensibility
+
+## Sample Data
+
+The current sample dataset lives in `callradar-data` and contains:
+
+- `1441` audio files in `audio/`
+- `1441` metadata JSON files in `metadata/`
+- one metadata record per call, matched by call ID
+
+Sample metadata includes:
+
+- agent name
+- caller name
+- call start and end timestamps
+- agent and caller speaker IDs
+- survey response timing
+- quality labels such as `caller_mos`, `agent_mos`, and `lhvb_script`
+
+This sample set is used for:
+
+- initial pipeline development
+- transcript and evidence testing
+- dashboard demonstrations
+- evaluation and regression checks before the live demo
+
 ## Core POC Principles
 
 - Trust: every important AI judgment must link back to transcript turns and audio evidence
