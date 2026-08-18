@@ -1,0 +1,2596 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Call-Centre Radar - Project Plan</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #627089;
+      --line: #d9e1ec;
+      --panel: #ffffff;
+      --soft: #f5f7fb;
+      --brand: #155eef;
+      --brand-soft: #eaf0ff;
+      --green: #157f3b;
+      --green-soft: #e9f8ef;
+      --amber: #996800;
+      --amber-soft: #fff4d6;
+      --red: #ba1a1a;
+      --red-soft: #ffe7e7;
+      --violet: #6741d9;
+      --violet-soft: #f0ebff;
+      --radius: 8px;
+      --shadow: 0 12px 34px rgba(22, 35, 56, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: #eef2f7;
+      line-height: 1.55;
+    }
+
+    a {
+      color: var(--brand);
+    }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 18px 60px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #ffffff 0%, #f6f9ff 55%, #edf6f2 100%);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 34px;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      color: var(--brand);
+      background: var(--brand-soft);
+      border: 1px solid #cfddff;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    h1, h2, h3 {
+      line-height: 1.16;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(32px, 5vw, 58px);
+      max-width: 860px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    .lede {
+      max-width: 820px;
+      color: var(--muted);
+      font-size: 19px;
+      margin-top: 16px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .metric {
+      background: rgba(255,255,255,0.78);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 24px rgba(22, 35, 56, 0.04);
+      padding: 26px;
+      margin-top: 18px;
+    }
+
+    .section-intro {
+      color: var(--muted);
+      max-width: 880px;
+      margin-bottom: 18px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 16px;
+    }
+
+    .card.soft {
+      background: var(--soft);
+    }
+
+    .card ul,
+    .section ul,
+    .section ol {
+      margin: 10px 0 0 20px;
+      padding: 0;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .tag {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 9px;
+      color: #33405a;
+      background: #fff;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .tag.red { color: var(--red); background: var(--red-soft); border-color: #ffc8c8; }
+    .tag.green { color: var(--green); background: var(--green-soft); border-color: #c7efd4; }
+    .tag.amber { color: var(--amber); background: var(--amber-soft); border-color: #ffe29c; }
+    .tag.blue { color: var(--brand); background: var(--brand-soft); border-color: #cfddff; }
+    .tag.violet { color: var(--violet); background: var(--violet-soft); border-color: #ddd2ff; }
+
+    .diagram {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfcff;
+      padding: 18px;
+      overflow-x: auto;
+      margin-top: 14px;
+    }
+
+    .flow {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+      min-width: 760px;
+    }
+
+    .flow.vertical {
+      display: grid;
+      min-width: 0;
+      gap: 10px;
+    }
+
+    .node {
+      border: 1px solid #cdd8e8;
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 12px;
+      min-width: 136px;
+      flex: 1;
+      text-align: center;
+    }
+
+    .node strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .node span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .arrow {
+      color: var(--muted);
+      align-self: center;
+      font-weight: 800;
+      font-size: 20px;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    .lane-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    .arch-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(190px, 1fr));
+      gap: 12px;
+      min-width: 980px;
+    }
+
+    .lane {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .lane h3 {
+      background: var(--soft);
+      border-bottom: 1px solid var(--line);
+      padding: 12px;
+      margin: 0;
+    }
+
+    .lane .node {
+      margin: 12px;
+      text-align: left;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: var(--soft);
+      font-weight: 750;
+    }
+
+    code,
+    pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+
+    pre {
+      background: #101828;
+      color: #f2f5fb;
+      border-radius: var(--radius);
+      padding: 16px;
+      overflow: auto;
+      font-size: 13px;
+      line-height: 1.45;
+      margin: 12px 0 0;
+    }
+
+    code {
+      background: #eef3fb;
+      color: #1c2d49;
+      padding: 1px 5px;
+      border-radius: 5px;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+
+    .callout {
+      border-left: 5px solid var(--brand);
+      background: var(--brand-soft);
+      padding: 14px 16px;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      margin: 14px 0;
+    }
+
+    .callout.green { border-left-color: var(--green); background: var(--green-soft); }
+    .callout.amber { border-left-color: var(--amber); background: var(--amber-soft); }
+    .callout.red { border-left-color: var(--red); background: var(--red-soft); }
+
+    .timeline {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .num {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: var(--brand);
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .step-body {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: #fff;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .toc a {
+      color: #26354f;
+      text-decoration: none;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-weight: 650;
+      font-size: 14px;
+    }
+
+    .screen {
+      border: 1px solid #cdd8e8;
+      background: #f8fafd;
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-top: 12px;
+    }
+
+    .wireframe-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .wireframe {
+      border: 2px solid #bfccdc;
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 12px;
+    }
+
+    .wire-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+      font-weight: 800;
+    }
+
+    .wire-row {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 8px;
+      background: #f8fafd;
+    }
+
+    .wire-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .wire-tall {
+      min-height: 154px;
+    }
+
+    .screen-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+
+    .screen-body {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 12px;
+    }
+
+    .list-item {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+
+    .bar {
+      height: 10px;
+      background: #e6edf6;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      background: var(--brand);
+    }
+
+    .score-breakdown {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .score-line {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      border-bottom: 1px dashed var(--line);
+      padding-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .score-line:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+      font-weight: 800;
+    }
+
+    .mini-timeline {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .timeline-point {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px;
+      background: #fff;
+      min-height: 82px;
+    }
+
+    .timeline-point strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .issue-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .issue-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px;
+      background: #fff;
+      font-size: 14px;
+    }
+
+    .evidence-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #c7d7ff;
+      background: var(--brand-soft);
+      color: var(--brand);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 13px;
+      font-weight: 800;
+      margin-top: 6px;
+    }
+
+    .footer {
+      color: var(--muted);
+      text-align: center;
+      padding: 22px 0 4px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 860px) {
+      .hero {
+        padding: 24px;
+      }
+
+      .hero-grid,
+      .grid-2,
+      .grid-3,
+      .lane-grid,
+      .mini-timeline,
+      .wireframe-grid,
+      .screen-body {
+        grid-template-columns: 1fr;
+      }
+
+      .flow {
+        min-width: 640px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="eyebrow">Hackathon project plan</div>
+      <h1>Call-Centre Radar</h1>
+      <p class="lede">
+        A manager-friendly dashboard that turns call recordings into clear, evidence-backed actions:
+        who needs attention today, what customers are complaining about, which calls are unresolved,
+        and how service agents are being treated.
+      </p>
+      <div class="hero-grid">
+        <div class="metric">
+          <strong>1,441+</strong>
+          <span>sample calls plus new live uploads</span>
+        </div>
+        <div class="metric">
+          <strong>0 API cost</strong>
+          <span>local open-source AI path</span>
+        </div>
+        <div class="metric">
+          <strong>100%</strong>
+          <span>claims linked to evidence</span>
+        </div>
+        <div class="metric">
+          <strong>Live demo</strong>
+          <span>upload, process, review</span>
+        </div>
+      </div>
+      <nav class="toc" aria-label="Document sections">
+        <a href="#one-line">One-line idea</a>
+        <a href="#winning">Winning strategy</a>
+        <a href="#users">Users</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#pipeline">Processing flow</a>
+        <a href="#ui">Manager UI</a>
+        <a href="#wireframes">Wireframes</a>
+        <a href="#poc-charts">POC charts</a>
+        <a href="#ai">AI analysis</a>
+        <a href="#quality-signals">POC signals</a>
+        <a href="#llm-strategy">LLM strategy</a>
+        <a href="#data">Data model</a>
+        <a href="#api">API</a>
+        <a href="#observability">Logs</a>
+        <a href="#testing">Testing</a>
+        <a href="#code">Code structure</a>
+        <a href="#solid">SOLID</a>
+        <a href="#demo">Demo plan</a>
+        <a href="#failure-plan">Failure plan</a>
+        <a href="#pros-cons">Pros and cons</a>
+      </nav>
+    </section>
+
+    <section id="one-line" class="section">
+      <h2>1. One-line Idea</h2>
+      <p class="section-intro">
+        Most companies record support calls but nobody has time to listen to them. Call-Centre Radar listens,
+        finds important moments, and shows managers exactly what needs action.
+      </p>
+      <div class="callout">
+        <strong>Main promise:</strong>
+        every insight is backed by the exact timestamp and words spoken in the call.
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <h3>For managers</h3>
+          <p>Open one dashboard and see which calls need attention today.</p>
+        </div>
+        <div class="card">
+          <h3>For operations leaders</h3>
+          <p>See trends, repeated complaints, unresolved issues, and agent workload.</p>
+        </div>
+        <div class="card">
+          <h3>For technical judges</h3>
+          <p>Show a clear AI pipeline with transcription, evidence extraction, LLM analysis, validation, and caching.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="winning" class="section">
+      <h2>Winning POC Strategy</h2>
+      <p class="section-intro">
+        The demo should not feel like a checklist of requirements. It should feel like a bank-grade product:
+        every AI decision can be verified against the call, insights arrive quickly, and the manager gets a clear next action.
+      </p>
+      <div class="grid-3">
+        <div class="card">
+          <h3>Trust</h3>
+          <p>Every judgment has a timestamp, speaker, quote, and a <strong>Show Me Why</strong> path back to the recording.</p>
+        </div>
+        <div class="card">
+          <h3>Speed</h3>
+          <p>The dashboard shows manager-ready results immediately from cached SQLite analysis and live job progress for new uploads.</p>
+        </div>
+        <div class="card">
+          <h3>Action</h3>
+          <p>High-risk calls include a manager brief and recommended next action, clearly separated from evidence-backed facts.</p>
+        </div>
+      </div>
+      <div class="callout green">
+        <strong>Core difference:</strong>
+        most simple demos stop at <code>audio -> Whisper -> LLM -> dashboard</code>. Our POC is
+        <code>audio -> transcript turns -> evidence -> validated AI judgment -> prioritized manager action</code>.
+      </div>
+    </section>
+
+    <section id="users" class="section">
+      <h2>2. Product User and Demo Audience</h2>
+      <p class="section-intro">
+        The requirement document is clear about the product user: this is an admin dashboard over call recordings.
+        The people watching the hackathon demo are different. We must design the app for call-centre managers,
+        then explain the architecture to CEOs, COOs, CTOs, and senior architects.
+      </p>
+      <div class="callout">
+        <strong>Primary app user:</strong>
+        call-centre admin, support manager, team lead, or operations manager responsible for reviewing calls.
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Person</th>
+            <th>Role in this project</th>
+            <th>What they should see</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Call-centre admin / support manager</td>
+            <td>Main product user</td>
+            <td>Risk queue, unresolved calls, evidence, audio jump-to-time.</td>
+          </tr>
+          <tr>
+            <td>Agent team lead</td>
+            <td>Daily operational user</td>
+            <td>Agent workload, customer satisfaction by agent, difficult calls, coaching opportunities.</td>
+          </tr>
+          <tr>
+            <td>QA / compliance reviewer</td>
+            <td>Supporting product user</td>
+            <td>Transcript, evidence, recording, review status, and audit trail.</td>
+          </tr>
+          <tr>
+            <td>COO / operations leader</td>
+            <td>Demo stakeholder</td>
+            <td>Trending issues, repeated complaints, handle times, outcomes.</td>
+          </tr>
+          <tr>
+            <td>CEO</td>
+            <td>Demo stakeholder</td>
+            <td>Less manual review, faster escalation, better customer retention, agent protection.</td>
+          </tr>
+          <tr>
+            <td>CTO / architect</td>
+            <td>Demo stakeholder</td>
+            <td>Evidence-first architecture, validation, caching, modular services, scale path.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="architecture" class="section">
+      <h2>3. High-level Architecture</h2>
+      <p class="section-intro">
+        The application has a simple dashboard on top of a serious processing pipeline. New calls can be uploaded
+        during the demo and processed live.
+      </p>
+      <h3>Detailed runtime architecture</h3>
+      <div class="diagram" aria-label="Detailed runtime architecture diagram">
+        <div class="arch-grid">
+          <div class="lane">
+            <h3>1. User Interface</h3>
+            <div class="node">
+              <strong>Manager Dashboard</strong>
+              <span>risk queue, trends, agents</span>
+            </div>
+            <div class="node">
+              <strong>Call Review Page</strong>
+              <span>audio, transcript, evidence</span>
+            </div>
+            <div class="node">
+              <strong>Upload Page</strong>
+              <span>new audio, job status</span>
+            </div>
+          </div>
+          <div class="lane">
+            <h3>2. API Layer</h3>
+            <div class="node">
+              <strong>FastAPI Routes</strong>
+              <span>calls, jobs, agents, trends</span>
+            </div>
+            <div class="node">
+              <strong>Auth-ready Boundary</strong>
+              <span>demo open, production secured</span>
+            </div>
+            <div class="node">
+              <strong>DTO Schemas</strong>
+              <span>Pydantic validation</span>
+            </div>
+          </div>
+          <div class="lane">
+            <h3>3. Processing Layer</h3>
+            <div class="node">
+              <strong>Job Worker</strong>
+              <span>queued to complete</span>
+            </div>
+            <div class="node">
+              <strong>Audio Service</strong>
+              <span>ffmpeg split and normalize</span>
+            </div>
+            <div class="node">
+              <strong>Transcript Service</strong>
+              <span>speaker turns and timings</span>
+            </div>
+          </div>
+          <div class="lane">
+            <h3>4. Intelligence Layer</h3>
+            <div class="node">
+              <strong>Evidence Engine</strong>
+              <span>rules, sentiment, key phrases</span>
+            </div>
+            <div class="node">
+              <strong>LLM Router</strong>
+              <span>fast, accurate, optional paid</span>
+            </div>
+            <div class="node">
+              <strong>Result Validator</strong>
+              <span>no evidence, no claim</span>
+            </div>
+          </div>
+          <div class="lane">
+            <h3>5. Storage and Logs</h3>
+            <div class="node">
+              <strong>SQLite DB</strong>
+              <span>Postgres-ready schema</span>
+            </div>
+            <div class="node">
+              <strong>Audio Store</strong>
+              <span>uploads and recordings</span>
+            </div>
+            <div class="node">
+              <strong>Structured Logs</strong>
+              <span>debug, test, audit, eval</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-top: 18px;">Simple request flow</h3>
+      <div class="diagram" aria-label="High-level architecture diagram">
+        <div class="flow">
+          <div class="node">
+            <strong>Manager UI</strong>
+            <span>React dashboard</span>
+          </div>
+          <div class="arrow">-></div>
+          <div class="node">
+            <strong>API</strong>
+            <span>FastAPI</span>
+          </div>
+          <div class="arrow">-></div>
+          <div class="node">
+            <strong>Job Worker</strong>
+            <span>process new audio</span>
+          </div>
+          <div class="arrow">-></div>
+          <div class="node">
+            <strong>AI Pipeline</strong>
+            <span>Whisper + rules + LLM</span>
+          </div>
+          <div class="arrow">-></div>
+          <div class="node">
+            <strong>Database</strong>
+            <span>SQLite, Postgres-ready</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 16px;">
+        <div class="card">
+          <h3>Recommended hackathon stack</h3>
+          <ul>
+            <li><strong>Frontend:</strong> React + Vite</li>
+            <li><strong>Backend:</strong> FastAPI</li>
+            <li><strong>Database:</strong> SQLite for demo, Postgres-ready design</li>
+            <li><strong>Transcription:</strong> faster-whisper</li>
+            <li><strong>Local LLM:</strong> Ollama with Qwen, Llama, or Gemma</li>
+            <li><strong>Audio:</strong> ffmpeg</li>
+            <li><strong>Validation:</strong> Pydantic schemas</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Free hosting/demo strategy</h3>
+          <ul>
+            <li>Run heavy AI processing on local laptop or local server.</li>
+            <li>Expose the dashboard/API using Cloudflare Tunnel, ngrok, or localtunnel.</li>
+            <li>Do not rely on free cloud servers for Whisper plus LLM inference.</li>
+            <li>Optional: host frontend on Vercel and keep backend local during demo.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="pipeline" class="section">
+      <h2>4. Live Call Processing Flow</h2>
+      <p class="section-intro">
+        The sample calls are only seed data. The real product flow supports new audio files given during the demo.
+      </p>
+      <div class="diagram">
+        <div class="flow">
+          <div class="node">
+            <strong>Upload MP3</strong>
+            <span>new call from judge</span>
+          </div>
+          <div class="arrow">-></div>
+          <div class="node">
+            <strong>Create job</strong>
+            <span>queued status</span>
+          </div>
+          <div class="arrow">-></div>
+          <div class="node">
+            <strong>Split audio</strong>
+            <span>agent left, customer right</span>
+          </div>
+          <div class="arrow">-></div>
+          <div class="node">
+            <strong>Transcribe</strong>
+            <span>speaker + time</span>
+          </div>
+          <div class="arrow">-></div>
+          <div class="node">
+            <strong>Analyze</strong>
+            <span>evidence + LLM</span>
+          </div>
+          <div class="arrow">-></div>
+          <div class="node">
+            <strong>Show result</strong>
+            <span>dashboard updates</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline">
+        <div class="step">
+          <div class="num">1</div>
+          <div class="step-body">
+            <h3>Upload or ingest</h3>
+            <p>The user uploads a call recording and basic metadata such as customer name, agent name, and call start time.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <div class="step-body">
+            <h3>Split channels</h3>
+            <p>The dataset says left channel is the agent and right channel is the customer, so speaker separation is reliable for these files.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <div class="step-body">
+            <h3>Transcribe both speakers</h3>
+            <p>faster-whisper creates timestamped text for each channel. The app merges the turns into one conversation timeline.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">4</div>
+          <div class="step-body">
+            <h3>Extract evidence first</h3>
+            <p>A deterministic engine finds candidate moments for complaints, anger, resolution, escalation, fraud, repeat calls, and agent mistreatment.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">5</div>
+          <div class="step-body">
+            <h3>Run LLM analysis</h3>
+            <p>The local LLM receives the transcript plus evidence candidates and returns structured JSON only.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num">6</div>
+          <div class="step-body">
+            <h3>Validate and save</h3>
+            <p>The validator rejects unsupported claims, missing timestamps, fake quotes, invalid scores, and summaries over 40 words.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="ui" class="section">
+      <h2>5. Manager Dashboard UI</h2>
+      <p class="section-intro">
+        The UI should avoid technical language. A manager should understand the first screen in less than ten seconds.
+      </p>
+
+      <div class="screen">
+        <div class="screen-header">
+          <strong>Today at a glance</strong>
+          <span class="small">Simple labels, proof behind every alert</span>
+        </div>
+        <div class="screen-body">
+          <div>
+            <div class="list-item">
+              <strong>Needs attention: 12 calls</strong>
+              <div class="tag-row">
+                <span class="tag red">Unresolved</span>
+                <span class="tag amber">Angry customer</span>
+                <span class="tag violet">Agent mistreated</span>
+              </div>
+            </div>
+            <div class="list-item">
+              <strong>Issue Radar: failed transactions</strong>
+              <p class="small">Found in 38 calls, rising from yesterday.</p>
+            </div>
+            <div class="list-item">
+              <strong>Agent support alert</strong>
+              <p class="small">Two agents handled multiple difficult calls.</p>
+            </div>
+          </div>
+          <div>
+            <div class="list-item">
+              <strong>Example evidence</strong>
+              <p class="small">02:14 Customer: "I called three times and this is still not fixed."</p>
+              <span class="evidence-button">Show Me Why</span>
+              <div class="bar"><span style="width: 82%;"></span></div>
+              <p class="small">Radar Priority: 82 / 100</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-top: 16px;">
+        <div class="card">
+          <h3>Risk Queue</h3>
+          <p>Ranked calls that need manager attention today.</p>
+          <ul>
+            <li>Radar Priority score</li>
+            <li>Reason for flag</li>
+            <li>Evidence quote</li>
+            <li>Play full call recording</li>
+            <li>Jump to audio timestamp</li>
+            <li>Score breakdown by factor</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Call Detail</h3>
+          <p>The centerpiece screen: audio player, transcript, manager brief, mood timeline, score breakdown, findings, and evidence jump links.</p>
+        </div>
+        <div class="card">
+          <h3>Customer View</h3>
+          <p>Full call history plus a customer journey timeline showing repeat issues, mood changes, and unresolved follow-ups.</p>
+        </div>
+        <div class="card">
+          <h3>Agent View</h3>
+          <p>Agent volumes, handle time, outcomes, difficult calls, and agent treatment score.</p>
+        </div>
+        <div class="card">
+          <h3>Issue Radar</h3>
+          <p>Critical, emerging, and stable issue groups with trend direction and representative evidence.</p>
+        </div>
+        <div class="card">
+          <h3>Upload View</h3>
+          <p>Drop a new audio file, watch status, then open the finished analysis.</p>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-top: 16px;">
+        <div class="card soft">
+          <h3>Manager Brief</h3>
+          <p>Short plain-English explanation of what happened and why the manager should care.</p>
+          <p class="small">Recommendation is labeled separately so we do not pretend the audio proves future action.</p>
+        </div>
+        <div class="card soft">
+          <h3>Show Me Why</h3>
+          <p>Every intent, mood, resolution, score, and escalation claim opens evidence with timestamp, quote, and audio jump.</p>
+        </div>
+        <div class="card soft">
+          <h3>Manager Audio Playback</h3>
+          <p>Managers can play or pause the full recording, change speed, jump back, and start playback from any evidence timestamp.</p>
+        </div>
+        <div class="card soft">
+          <h3>Useful POC Charts</h3>
+          <p>Mood timeline, score breakdown, issue direction, customer journey, and simple agent bars. Avoid decorative charts unless time permits.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="wireframes" class="section">
+      <h2>6. Simple Wireframes</h2>
+      <p class="section-intro">
+        These are low-fidelity screen plans. The final UI should feel like an operations dashboard, not a technical
+        AI console. The manager sees plain labels first and proof only when they open a call.
+      </p>
+
+      <div class="wireframe-grid">
+        <div class="wireframe">
+          <div class="wire-title">
+            <span>Dashboard: Today</span>
+            <span class="small">first screen</span>
+          </div>
+          <div class="wire-row">
+            <strong>Top numbers</strong>
+            <div class="tag-row">
+              <span class="tag red">12 need attention</span>
+              <span class="tag amber">38 failed transactions</span>
+              <span class="tag blue">91% resolved</span>
+            </div>
+          </div>
+          <div class="wire-columns">
+            <div class="wire-row wire-tall">
+              <strong>Risk queue</strong>
+              <p class="small">Ranked calls with reason and score.</p>
+              <p class="small">1. Unresolved refund - 88</p>
+              <p class="small">2. Agent mistreated - 82</p>
+              <p class="small">3. Fraud concern - 79</p>
+            </div>
+            <div class="wire-row wire-tall">
+              <strong>Issue Radar</strong>
+              <p class="small">Critical: refund delays +64%</p>
+              <p class="small">Emerging: card reversals +22%</p>
+              <p class="small">Stable: password reset -4%</p>
+            </div>
+          </div>
+          <div class="wire-row">
+            <strong>Selected alert:</strong>
+            <span class="small"> 88 High Priority - Show Me Why - open call evidence</span>
+          </div>
+        </div>
+
+        <div class="wireframe">
+          <div class="wire-title">
+            <span>Call Detail</span>
+            <span class="small">main proof screen</span>
+          </div>
+          <div class="wire-row">
+            <strong>Header:</strong>
+            <span class="small"> customer, agent, call time, Radar Priority, resolution status</span>
+          </div>
+          <div class="wire-row">
+            <strong>Manager brief</strong>
+            <p class="small">Customer is calling again about a missing refund. Agent could not confirm a resolution date.</p>
+            <p class="small"><strong>Recommended action:</strong> verify refund status and call customer with a confirmed date.</p>
+          </div>
+          <div class="wire-row">
+            <strong>Audio player</strong>
+            <p class="small">Play/pause full call, 10-second back, speed control, current timestamp, and evidence jump-to-time.</p>
+            <p class="small">The transcript highlights the active turn while audio plays.</p>
+          </div>
+          <div class="wire-columns">
+            <div class="wire-row wire-tall">
+              <strong>Mood timeline</strong>
+              <p class="small">Neutral -> frustrated at 03:14 -> angry near end.</p>
+              <p class="small">Show Me Why: 03:14 customer quote.</p>
+            </div>
+            <div class="wire-row wire-tall">
+              <strong>Radar Priority breakdown</strong>
+              <p class="small">Unresolved +35</p>
+              <p class="small">Mood deterioration +15</p>
+              <p class="small">Repeat contact +10</p>
+            </div>
+          </div>
+          <div class="wire-columns">
+            <div class="wire-row wire-tall">
+              <strong>Transcript</strong>
+              <p class="small">Agent and customer turns with timestamps and turn IDs.</p>
+            </div>
+            <div class="wire-row wire-tall">
+              <strong>Evidence drawer</strong>
+              <p class="small">02:14 Customer quote</p>
+              <p class="small">Play from timestamp</p>
+              <p class="small">Linked claim: unresolved issue</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="wireframe">
+          <div class="wire-title">
+            <span>Agent Page</span>
+            <span class="small">team lead view</span>
+          </div>
+          <div class="wire-row">
+            <strong>Agent scorecard</strong>
+            <p class="small">Calls handled, average handle time, resolved calls, customer satisfaction estimate.</p>
+          </div>
+          <div class="wire-columns">
+            <div class="wire-row wire-tall">
+              <strong>Customer satisfaction by agent</strong>
+              <p class="small">Final customer mood, resolved outcome, positive/negative closing language.</p>
+            </div>
+            <div class="wire-row wire-tall">
+              <strong>Agent treatment</strong>
+              <p class="small">Difficult calls, rude customers, abusive calls, support needed.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="wireframe">
+          <div class="wire-title">
+            <span>Upload and Processing</span>
+            <span class="small">live demo</span>
+          </div>
+          <div class="wire-row">
+            <strong>Drop audio file</strong>
+            <p class="small">Accept MP3 and optional metadata.</p>
+          </div>
+          <div class="wire-row">
+            <strong>Status timeline</strong>
+            <p class="small">Queued -> Audio split -> Transcribing -> Evidence -> LLM -> Validated -> Complete</p>
+          </div>
+          <div class="wire-row">
+            <strong>Open result</strong>
+            <p class="small">Button appears when processing finishes.</p>
+          </div>
+        </div>
+
+        <div class="wireframe">
+          <div class="wire-title">
+            <span>Customer Journey</span>
+            <span class="small">repeat caller view</span>
+          </div>
+          <div class="wire-row">
+            <strong>Customer story</strong>
+            <p class="small">Aug 12 card issue resolved -> Aug 14 refund unresolved -> Aug 16 refund follow-up angry.</p>
+          </div>
+          <div class="wire-row">
+            <strong>Why it matters</strong>
+            <p class="small">Same issue repeated, customer mood deteriorated, manager follow-up recommended.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="poc-charts" class="section">
+      <h2>Selected POC Charts</h2>
+      <p class="section-intro">
+        Charts should make manager decisions easier. Use these simple visuals; avoid complex decorative radar
+        graphics unless the core proof screens are already complete.
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Mood timeline</h3>
+          <div class="mini-timeline">
+            <div class="timeline-point">
+              <strong>00:00</strong>
+              <span class="small">neutral</span>
+            </div>
+            <div class="timeline-point">
+              <strong>03:14</strong>
+              <span class="small">frustrated</span>
+            </div>
+            <div class="timeline-point">
+              <strong>05:49</strong>
+              <span class="small">unresolved</span>
+            </div>
+            <div class="timeline-point">
+              <strong>06:26</strong>
+              <span class="small">manager risk</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Radar Priority breakdown</h3>
+          <div class="score-breakdown">
+            <div class="score-line"><span>Unresolved issue</span><strong>+35</strong></div>
+            <div class="score-line"><span>Customer frustration</span><strong>+20</strong></div>
+            <div class="score-line"><span>Mood deterioration</span><strong>+15</strong></div>
+            <div class="score-line"><span>Repeat contact</span><strong>+10</strong></div>
+            <div class="score-line"><span>Total</span><strong>80 / 100</strong></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Issue Radar</h3>
+          <div class="issue-list">
+            <div class="issue-item"><span class="tag red">Critical</span><span>Refund delays</span><strong>+64%</strong></div>
+            <div class="issue-item"><span class="tag amber">Emerging</span><span>Card reversals</span><strong>+22%</strong></div>
+            <div class="issue-item"><span class="tag green">Stable</span><span>Password reset</span><strong>-4%</strong></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Customer journey</h3>
+          <div class="mini-timeline">
+            <div class="timeline-point"><strong>Aug 12</strong><span class="small">resolved</span></div>
+            <div class="timeline-point"><strong>Aug 14</strong><span class="small">unresolved</span></div>
+            <div class="timeline-point"><strong>Aug 16</strong><span class="small">frustrated</span></div>
+            <div class="timeline-point"><strong>Aug 17</strong><span class="small">attention</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Agent satisfaction and treatment bars</h3>
+          <p class="small">Simple bars are enough for POC; each score opens evidence, not a black-box rating.</p>
+          <p><strong>Customer satisfaction</strong></p>
+          <div class="bar"><span style="width: 84%;"></span></div>
+          <p style="margin-top: 10px;"><strong>Customer respect toward agent</strong></p>
+          <div class="bar"><span style="width: 72%;"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="ai" class="section">
+      <h2>7. AI Analysis Design</h2>
+      <p class="section-intro">
+        The solution should use an LLM, but the LLM should not be the only source of truth. The system first finds
+        evidence, then asks the LLM to reason over that evidence, then validates the answer.
+      </p>
+      <div class="callout">
+        <strong>Evidence design rule:</strong>
+        every AI judgment must reference immutable <code>transcript_turn_id</code> values. Timestamps and quotes are
+        derived from stored transcript turns, not written freely by the LLM.
+      </div>
+
+      <div class="diagram">
+        <div class="flow">
+          <div class="node">
+            <strong>Transcript</strong>
+            <span>all speaker turns</span>
+          </div>
+          <div class="arrow">-></div>
+          <div class="node">
+            <strong>Evidence engine</strong>
+            <span>rules + sentiment</span>
+          </div>
+          <div class="arrow">-></div>
+          <div class="node">
+            <strong>Local LLM</strong>
+            <span>structured reasoning</span>
+          </div>
+          <div class="arrow">-></div>
+          <div class="node">
+            <strong>Validator</strong>
+            <span>reject bad claims</span>
+          </div>
+          <div class="arrow">-></div>
+          <div class="node">
+            <strong>Final analysis</strong>
+            <span>saved JSON</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 16px;">
+        <div class="card">
+          <h3>What the LLM produces</h3>
+          <ul>
+            <li>Customer intent</li>
+            <li>Mood at start and end</li>
+            <li>Mood shift timestamp</li>
+            <li>Resolution status</li>
+            <li>Summary under 40 words</li>
+            <li>Needs-attention score</li>
+            <li>Radar Priority score breakdown</li>
+            <li>Issue category</li>
+            <li>Manager brief</li>
+            <li>Recommended action</li>
+            <li>Customer journey summary</li>
+            <li>False-resolution flag</li>
+            <li>Repeated-question events</li>
+            <li>Silence and conversation-balance signals</li>
+            <li>Agent treatment score</li>
+            <li>Evidence for every judgment</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>What the validator checks</h3>
+          <ul>
+            <li>Output is valid JSON.</li>
+            <li>Score is between 0 and 100.</li>
+            <li>Summary has 40 words or fewer.</li>
+            <li>Every claim has timestamp and quote.</li>
+            <li>Quote exists in transcript.</li>
+            <li>Timestamp belongs to a real transcript turn ID.</li>
+            <li>Score factors link to supporting evidence.</li>
+            <li>Unsupported claims are rejected or marked uncertain.</li>
+          </ul>
+        </div>
+      </div>
+
+      <pre><code>{
+  "intent": {
+    "label": "Duplicate transaction dispute",
+    "evidence": [
+      {
+        "timestamp": 12.4,
+        "speaker": "customer",
+        "quote": "I was charged twice for the same transaction."
+      }
+    ]
+  },
+  "resolution": {
+    "status": "unresolved",
+    "evidence": [
+      {
+        "timestamp": 301.7,
+        "speaker": "customer",
+        "quote": "So I still need to wait for someone to call me back?"
+      }
+    ]
+  },
+  "summary": "Customer disputed a duplicate transaction. Agent checked details but the case remained pending for follow-up.",
+  "manager_brief": "Customer disputed a duplicate transaction and left without a confirmed resolution date.",
+  "recommended_action": "Verify reversal status and contact the customer with a confirmed next step.",
+  "customer_journey_summary": "No prior call is linked in the POC dataset for this customer.",
+  "needs_attention_score": 78,
+  "attention_score_breakdown": [
+    {
+      "factor": "unresolved",
+      "points": 35,
+      "transcript_turn_id": "turn_094"
+    },
+    {
+      "factor": "negative final mood",
+      "points": 20,
+      "transcript_turn_id": "turn_087"
+    }
+  ],
+  "issue_radar_category": "payment dispute",
+  "false_resolution_flag": false,
+  "repeated_question_events": [],
+  "silence_events": [],
+  "conversation_balance": {
+    "agent_talk_ratio": 0.58,
+    "customer_talk_ratio": 0.42
+  }
+}</code></pre>
+    </section>
+
+    <section id="quality-signals" class="section">
+      <h2>POC Quality Signals</h2>
+      <p class="section-intro">
+        These are improvement signals from the shared chat that are valuable for the POC only if they remain
+        evidence-backed. We should implement a small number well instead of many unreliable metrics.
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Best POC signals</h3>
+          <ul>
+            <li><strong>False resolution:</strong> agent says it is handled, but customer later asks what is still pending.</li>
+            <li><strong>Repeated questions:</strong> same information requested multiple times, useful for coaching or process issues.</li>
+            <li><strong>Long silence:</strong> audio has a meaningful silent gap, shown with a clickable timestamp.</li>
+            <li><strong>Conversation balance:</strong> agent/customer talk ratio from the stereo channels.</li>
+            <li><strong>Customer journey deterioration:</strong> repeat calls for same issue with worsening mood or unresolved outcomes.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>POC rule</h3>
+          <p>Only show a quality signal when the system has evidence from transcript turns or measurable audio timing.</p>
+          <p class="small">Example: do not claim "agent interrupted customer" unless overlap or turn timing supports it.</p>
+          <span class="evidence-button">Show Me Why</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="llm-strategy" class="section">
+      <h2>8. Multi-LLM Strategy</h2>
+      <p class="section-intro">
+        For the demo, the default path should be free and local. The architecture should still allow faster,
+        slower, stronger, or paid models later without changing the product.
+      </p>
+
+      <div class="diagram">
+        <div class="flow">
+          <div class="node">
+            <strong>Call transcript</strong>
+            <span>speaker and timestamps</span>
+          </div>
+          <div class="arrow">-></div>
+          <div class="node">
+            <strong>Model router</strong>
+            <span>choose by speed, cost, risk</span>
+          </div>
+          <div class="arrow">-></div>
+          <div class="node">
+            <strong>Fast local model</strong>
+            <span>demo default</span>
+          </div>
+          <div class="arrow">+</div>
+          <div class="node">
+            <strong>Accurate model</strong>
+            <span>slower or optional paid</span>
+          </div>
+          <div class="arrow">-></div>
+          <div class="node">
+            <strong>Validator</strong>
+            <span>accept, retry, compare</span>
+          </div>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Mode</th>
+            <th>Purpose</th>
+            <th>Cost</th>
+            <th>When to use</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Fast local LLM</td>
+            <td>Quick live demo analysis.</td>
+            <td>Free</td>
+            <td>Short calls, low-risk calls, first-pass results.</td>
+          </tr>
+          <tr>
+            <td>Stronger local LLM</td>
+            <td>Better reasoning, slower response.</td>
+            <td>Free, but needs more hardware</td>
+            <td>High-risk calls, unclear resolution, low confidence.</td>
+          </tr>
+          <tr>
+            <td>Two-model agreement</td>
+            <td>Improve trust by comparing outputs.</td>
+            <td>Free if both are local</td>
+            <td>Manager attention score above a threshold.</td>
+          </tr>
+          <tr>
+            <td>Optional paid model</td>
+            <td>Higher accuracy after hackathon.</td>
+            <td>Paid, not required for demo</td>
+            <td>Production mode, compliance review, difficult calls.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout green">
+        <strong>Design rule:</strong>
+        every model must implement the same analyzer interface and return the same JSON schema. This keeps the
+        system open for better models later without rewriting the dashboard or API.
+      </div>
+    </section>
+
+    <section id="agent-treatment" class="section">
+      <h2>9. Agent Treatment and Customer Satisfaction</h2>
+      <p class="section-intro">
+        A strong differentiator is tracking how service-care staff are treated on calls. This is useful for wellbeing,
+        training, escalation, and management support. We should also estimate customer satisfaction for each
+        service person so managers can see who is creating positive outcomes.
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Detected behavior</h3>
+          <ul>
+            <li>Respectful or polite customer</li>
+            <li>Frustrated but respectful customer</li>
+            <li>Rude or insulting customer</li>
+            <li>Threatening language</li>
+            <li>Repeated interruptions</li>
+            <li>Personal blame toward the agent</li>
+            <li>Manager escalation request</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Agent treatment metrics</h3>
+          <ul>
+            <li>Average treatment score</li>
+            <li>Difficult calls handled</li>
+            <li>Abusive calls today</li>
+            <li>Escalation-heavy calls</li>
+            <li>Calls needing supervisor support</li>
+            <li>Evidence clips for each flag</li>
+          </ul>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top: 16px;">
+        <div class="card">
+          <h3>Customer satisfaction by service person</h3>
+          <ul>
+            <li>Estimated satisfaction score per agent from 0 to 100.</li>
+            <li>Signals: resolved outcome, final customer mood, positive closing words, repeat complaint, escalation, and call-back requirement.</li>
+            <li>Every score links to call evidence so it is not a black-box rating.</li>
+            <li>Use as coaching and support signal, not as the only performance measure.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Example manager view</h3>
+          <p><strong>Agent:</strong> Priya Shah</p>
+          <p class="small">Calls handled: 22 | Estimated customer satisfaction: 86 | Difficult calls: 5 | Abusive calls: 1</p>
+          <p class="small">Evidence: 05:42 Customer: "Thank you, that finally helps."</p>
+          <p class="small">Coaching note: High resolution rate, but handled several high-stress calls today.</p>
+        </div>
+      </div>
+      <div class="callout green">
+        <strong>Important positioning:</strong>
+        agent treatment and satisfaction tracking should be framed as support, coaching, and service quality,
+        not punishment.
+      </div>
+    </section>
+
+    <section id="data" class="section">
+      <h2>10. Data Model</h2>
+      <p class="section-intro">
+        SQLite is enough for the hackathon, but the schema should be simple to move to Postgres later.
+      </p>
+      <div class="diagram">
+        <div class="lane-grid">
+          <div class="lane">
+            <h3>Core records</h3>
+            <div class="node">
+              <strong>customers</strong>
+              <span>id, name, external_ref</span>
+            </div>
+            <div class="node">
+              <strong>agents</strong>
+              <span>id, name, team</span>
+            </div>
+            <div class="node">
+              <strong>calls</strong>
+              <span>id, customer_id, agent_id, status, audio_path, started_at</span>
+            </div>
+          </div>
+          <div class="lane">
+            <h3>Processing records</h3>
+            <div class="node">
+              <strong>jobs</strong>
+              <span>call_id, status, progress, error</span>
+            </div>
+            <div class="node">
+              <strong>transcript_turns</strong>
+              <span>immutable id, speaker, start, end, text</span>
+            </div>
+            <div class="node">
+              <strong>evidence_candidates</strong>
+              <span>signal, timestamp, quote, confidence</span>
+            </div>
+            <div class="node">
+              <strong>job_events</strong>
+              <span>status, timing, errors, trace_id</span>
+            </div>
+          </div>
+          <div class="lane">
+            <h3>Analysis records</h3>
+            <div class="node">
+              <strong>call_analysis</strong>
+              <span>intent, mood, resolution, summary, manager brief, score</span>
+            </div>
+            <div class="node">
+              <strong>evidence_links</strong>
+              <span>claim, timestamp, quote, turn_id</span>
+            </div>
+            <div class="node">
+              <strong>score_breakdown</strong>
+              <span>factor, points, evidence turn</span>
+            </div>
+            <div class="node">
+              <strong>quality_signals</strong>
+              <span>false resolution, repeats, silence, balance</span>
+            </div>
+            <div class="node">
+              <strong>manager_actions</strong>
+              <span>reviewed, escalated, dismissed, notes</span>
+            </div>
+            <div class="node">
+              <strong>model_runs</strong>
+              <span>provider, model, prompt_version, validation_result</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="api" class="section">
+      <h2>11. API Design</h2>
+      <p class="section-intro">
+        The API should be easy to demo and clear enough for technical reviewers.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>POST /api/calls</code></td>
+            <td>Upload/register a new call and start processing.</td>
+          </tr>
+          <tr>
+            <td><code>GET /api/jobs/{job_id}</code></td>
+            <td>Return processing status: queued, transcribing, analyzing, complete, failed.</td>
+          </tr>
+          <tr>
+            <td><code>GET /api/calls/{call_id}</code></td>
+            <td>Return playable recording URL, transcript, manager brief, analysis, Radar Priority score, score breakdown, and evidence.</td>
+          </tr>
+          <tr>
+            <td><code>GET /api/calls/{call_id}/evidence/{turn_id}</code></td>
+            <td>Return exact transcript turn and audio timestamp for a Show Me Why jump-to-audio action.</td>
+          </tr>
+          <tr>
+            <td><code>GET /api/calls/{call_id}/score-breakdown</code></td>
+            <td>Return attention score factors, points, and supporting transcript turn IDs.</td>
+          </tr>
+          <tr>
+            <td><code>GET /api/customers</code></td>
+            <td>List customers with latest call outcome and risk.</td>
+          </tr>
+          <tr>
+            <td><code>GET /api/customers/{id}</code></td>
+            <td>Show customer profile and full call history.</td>
+          </tr>
+          <tr>
+            <td><code>GET /api/attention</code></td>
+            <td>Rank calls needing manager attention.</td>
+          </tr>
+          <tr>
+            <td><code>GET /api/trends</code></td>
+            <td>Show top and emerging issues across calls; keep for compatibility with the dashboard.</td>
+          </tr>
+          <tr>
+            <td><code>GET /api/issue-radar</code></td>
+            <td>Show critical, emerging, and stable issue groups with trend direction and representative evidence.</td>
+          </tr>
+          <tr>
+            <td><code>GET /api/customers/{id}/journey</code></td>
+            <td>Show customer journey timeline with repeat issues, mood changes, outcomes, and evidence links.</td>
+          </tr>
+          <tr>
+            <td><code>GET /api/agents</code></td>
+            <td>Show call volumes, handle times, outcomes, treatment metrics, and customer satisfaction estimates.</td>
+          </tr>
+          <tr>
+            <td><code>GET /api/agents/{id}</code></td>
+            <td>Show one service person's call history, satisfaction trend, difficult calls, and evidence.</td>
+          </tr>
+          <tr>
+            <td><code>POST /api/calls/{call_id}/reprocess</code></td>
+            <td>Re-run transcription or analysis if needed.</td>
+          </tr>
+          <tr>
+            <td><code>GET /api/health</code></td>
+            <td>Check API, database, ffmpeg, transcription model, and LLM availability before demo.</td>
+          </tr>
+          <tr>
+            <td><code>GET /api/jobs/{job_id}/events</code></td>
+            <td>Show live processing timeline and logs for debugging and demo transparency.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="observability" class="section">
+      <h2>12. Logging and Observability</h2>
+      <p class="section-intro">
+        We need to log enough to test, debug, and improve the product. The logs should tell us what happened,
+        which model was used, how long each step took, and why a result was accepted or rejected.
+      </p>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>What we log</h3>
+          <ul>
+            <li>Request ID, call ID, job ID, customer ID, and agent ID.</li>
+            <li>Job lifecycle: queued, audio split, transcribing, evidence extraction, LLM analysis, validation, complete, failed.</li>
+            <li>Duration for each step and total processing time.</li>
+            <li>Transcription model, LLM model, prompt version, rule version, and schema version.</li>
+            <li>Transcript turn IDs used by each AI judgment, score factor, quality signal, and Show Me Why link.</li>
+            <li>Radar Priority score breakdown, issue radar category, customer journey match, and manager brief version.</li>
+            <li>Audio timing events such as silence windows, channel balance, and evidence jump timestamp.</li>
+            <li>Validation failures such as missing evidence, fake quote, invalid JSON, or summary too long.</li>
+            <li>Manager actions: reviewed, escalated, dismissed, corrected, or reprocessed.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>What we avoid logging</h3>
+          <ul>
+            <li>Do not print full raw audio content in logs.</li>
+            <li>Do not expose sensitive banking data in plain operational logs.</li>
+            <li>Keep model prompts and outputs in a controlled audit store, with redaction where needed.</li>
+            <li>Separate debug logs from business audit logs.</li>
+          </ul>
+        </div>
+      </div>
+
+      <pre><code>{
+  "level": "info",
+  "event": "analysis_validated",
+  "request_id": "req_91b2",
+  "job_id": "job_1024",
+  "call_id": "call_778",
+  "agent_id": "agent_44",
+  "model": "local-fast",
+  "prompt_version": "analysis_v3",
+  "rule_version": "banking_rules_v2",
+  "duration_ms": 1280,
+  "needs_attention_score": 82,
+  "score_factors": ["unresolved", "negative_final_mood", "repeat_contact"],
+  "evidence_count": 5,
+  "transcript_turn_ids": ["turn_087", "turn_094"],
+  "quality_signals": ["false_resolution_check_passed", "conversation_balance"],
+  "validator_result": "accepted"
+}</code></pre>
+
+      <div class="callout">
+        <strong>Demo value:</strong>
+        if a reviewer asks how we debug or improve accuracy, we can show that every result has traceable job
+        events, model versions, rule versions, validation decisions, and manager feedback.
+      </div>
+    </section>
+
+    <section id="testing" class="section">
+      <h2>13. Testing and Accuracy Plan</h2>
+      <p class="section-intro">
+        Unit tests prove the code behaves correctly. Accuracy tests prove the AI product is useful. We need both.
+      </p>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>100% unit test target</h3>
+          <ul>
+            <li>Target 100% unit test coverage for domain logic and service logic.</li>
+            <li>Cover scoring, validation, evidence matching, transcript merging, status transitions, API schema rules, and summary word-count rules.</li>
+            <li>Cover Radar Priority factor math, quality-signal detection, Issue Radar grouping, customer journey matching, and evidence jump URLs.</li>
+            <li>Use coverage gates in CI so new code cannot reduce coverage.</li>
+            <li>Exclude generated files, migrations, static assets, and test fixtures from the coverage percentage.</li>
+            <li>Keep integration and UI tests separate from unit test coverage.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Accuracy evaluation</h3>
+          <ul>
+            <li>Create a gold set of calls manually labeled by the team.</li>
+            <li>Measure transcription word error rate on a few manually checked calls.</li>
+            <li>Measure intent accuracy, resolution F1, mood-shift tolerance, and issue-category accuracy.</li>
+            <li>Measure false-resolution precision, repeated-question detection precision, silence-event timing tolerance, and conversation-balance correctness.</li>
+            <li>Measure evidence precision: does the quote really support the claim?</li>
+            <li>Measure evidence recall: did we find the important moments?</li>
+            <li>Track hallucination rate: claims without valid evidence must be zero after validation.</li>
+          </ul>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Quality area</th>
+            <th>Metric</th>
+            <th>Target for demo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Transcript</td>
+            <td>Manual review plus word error rate on sample calls</td>
+            <td>Good enough that evidence quotes are understandable.</td>
+          </tr>
+          <tr>
+            <td>Speaker attribution</td>
+            <td>Correct agent/customer channel assignment</td>
+            <td>Near 100% for stereo dataset because channel mapping is known.</td>
+          </tr>
+          <tr>
+            <td>Evidence grounding</td>
+            <td>Claims with valid timestamp and matching quote</td>
+            <td>100% of displayed claims must have evidence.</td>
+          </tr>
+          <tr>
+            <td>Resolution detection</td>
+            <td>Resolved/unresolved classification</td>
+            <td>High precision for manager attention calls.</td>
+          </tr>
+          <tr>
+            <td>Attention queue</td>
+            <td>Top risky calls include truly important calls</td>
+            <td>Top 10 should feel obviously useful to a manager.</td>
+          </tr>
+          <tr>
+            <td>Radar Priority breakdown</td>
+            <td>Score factors add up correctly and each factor has evidence</td>
+            <td>100% deterministic math correctness; evidence required for each displayed factor.</td>
+          </tr>
+          <tr>
+            <td>Issue Radar</td>
+            <td>Issue grouping and trend direction against labeled sample calls</td>
+            <td>Useful grouping with representative evidence for every shown issue.</td>
+          </tr>
+          <tr>
+            <td>Customer Journey</td>
+            <td>Repeat issue and mood/outcome sequence accuracy</td>
+            <td>Correct on prepared demo customers and regression-tested against gold cases.</td>
+          </tr>
+          <tr>
+            <td>Agent satisfaction score</td>
+            <td>Correlation with final mood, resolution, and positive closing language</td>
+            <td>Useful directional score, always evidence-backed.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout amber">
+        <strong>Honest technical note:</strong>
+        100% unit test coverage does not mean 100% AI accuracy. The right answer is 100% coverage for deterministic
+        code plus a separate AI evaluation suite with labeled calls and regression tracking.
+      </div>
+    </section>
+
+    <section id="code" class="section">
+      <h2>14. Code Structure</h2>
+      <p class="section-intro">
+        The project should be easy for another engineer to understand. Keep UI, API, domain logic, AI services,
+        and infrastructure separate.
+      </p>
+      <pre><code>call-centre-radar/
+  README.md
+  docker-compose.yml
+  .env.example
+
+  backend/
+    pyproject.toml
+    app/
+      main.py
+      api/
+        routes_calls.py
+        routes_customers.py
+        routes_agents.py
+        routes_attention.py
+        routes_trends.py
+        routes_issue_radar.py
+        routes_customer_journey.py
+      core/
+        config.py
+        errors.py
+        logging.py
+        telemetry.py
+      domain/
+        models.py
+        schemas.py
+        scoring.py
+        evidence_rules.py
+        quality_signals.py
+        interfaces.py
+      services/
+        audio_splitter.py
+        transcriber.py
+        transcript_merger.py
+        evidence_extractor.py
+        analyzer_orchestrator.py
+        validator.py
+        trend_service.py
+        issue_radar_service.py
+        customer_journey_service.py
+        agent_metrics_service.py
+        satisfaction_service.py
+        quality_signal_service.py
+        conversation_balance_service.py
+      llm/
+        base.py
+        ollama_provider.py
+        paid_provider.py
+        model_router.py
+        prompts/
+      repositories/
+        call_repository.py
+        customer_repository.py
+        agent_repository.py
+        job_repository.py
+        audit_repository.py
+      workers/
+        process_call_job.py
+      db/
+        session.py
+        migrations/
+      observability/
+        job_events.py
+        model_audit.py
+        metrics.py
+      tests/
+        unit/
+        integration/
+        accuracy/
+
+  frontend/
+    package.json
+    src/
+      app/
+      components/
+        AudioTranscriptSync.tsx
+        EvidenceDrawer.tsx
+        ManagerBrief.tsx
+        ScoreBreakdown.tsx
+        ProcessingTimeline.tsx
+        CustomerJourneyTimeline.tsx
+        AgentTreatmentBars.tsx
+      pages/
+        DashboardPage.tsx
+        UploadPage.tsx
+        CallDetailPage.tsx
+        CustomerPage.tsx
+        AgentPage.tsx
+        TrendsPage.tsx
+        IssueRadarPage.tsx
+      api/
+      types/
+      styles/
+
+  evals/
+    gold_calls/
+    expected_outputs/
+    run_accuracy_eval.py
+
+  data/
+    sample/
+    uploads/
+    processed/
+
+  docs/
+    architecture.md
+    demo_script.md</code></pre>
+    </section>
+
+    <section id="solid" class="section">
+      <h2>15. SOLID Principles</h2>
+      <p class="section-intro">
+        SOLID keeps the code clean enough for senior technical reviewers and easier to extend after the hackathon.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Principle</th>
+            <th>How we apply it</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Single Responsibility</td>
+            <td>Audio splitting, transcription, evidence extraction, LLM analysis, validation, scoring, and storage are separate services.</td>
+          </tr>
+          <tr>
+            <td>Open / Closed</td>
+            <td>Add new evidence rules, new LLM provider, or new transcription engine without rewriting the whole pipeline.</td>
+          </tr>
+          <tr>
+            <td>Liskov Substitution</td>
+            <td>Any transcriber implementation should return the same transcript interface, whether it uses faster-whisper or another engine.</td>
+          </tr>
+          <tr>
+            <td>Interface Segregation</td>
+            <td>Small interfaces: Transcriber, Analyzer, EvidenceExtractor, Validator, Repository. No giant service object.</td>
+          </tr>
+          <tr>
+            <td>Dependency Inversion</td>
+            <td>Business logic depends on interfaces, not directly on Ollama, ffmpeg, SQLite, or a specific model.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="demo" class="section">
+      <h2>16. What We Can Demo</h2>
+      <p class="section-intro">
+        The demo should be simple, visual, and proof-driven. The centerpiece is the call detail screen: upload or
+        select a call, see the manager brief, then click Show Me Why and jump directly to the audio evidence.
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Main demo path</h3>
+          <ol>
+            <li>Open dashboard and show today's risk queue.</li>
+            <li>Open the top flagged call.</li>
+            <li>Show manager brief, recommended action, summary, intent, mood shift, resolution, and Radar Priority.</li>
+            <li>Open the score breakdown and click Show Me Why for one factor.</li>
+            <li>Jump the audio player to the exact evidence timestamp.</li>
+            <li>Open Issue Radar and show recurring issues with representative evidence.</li>
+            <li>Open Customer Journey for a repeat caller if time allows.</li>
+            <li>Open agent page and show treatment and satisfaction metrics.</li>
+            <li>Upload a new audio file and watch live processing status.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h3>Technical demo path</h3>
+          <ol>
+            <li>Show architecture diagram.</li>
+            <li>Show transcript with speaker/time alignment.</li>
+            <li>Show evidence candidates before LLM.</li>
+            <li>Show LLM JSON output.</li>
+            <li>Show validator rejecting unsupported claims.</li>
+            <li>Show immutable transcript turn IDs behind evidence and score factors.</li>
+            <li>Show SQLite caching: no re-transcription on reload.</li>
+            <li>Explain scale path to production.</li>
+          </ol>
+        </div>
+      </div>
+      <div class="card soft" style="margin-top: 16px;">
+        <h3>POC priority order</h3>
+        <ol>
+          <li>Stereo-aware transcription.</li>
+          <li>Persistent transcript database in SQLite.</li>
+          <li>Synchronized audio and transcript on call detail.</li>
+          <li>Intent, mood, resolution, and summary with evidence.</li>
+          <li>Radar Priority score breakdown.</li>
+          <li>Manager brief and recommended action.</li>
+          <li>Ranked attention queue.</li>
+          <li>Issue Radar and Customer Journey if time allows.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="before-demo" class="section">
+      <h2>17. Before-demo Checklist</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Product readiness</h3>
+          <ul>
+            <li>Prepare 5 to 10 strong sample calls with known outcomes.</li>
+            <li>Prepare one short new audio file for live upload.</li>
+            <li>Make sure each sample has evidence timestamps.</li>
+            <li>Prepare at least one call with a strong manager brief and visible Radar Priority breakdown.</li>
+            <li>Prepare one customer journey example with repeat issue deterioration.</li>
+            <li>Prepare one Issue Radar example with critical, emerging, and stable issue groups.</li>
+            <li>Prepare a small accuracy scorecard from manually checked sample calls.</li>
+            <li>Verify dashboard works on projector resolution.</li>
+            <li>Keep labels simple: High risk, Unresolved, Angry customer, Agent mistreated.</li>
+            <li>Prepare a 2-minute CEO story and a 5-minute CTO story.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Technical readiness</h3>
+          <ul>
+            <li>Install ffmpeg, faster-whisper, Ollama, and selected model.</li>
+            <li>Run ingestion on sample dataset before the demo.</li>
+            <li>Test live upload on a small audio file.</li>
+            <li>Run unit tests with the coverage gate enabled.</li>
+            <li>Run accuracy evaluation against the gold call set.</li>
+            <li>Confirm logs show request IDs, job IDs, model versions, validation results, and errors.</li>
+            <li>Confirm every displayed evidence quote maps back to a saved transcript turn ID.</li>
+            <li>Confirm Show Me Why jumps the audio player to the correct timestamp.</li>
+            <li>Start backend, frontend, worker, and Ollama before presenting.</li>
+            <li>Keep a tunnel URL ready if judges need remote access.</li>
+            <li>Have fallback precomputed results in case local inference is slow.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="failure-plan" class="section">
+      <h2>18. What Can Go Wrong?</h2>
+      <p class="section-intro">
+        A strong demo plan should not pretend everything is perfect. The system must show clear status, recover
+        gracefully, and explain limits honestly.
+      </p>
+
+      <div class="callout amber">
+        <strong>Core fallback rule:</strong>
+        if a step fails, the dashboard should still show what is known, what failed, and what the manager can do next.
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>What can go wrong</th>
+            <th>Impact</th>
+            <th>How we handle it in demo</th>
+            <th>Production mitigation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Audio upload fails</td>
+            <td>New call cannot enter the system.</td>
+            <td>Show a clear error: unsupported file, too large, or missing metadata.</td>
+            <td>Virus scan, file validation, resumable upload, object storage.</td>
+          </tr>
+          <tr>
+            <td>Audio is not stereo</td>
+            <td>Cannot use left/right channel speaker separation.</td>
+            <td>Mark speaker confidence as low and process as single-speaker transcript, or reject with a helpful message.</td>
+            <td>Add diarization fallback for mono recordings.</td>
+          </tr>
+          <tr>
+            <td>ffmpeg is missing</td>
+            <td>Audio cannot be split or converted.</td>
+            <td>Startup health check warns before demo starts.</td>
+            <td>Container image includes ffmpeg and CI checks it.</td>
+          </tr>
+          <tr>
+            <td>Transcription is slow</td>
+            <td>Live demo waits too long.</td>
+            <td>Use a short demo call, show progress, and keep preprocessed backup calls ready.</td>
+            <td>Use GPU workers, queue concurrency, chunking, and model-size selection.</td>
+          </tr>
+          <tr>
+            <td>Transcription is inaccurate</td>
+            <td>Analysis may be wrong because evidence text is wrong.</td>
+            <td>Show audio player next to transcript so reviewers can verify evidence.</td>
+            <td>Confidence scoring, reprocessing, better model, human review workflow.</td>
+          </tr>
+          <tr>
+            <td>Local LLM is slow or unavailable</td>
+            <td>Detailed analysis may not finish.</td>
+            <td>Show deterministic preliminary analysis and mark LLM refinement as pending.</td>
+            <td>Dedicated inference service, retry queue, model health monitoring.</td>
+          </tr>
+          <tr>
+            <td>LLM returns invalid JSON</td>
+            <td>API cannot safely store analysis.</td>
+            <td>Validator rejects it and retries once with stricter prompt.</td>
+            <td>Structured output mode, schema validation, eval tests, fallback model.</td>
+          </tr>
+          <tr>
+            <td>LLM gives unsupported claim</td>
+            <td>False manager alert or wrong conclusion.</td>
+            <td>Reject any claim without matching timestamp and transcript quote.</td>
+            <td>Evidence validator, regression evals, confidence thresholds, human review.</td>
+          </tr>
+          <tr>
+            <td>Two models disagree</td>
+            <td>Unclear intent, mood, or resolution state.</td>
+            <td>Show the result as low confidence and prefer evidence-backed deterministic flags.</td>
+            <td>Use arbitration rules, human review, and a stronger model for high-risk calls.</td>
+          </tr>
+          <tr>
+            <td>Accuracy score drops after a change</td>
+            <td>A model, rule, or prompt update may regress quality.</td>
+            <td>Do not use the changed version in demo unless evals pass.</td>
+            <td>CI accuracy regression suite with gold calls and versioned prompts.</td>
+          </tr>
+          <tr>
+            <td>Summary is longer than 40 words</td>
+            <td>Violates assignment requirement.</td>
+            <td>Validator rejects and asks model to shorten, or uses a template summary.</td>
+            <td>Automated schema and word-count tests.</td>
+          </tr>
+          <tr>
+            <td>Database write fails</td>
+            <td>Processed result may be lost.</td>
+            <td>Show failed job state and keep temporary output for retry.</td>
+            <td>Transactions, backups, retry policy, observability.</td>
+          </tr>
+          <tr>
+            <td>Dashboard cannot reach backend</td>
+            <td>UI appears broken.</td>
+            <td>Show offline banner and retry button.</td>
+            <td>Health checks, uptime monitoring, graceful error pages.</td>
+          </tr>
+          <tr>
+            <td>Tunnel fails during demo</td>
+            <td>Remote URL may stop working.</td>
+            <td>Run locally on the presenter machine and have screenshots/video backup.</td>
+            <td>Deploy stable backend infrastructure behind HTTPS.</td>
+          </tr>
+          <tr>
+            <td>PII appears in transcript</td>
+            <td>Privacy risk for banking-style data.</td>
+            <td>Use sample/demo-safe audio and clearly mark PII redaction path.</td>
+            <td>Presidio redaction, encryption, access control, audit logs.</td>
+          </tr>
+          <tr>
+            <td>Rule engine over-flags calls</td>
+            <td>Too many false positives in manager queue.</td>
+            <td>Show evidence and confidence, not just final score.</td>
+            <td>Tune weights, collect manager feedback, calibrate thresholds.</td>
+          </tr>
+          <tr>
+            <td>Important issue is missed</td>
+            <td>False negative: manager does not see a risky call.</td>
+            <td>Allow manual search and show all unresolved/low-confidence calls.</td>
+            <td>Evaluation dataset, recall-focused thresholds, periodic rule/model updates.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="grid-2" style="margin-top: 16px;">
+        <div class="card">
+          <h3>Demo safety plan</h3>
+          <ul>
+            <li>Use one short live-upload audio file to keep processing fast.</li>
+            <li>Prepare several already-processed calls for immediate dashboard walkthrough.</li>
+            <li>Run a startup health check for ffmpeg, Whisper model, Ollama, database, and frontend/backend connectivity.</li>
+            <li>Keep the local app open even if the public tunnel fails.</li>
+            <li>Have a backup screen recording of the live-upload flow.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>How to explain failures</h3>
+          <ul>
+            <li>Be transparent: the app shows job status and error reasons.</li>
+            <li>Separate known facts from AI conclusions.</li>
+            <li>Show confidence and evidence for every important flag.</li>
+            <li>Use fallback analysis when LLM refinement is not ready.</li>
+            <li>Explain the production upgrade path without hiding hackathon constraints.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="pros-cons" class="section">
+      <h2>19. Pros and Cons</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Pros</h3>
+          <ul>
+            <li>Free to run with open-source local models.</li>
+            <li>Supports live new audio uploads.</li>
+            <li>Evidence-backed, which directly matches assignment scoring.</li>
+            <li>Simple manager dashboard with clear action list.</li>
+            <li>Call Detail is a strong proof screen: manager brief, recommended action, score breakdown, evidence, and audio jump.</li>
+            <li>Radar Priority is explainable because each factor has points and transcript-turn evidence.</li>
+            <li>Issue Radar and Customer Journey make the product feel useful beyond one-call summaries.</li>
+            <li>Technically defensible hybrid architecture.</li>
+            <li>Works even if LLM is slow by showing preliminary rule-based analysis.</li>
+            <li>Can scale later by swapping SQLite for Postgres and local worker for queue workers.</li>
+            <li>Agent treatment tracking adds a strong human and business angle.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Cons and risks</h3>
+          <ul>
+            <li>Transcription is the slowest part of live processing.</li>
+            <li>Local LLM quality depends on laptop/server hardware and model choice.</li>
+            <li>Whisper errors can affect downstream analysis.</li>
+            <li>Rule engine needs tuning after reviewing real transcripts.</li>
+            <li>Fully free cloud hosting is not ideal for heavy AI inference.</li>
+            <li>Mono audio would require speaker diarization fallback.</li>
+            <li>Long calls may need chunking and progress updates.</li>
+            <li>More POC screens mean more demo preparation and more UI states to test.</li>
+            <li>False-resolution and repeated-question signals must be carefully tuned to avoid overclaiming.</li>
+            <li>Agent satisfaction scores are directional and must be positioned as coaching support, not a final performance judgment.</li>
+            <li>PII handling must be clear for banking-like conversations.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="scale" class="section">
+      <h2>20. Scale Path After Hackathon</h2>
+      <p class="section-intro">
+        The hackathon version should be honest and free, but the architecture should have a clear production path.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Hackathon version</th>
+            <th>Production upgrade</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>SQLite</td>
+            <td>Postgres with indexes, backups, and audit logs.</td>
+          </tr>
+          <tr>
+            <td>Local file storage</td>
+            <td>Object storage such as S3, GCS, Azure Blob, or MinIO.</td>
+          </tr>
+          <tr>
+            <td>Simple background worker</td>
+            <td>Queue system with retry, concurrency, and monitoring.</td>
+          </tr>
+          <tr>
+            <td>Local faster-whisper</td>
+            <td>GPU worker pool or managed transcription service.</td>
+          </tr>
+          <tr>
+            <td>Local Ollama model</td>
+            <td>Private hosted LLM or managed LLM with data controls.</td>
+          </tr>
+          <tr>
+            <td>Basic dashboard</td>
+            <td>Role-based access, audit trail, review workflow, evidence exports, and reporting exports.</td>
+          </tr>
+          <tr>
+            <td>Deterministic score weights in config</td>
+            <td>Calibrated scoring model with manager feedback, offline evals, and versioned rollouts.</td>
+          </tr>
+          <tr>
+            <td>POC quality signals</td>
+            <td>Validated conversation-quality analytics with labeled datasets and human review workflow.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="questions" class="section">
+      <h2>21. Questions We Can Answer in Demo</h2>
+      <p class="section-intro">
+        These are likely questions from technical and business reviewers, with short answers the team can use.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Question</th>
+            <th>Answer</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Can it process a new audio file live?</td>
+            <td>Yes. Upload creates a job, then the worker transcribes, analyzes, validates, and updates the dashboard.</td>
+          </tr>
+          <tr>
+            <td>Why should we trust the AI output?</td>
+            <td>The LLM must cite timestamped transcript evidence. The validator rejects unsupported claims.</td>
+          </tr>
+          <tr>
+            <td>What exactly is evidence?</td>
+            <td>A saved transcript turn with immutable turn ID, speaker, timestamp, and quote, linked back to the audio.</td>
+          </tr>
+          <tr>
+            <td>Can the LLM invent timestamps or quotes?</td>
+            <td>No. The LLM returns transcript turn references; timestamps and quotes are read from SQLite transcript turns.</td>
+          </tr>
+          <tr>
+            <td>What is the Show Me Why button?</td>
+            <td>It opens the supporting transcript turn and jumps the audio player to the evidence timestamp.</td>
+          </tr>
+          <tr>
+            <td>Can the manager play the audio?</td>
+            <td>Yes. The Call Detail screen has a full audio player with play/pause, speed control, jump back, and evidence timestamp jumps.</td>
+          </tr>
+          <tr>
+            <td>Can the transcript follow the audio?</td>
+            <td>Yes. The planned UI highlights the active transcript turn while the recording plays.</td>
+          </tr>
+          <tr>
+            <td>What is Radar Priority?</td>
+            <td>It is an explainable manager-attention score based on unresolved status, mood, repeat contact, risk, and evidence-backed quality signals.</td>
+          </tr>
+          <tr>
+            <td>How is Radar Priority calculated?</td>
+            <td>Deterministic score factors add points, and each displayed factor must link to transcript or audio evidence.</td>
+          </tr>
+          <tr>
+            <td>Can managers see the score breakdown?</td>
+            <td>Yes. The call detail screen shows every score factor, points added, and Show Me Why evidence link.</td>
+          </tr>
+          <tr>
+            <td>What is Manager Brief?</td>
+            <td>A short manager-ready explanation of why the call matters and what risk or opportunity it contains.</td>
+          </tr>
+          <tr>
+            <td>Is Recommended Action treated as evidence?</td>
+            <td>No. It is clearly labeled as a recommendation; facts and evidence remain separate.</td>
+          </tr>
+          <tr>
+            <td>Why not use only rules?</td>
+            <td>Rules are fast and reliable for evidence, but LLM reasoning handles nuanced intent, mood, and resolution.</td>
+          </tr>
+          <tr>
+            <td>Why not use only LLM?</td>
+            <td>Pure LLM is slower and more likely to hallucinate. Evidence-first analysis is safer.</td>
+          </tr>
+          <tr>
+            <td>Is it free?</td>
+            <td>Yes for the hackathon path: local faster-whisper, local Ollama, SQLite, and open-source libraries.</td>
+          </tr>
+          <tr>
+            <td>What is the bottleneck?</td>
+            <td>Transcription. Evidence extraction and scoring are quick after transcript generation.</td>
+          </tr>
+          <tr>
+            <td>Can we run multiple LLMs?</td>
+            <td>Yes. The analyzer interface allows fast local, stronger local, two-model agreement, or optional paid models later.</td>
+          </tr>
+          <tr>
+            <td>Do we need a paid model for the hackathon demo?</td>
+            <td>No. The demo path is local faster-whisper, local Ollama, SQLite, and open-source libraries.</td>
+          </tr>
+          <tr>
+            <td>What if the local LLM is slow?</td>
+            <td>The app shows live processing status and can fall back to deterministic preliminary results or precomputed demo calls.</td>
+          </tr>
+          <tr>
+            <td>What if two models disagree?</td>
+            <td>The result is marked low confidence and the product relies on evidence-backed deterministic signals first.</td>
+          </tr>
+          <tr>
+            <td>Can this scale?</td>
+            <td>Yes. The services are modular: move DB to Postgres, audio to object storage, and workers to queue/GPU infrastructure.</td>
+          </tr>
+          <tr>
+            <td>Why SQLite for POC?</td>
+            <td>It is free, simple, reliable for a laptop demo, and enough to persist transcripts, evidence, jobs, and analysis.</td>
+          </tr>
+          <tr>
+            <td>Can SQLite be replaced later?</td>
+            <td>Yes. Repository interfaces keep business logic independent from the database implementation.</td>
+          </tr>
+          <tr>
+            <td>How do you identify speakers?</td>
+            <td>The assignment audio is stereo: left is agent, right is customer. We split channels before transcription.</td>
+          </tr>
+          <tr>
+            <td>What if the demo audio is mono?</td>
+            <td>The POC marks speaker confidence as low or uses a diarization fallback path if available.</td>
+          </tr>
+          <tr>
+            <td>Can it process a file we have never seen before?</td>
+            <td>Yes. Upload creates a fresh processing job; preprocessing is done by the app, not by the presenter.</td>
+          </tr>
+          <tr>
+            <td>Do we preprocess audio manually?</td>
+            <td>No. The app validates, converts, splits channels, transcribes, analyzes, and stores results automatically.</td>
+          </tr>
+          <tr>
+            <td>Can it protect sensitive data?</td>
+            <td>Yes. Local processing avoids external APIs by default, and PII redaction can be added with Presidio.</td>
+          </tr>
+          <tr>
+            <td>What is the business value?</td>
+            <td>Managers review the few calls that matter instead of randomly sampling hundreds of recordings.</td>
+          </tr>
+          <tr>
+            <td>What is Issue Radar?</td>
+            <td>It groups recurring call issues into critical, emerging, and stable categories with trend direction and evidence examples.</td>
+          </tr>
+          <tr>
+            <td>Why Issue Radar instead of generic trends?</td>
+            <td>Issue Radar is more action-oriented: it tells managers what operational problem needs attention now.</td>
+          </tr>
+          <tr>
+            <td>Can we track repeat caller experience?</td>
+            <td>Yes. Customer Journey shows repeat issues, mood changes, outcomes, and follow-up risk over time.</td>
+          </tr>
+          <tr>
+            <td>Can we detect false resolution?</td>
+            <td>For POC, yes when evidence shows the call sounded closed but later turns reveal pending work or customer confusion.</td>
+          </tr>
+          <tr>
+            <td>Can we detect repeated questions?</td>
+            <td>Yes as an evidence-backed quality signal using repeated intent/info-request patterns in transcript turns.</td>
+          </tr>
+          <tr>
+            <td>Can we detect long silence?</td>
+            <td>Yes. Silence is measured from audio timing and displayed only with a timestamped evidence window.</td>
+          </tr>
+          <tr>
+            <td>Can we measure agent/customer talk balance?</td>
+            <td>Yes, especially for stereo audio, by calculating talk time per channel and showing a simple ratio.</td>
+          </tr>
+          <tr>
+            <td>Can we track how service people are treated?</td>
+            <td>Yes. The app flags abusive, disrespectful, or high-stress moments with evidence and uses them for support/coaching.</td>
+          </tr>
+          <tr>
+            <td>Can we measure customer satisfaction by agent?</td>
+            <td>Yes as an estimated, evidence-backed directional score based on outcome, final mood, positive closing language, and repeat contact.</td>
+          </tr>
+          <tr>
+            <td>How do we avoid unfair agent scoring?</td>
+            <td>Scores are positioned as coaching signals, include evidence, and should not be used as the only performance measure.</td>
+          </tr>
+          <tr>
+            <td>How do we test accuracy?</td>
+            <td>Use manually labeled gold calls and measure transcript quality, intent, mood, resolution, evidence precision, and signal precision.</td>
+          </tr>
+          <tr>
+            <td>Does 100% unit coverage mean 100% AI accuracy?</td>
+            <td>No. Unit coverage proves deterministic code; AI accuracy needs a separate labeled evaluation suite.</td>
+          </tr>
+          <tr>
+            <td>How do we debug wrong results?</td>
+            <td>Logs include request IDs, job IDs, model versions, prompt versions, validation results, score factors, and evidence turn IDs.</td>
+          </tr>
+          <tr>
+            <td>What happens if evidence is missing?</td>
+            <td>The claim is rejected, hidden, or marked uncertain instead of being shown as a fact.</td>
+          </tr>
+          <tr>
+            <td>What charts are worth building for POC?</td>
+            <td>Mood timeline, Radar Priority breakdown, Issue Radar grouping, Customer Journey timeline, and simple agent satisfaction/treatment bars.</td>
+          </tr>
+          <tr>
+            <td>Why avoid complex radar charts?</td>
+            <td>They look decorative but add less demo value than evidence, audio sync, score breakdown, and manager actions.</td>
+          </tr>
+          <tr>
+            <td>Where can we host it for free?</td>
+            <td>Frontend can use Vercel or Netlify free tier; heavy AI should run locally for the demo because free cloud inference is limited.</td>
+          </tr>
+          <tr>
+            <td>What if hosting or tunnel fails?</td>
+            <td>Run the app locally, keep processed calls ready, and use a backup screen recording for the live-upload flow.</td>
+          </tr>
+          <tr>
+            <td>What is the strongest demo moment?</td>
+            <td>Open a high-risk call, read the manager brief, click Show Me Why, and jump the audio to the exact evidence.</td>
+          </tr>
+          <tr>
+            <td>What can be built first if time is short?</td>
+            <td>Call Detail, synced audio/transcript, evidence-backed intent/mood/resolution, Radar Priority breakdown, and dashboard ranking.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="final-recommendation" class="section">
+      <h2>22. Final Recommendation</h2>
+      <div class="callout green">
+        Build a hybrid, evidence-first call intelligence product:
+        <strong>faster-whisper transcription + deterministic evidence engine + local/multi-LLM analysis + strict validator + SQLite + logs + accuracy evals + manager dashboard.</strong>
+      </div>
+      <p>
+        This gives the best balance for the hackathon: simple for managers, impressive for executives, defensible
+        for architects, free to run, and capable of processing a new call during the demo.
+      </p>
+      <p>
+        The call detail screen should be the proof: Manager Brief, Recommended Action, Radar Priority breakdown,
+        transcript evidence, and audio jump-to-timestamp. Issue Radar and Customer Journey are high-value extensions
+        if the core flow is already solid.
+      </p>
+    </section>
+
+    <div class="footer">
+      Call-Centre Radar project document. Designed for a manager-simple and architect-defensible hackathon demo.
+    </div>
+  </main>
+</body>
+</html>
