@@ -6,6 +6,27 @@ This wiki is the working handbook for the Call Center Radar POC.
 
 Call Center Radar is an evidence-first call intelligence POC for support and operations teams. The product turns call recordings into manager-ready insights with traceable evidence, synchronized audio and transcript playback, and prioritized actions.
 
+## Project Objective
+
+The objective of this POC is to process support-call recordings, identify which calls need manager attention, explain every important AI decision with real evidence, and present the result through a manager-friendly dashboard.
+
+For the POC, the product should prove that it can:
+
+- accept a new call recording
+- generate evidence-backed call analysis
+- rank important calls for manager review
+- show exactly why a call was flagged
+
+## Sample Data
+
+The current sample dataset contains:
+
+- `1441` audio files
+- `1441` metadata JSON files
+- one metadata file paired to each call by shared call ID
+
+The sample metadata includes agent details, caller details, timestamps, speaker IDs, response timing, and quality-related labels such as MOS and script scores.
+
 Core positioning:
 
 - Bank-grade call intelligence where every AI judgment can be verified
