@@ -34,20 +34,30 @@ Build a fast, defensible demo that answers:
 ## POC Architecture
 
 ```mermaid
-flowchart LR
-  A[Upload Audio] --> B[Call Record + Job]
-  B --> C[Audio Validation]
-  C --> D[Transcription]
-  D --> E[Transcript Turns]
-  E --> F[Evidence Engine]
-  F --> G[Structured LLM Analysis]
-  G --> H[Validation Layer]
-  H --> I[SQLite Analysis Store]
-  I --> J[Manager Dashboard]
+flowchart TD
+  A[1. Upload Audio]
+  B[2. Create Call Job]
+  C[3. Transcribe Call]
+  D[4. Save Transcript Turns]
+  E[5. Extract Evidence]
+  F[6. Run AI Analysis]
+  G[7. Validate Claims]
+  H[8. Save Final Result in SQLite]
+  I[9. Show Manager Screens]
+
+  A --> B --> C --> D --> E --> F --> G --> H --> I
+
+  I --> J[Dashboard]
   I --> K[Call Detail]
   I --> L[Issue Radar]
   I --> M[Customer Journey]
 ```
+
+Architecture reading guide:
+
+- Steps 1 to 8 are the processing pipeline
+- Step 9 is where the manager sees the result
+- Dashboard, Call Detail, Issue Radar, and Customer Journey all read from the same validated stored result
 
 ## POC Abstract Flow
 
