@@ -619,6 +619,7 @@
       </div>
       <nav class="toc" aria-label="Document sections">
         <a href="#one-line">One-line idea</a>
+        <a href="#objective">Objective</a>
         <a href="#winning">Winning strategy</a>
         <a href="#users">Users</a>
         <a href="#architecture">Architecture</a>
@@ -663,6 +664,35 @@
         <div class="card">
           <h3>For technical judges</h3>
           <p>Show a clear AI pipeline with transcription, evidence extraction, LLM analysis, validation, and caching.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="objective" class="section">
+      <h2>Project Objective</h2>
+      <p class="section-intro">
+        The objective of this POC is to process support-call recordings, identify which calls need manager attention,
+        explain each major AI judgment with real transcript and audio evidence, and present the result in a simple
+        dashboard for operations teams.
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>What success looks like</h3>
+          <ul>
+            <li>A new call can be uploaded and processed during the demo.</li>
+            <li>The manager can open one call and understand what happened quickly.</li>
+            <li>Every major conclusion links back to real call evidence.</li>
+            <li>The system shows both business value and technical defensibility.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Sample data used for the POC</h3>
+          <ul>
+            <li><strong>1441</strong> audio files in the sample dataset.</li>
+            <li><strong>1441</strong> metadata JSON files matched one-to-one with calls.</li>
+            <li>Metadata includes agent name, caller name, timestamps, speaker IDs, response timing, and quality labels.</li>
+            <li>Example quality labels include <code>caller_mos</code>, <code>agent_mos</code>, and <code>lhvb_script</code>.</li>
+          </ul>
         </div>
       </div>
     </section>

@@ -46,6 +46,11 @@ This sample set is used for:
 - dashboard demonstrations
 - evaluation and regression checks before the live demo
 
+Tracked repo asset locations:
+
+- sample dataset: `sample-data/callradar-data/`
+- project objective PDF: `reference/Call_Centre_Radar_1.pdf`
+
 ## Core POC Principles
 
 - Trust: every important AI judgment must link back to transcript turns and audio evidence

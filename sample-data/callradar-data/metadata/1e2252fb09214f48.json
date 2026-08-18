@@ -1,0 +1,57 @@
+{
+ "agent": {
+  "arrival_time_ms": 1590864509501,
+  "hangup_time_ms": 1590864597419,
+  "metadata": {
+   "agent_name": "Patricia"
+  },
+  "responses": [
+   {
+    "submit_time_ms": 1590864548410
+   },
+   {
+    "submit_time_ms": 1590864550233
+   },
+   {
+    "submit_time_ms": 1590864577542
+   }
+  ],
+  "speaker_id": 56,
+  "survey_response": {
+   "submit_time_ms": 1590864595477,
+   "data": {
+    "ease_of_connection": "10",
+    "partner_rating": "10"
+   }
+  }
+ },
+ "caller": {
+  "arrival_time_ms": 1590864506877,
+  "hangup_time_ms": 1590864594945,
+  "metadata": {
+   "first and last name": "Patricia Miller"
+  },
+  "responses": [
+   {
+    "submit_time_ms": 1590864582173
+   }
+  ],
+  "speaker_id": 55,
+  "survey_response": {
+   "submit_time_ms": 1590864599116,
+   "data": {
+    "ease_of_connection": "10",
+    "partner_rating": "10"
+   }
+  }
+ },
+ "end_time_ms": 1590864594847,
+ "sid": "1e2252fb09214f48",
+ "start_time_ms": 1590864515375,
+ "labels": {
+  "lhvb_script": 5.0,
+  "caller_mos": 3.0,
+  "agent_mos": 3.0
+ },
+ "session": "Little Harper Valley 2"
+}

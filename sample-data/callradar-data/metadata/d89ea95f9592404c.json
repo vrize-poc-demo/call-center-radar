@@ -1,0 +1,52 @@
+{
+ "agent": {
+  "arrival_time_ms": 1590858325308,
+  "hangup_time_ms": 1590858441302,
+  "metadata": {
+   "agent_name": "Jennifer"
+  },
+  "responses": [
+   {
+    "submit_time_ms": 1590858426252
+   }
+  ],
+  "speaker_id": 56,
+  "survey_response": {
+   "submit_time_ms": 1590858445815,
+   "data": {
+    "ease_of_connection": "10",
+    "partner_rating": "9"
+   }
+  }
+ },
+ "caller": {
+  "arrival_time_ms": 1590858303300,
+  "hangup_time_ms": 1590858444128,
+  "metadata": {
+   "first and last name": "Robert Johnson"
+  },
+  "responses": [
+   {
+    "submit_time_ms": 1590858432248
+   }
+  ],
+  "speaker_id": 10,
+  "survey_response": {
+   "submit_time_ms": 1590858458405,
+   "data": {
+    "additional_comments": "i can't tell if i'm supposed to keep going without waiting for responses or what",
+    "ease_of_connection": "10",
+    "partner_rating": "10"
+   }
+  }
+ },
+ "end_time_ms": 1590858441158,
+ "sid": "d89ea95f9592404c",
+ "start_time_ms": 1590858331197,
+ "labels": {
+  "lhvb_script": 5.0,
+  "caller_mos": 3.0,
+  "agent_mos": 4.0
+ },
+ "session": "Little Harper Valley 2"
+}

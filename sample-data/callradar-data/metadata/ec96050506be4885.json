@@ -1,0 +1,56 @@
+{
+ "agent": {
+  "arrival_time_ms": 1590864519852,
+  "hangup_time_ms": 1590864607624,
+  "metadata": {
+   "agent_name": "James"
+  },
+  "responses": [
+   {
+    "submit_time_ms": 1590864583693
+   },
+   {
+    "submit_time_ms": 1590864584438
+   },
+   {
+    "submit_time_ms": 1590864586041
+   },
+   {
+    "submit_time_ms": 1590864587885
+   }
+  ],
+  "speaker_id": 44,
+  "survey_response": {
+   "submit_time_ms": 1590864610344,
+   "data": {
+    "additional_comments": "Submit tasks button didnt work"
+   }
+  }
+ },
+ "caller": {
+  "arrival_time_ms": 1590864514150,
+  "hangup_time_ms": 1590864605109,
+  "metadata": {
+   "first and last name": "Michael Garcia"
+  },
+  "responses": [
+   {
+    "submit_time_ms": 1590864591646
+   }
+  ],
+  "speaker_id": 6,
+  "survey_response": {
+   "submit_time_ms": 1590864602642,
+   "data": {}
+  }
+ },
+ "end_time_ms": 1590864604969,
+ "sid": "ec96050506be4885",
+ "start_time_ms": 1590864525824,
+ "labels": {
+  "lhvb_script": 5.0,
+  "caller_mos": 4.0,
+  "agent_mos": 3.0
+ },
+ "session": "Little Harper Valley 2"
+}

@@ -1,0 +1,51 @@
+{
+ "agent": {
+  "arrival_time_ms": 1590864394903,
+  "hangup_time_ms": 1590864497705,
+  "metadata": {
+   "agent_name": "John"
+  },
+  "responses": [
+   {
+    "submit_time_ms": 1590864468913
+   },
+   {
+    "submit_time_ms": 1590864471932
+   }
+  ],
+  "speaker_id": 57,
+  "survey_response": {
+   "submit_time_ms": 1590864502431,
+   "data": {
+    "ease_of_connection": "10",
+    "partner_rating": "10"
+   }
+  }
+ },
+ "caller": {
+  "arrival_time_ms": 1590864390703,
+  "hangup_time_ms": 1590864495258,
+  "metadata": {
+   "first and last name": "Michael Brown"
+  },
+  "responses": [
+   {
+    "submit_time_ms": 1590864479911
+   }
+  ],
+  "speaker_id": 6,
+  "survey_response": {
+   "submit_time_ms": 1590864492281,
+   "data": {}
+  }
+ },
+ "end_time_ms": 1590864495122,
+ "sid": "f97b4e058aa04216",
+ "start_time_ms": 1590864400753,
+ "labels": {
+  "lhvb_script": 5.0,
+  "caller_mos": 4.0,
+  "agent_mos": 3.0
+ },
+ "session": "Little Harper Valley 2"
+}
