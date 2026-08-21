@@ -15,7 +15,9 @@ class ClaimValidationError(ValueError):
     pass
 
 
-def validate_claims(claims: list[EvidenceClaim], turns: list[TranscriptTurn]) -> list[EvidenceClaim]:
+def validate_claims(
+    claims: list[EvidenceClaim], turns: list[TranscriptTurn]
+) -> list[EvidenceClaim]:
     turns_by_id = {turn.transcript_turn_id: turn for turn in turns}
     validated = []
     for claim in claims:

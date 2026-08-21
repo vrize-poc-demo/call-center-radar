@@ -64,7 +64,13 @@ def local_demo_model(turns: list[TranscriptTurn]) -> str:
         if has_problem
         else "Monitor the call outcome in normal workflow.",
         "claims": [
-            {"claim": "Customer support concern", "transcript_turn_id": turn.transcript_turn_id, "quote": turn.text, "start_ms": turn.start_ms, "end_ms": turn.end_ms}
+            {
+                "claim": "Customer support concern",
+                "transcript_turn_id": turn.transcript_turn_id,
+                "quote": turn.text,
+                "start_ms": turn.start_ms,
+                "end_ms": turn.end_ms,
+            }
             for turn in turns[:1]
         ],
         "model_version": MODEL_VERSION,
