@@ -83,3 +83,18 @@ Describe expected error states, user feedback, retry or fallback behavior, and h
 - Pull request: TBD
 - Commit(s): TBD
 - Review result: TBD
+
+### Change Log
+
+Update this table before every commit. Explain both the change and its reason; do not use generic entries such as "updates" or "fixes".
+
+| Commit | What changed | Why |
+| --- | --- | --- |
+| Pending | TBD | TBD |
+
+### PR Readiness and Review
+
+- Mergeability verification: `Pending - npm run pr:verify -- <pr-number>`
+- Code quality grade: `Pending - A to F`
+- Testing quality grade: `Pending - A to F`
+- Review findings and follow-up: TBD

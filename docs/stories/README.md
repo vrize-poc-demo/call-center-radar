@@ -15,6 +15,9 @@ Use `story-x.y-short-name.md`, for example `story-2.2-audio-transcript-sync.md`.
 - [ ] Automated tests, manual checks, results, and known gaps are recorded.
 - [ ] Acceptance criteria are checked against the story issue.
 - [ ] The demo path, PR, and next-story boundaries are recorded.
+- [ ] The change log explains what changed and why for every commit on the story branch.
+- [ ] The PR contains separate A-F grades for code quality and testing quality.
+- [ ] The PR targets `development` and passes `npm run pr:verify -- <pr-number>` before the story moves to `In Review`.
 
 Copy [`_template.md`](_template.md) at the start of every new story. Do not delete sections that do not apply; mark them `Not applicable` and state why.
 

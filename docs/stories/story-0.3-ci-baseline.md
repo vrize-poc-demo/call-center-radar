@@ -56,6 +56,7 @@ flowchart LR
 | API tests | `apps/api/pyproject.toml` | Supplies `pytest-cov` and pre-commit as development tools. |
 | Local hooks | `.pre-commit-config.yaml` | Runs lint, formatting, and fast tests before a commit. |
 | Documentation | `docs/Developer_Notes.md`, `docs/stories` | Explains project rules and per-story delivery records. |
+| Governance | `AGENTS.md`, `docs/Engineering_Governance.md`, PR template | Enforces the feature-branch, documentation, verification, and human-merge workflow. |
 
 ### Contracts and Data
 
@@ -113,3 +114,18 @@ The bootstrap web UI currently has one smoke test, so its coverage measurement i
 - Pull request: [#45](https://github.com/vrize-poc-demo/call-center-radar/pull/45)
 - Commit(s): `1469dc8`
 - Review result: Draft PR open; GitHub Actions quality gate passed
+
+### Change Log
+
+| Commit | What changed | Why |
+| --- | --- | --- |
+| `1469dc8` | Added GitHub Actions, coverage reporting, and local pre-commit checks. | Establish a repeatable CI baseline before product stories start. |
+| `4ce3215` | Added separate documentation records and the required story template. | Make each story independently auditable and easy to hand over. |
+| Pending | Added repository governance, PR template, and readiness verifier. | Make the agreed Git flow, human merge boundary, and pre-review checks repeatable for all contributors. |
+
+### PR Readiness and Review
+
+- Mergeability verification: Passed before the governance update; rerun after this commit is pushed.
+- Code quality grade: A. Focused implementation, clear authority boundary, explicit workflow, and no manager-facing regression.
+- Testing quality grade: B. The verifier was exercised against a live clean PR and the full quality gate passed; automated negative-case fixtures for GitHub CLI responses remain a follow-up.
+- Review findings and follow-up: No blocking finding. Add fixture-driven tests for wrong base branch, missing checks, and conflict states if the verifier grows beyond this POC.
