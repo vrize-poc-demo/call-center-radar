@@ -1,30 +1,31 @@
-# Developer Notes
+# Developer Documentation
 
-## Story 0.1 Bootstrap
+This is the project-level guide for engineering work on the Call Center Radar POC. It deliberately does not hold individual implementation histories. Every implemented story has its own complete record in [`docs/stories`](stories/README.md), kept with the code and reviewed in the same pull request.
 
-This repository is a small monorepo for a fast, evidence-first POC. It keeps the web application and API separate while allowing each story to deliver a complete vertical slice.
+## Documentation Rule
 
-```mermaid
-flowchart LR
-  M[Manager browser] --> W[apps/web\nReact + Vite]
-  W --> A[apps/api\nFastAPI]
-  A --> D[(SQLite in Story 0.2)]
-  A --> P[Processing and analysis\nstories 1 onward]
-```
+One GitHub story must have one file at `docs/stories/story-x.y-short-name.md`.
 
-### Repository layout
+Create the story file when implementation starts, update it as the design changes, and complete every section before the pull request moves to review. Start from [`_template.md`](stories/_template.md). The story document is part of the definition of done, alongside code, tests, logs, and the PR description.
 
-```text
-apps/
-  web/                 React manager UI
-  api/                 FastAPI application
-    src/app/           API modules by feature
-docs/                  architecture, delivery, and developer guidance
-sample-data/           demo assets; never mutate original samples
-reference/             requirement and objective PDFs
-```
+The record must state:
 
-### Local setup
+- The manager or operational outcome and intentionally excluded scope.
+- The implementation flow and component boundaries, with a simple diagram when it clarifies the design.
+- Changed UI, API, database, configuration, and files.
+- Logging, redaction, failure behavior, and recovery behavior.
+- Automated tests, manual verification, known gaps, and acceptance result.
+- A short demo path and the next story boundaries.
+
+## Implemented Stories
+
+| Story | Record | Status |
+| --- | --- | --- |
+| 0.1 | [Monorepo and app bootstrap](stories/story-0.1-monorepo-and-app-bootstrap.md) | Merged |
+| 0.2 | [Core developer workflow](stories/story-0.2-core-developer-workflow.md) | Merged |
+| 0.3 | [CI baseline](stories/story-0.3-ci-baseline.md) | In review |
+
+## Common Setup
 
 Prerequisites: Node 20.15+ with npm 10.7+, and Python 3.12+.
 
@@ -38,65 +39,7 @@ npm run dev
 
 The manager UI runs at `http://localhost:5173`. The API runs at `http://localhost:8000/api`.
 
-Use the full quality gate before opening a PR:
-
-```bash
-npm run lint
-npm run format:check
-npm run test
-npm run build
-```
-
-### Architectural rules
-
-- Keep stories vertical: UI, API, persistence, logs, and tests belong together when they are needed for a user-visible outcome.
-- Keep product logic in feature modules, not in route handlers or React page components.
-- Treat saved transcript turns as immutable evidence. AI output may reference a `transcript_turn_id`; it may not invent a timestamp or quote.
-- SQLite is the only POC database. Add migrations and database bootstrap in Story 0.2.
-- Do not call paid AI services from default development or demo flows. Model providers must stay behind an interface so local and paid options can be compared later.
-- Do not log raw audio, customer PII, access tokens, or full transcripts unless an explicit later story defines a redaction policy.
-
-### Story ownership and handoff
-
-Start every story from updated `development` using a focused `feature/story-x.y-description` branch. Keep commits scoped to the issue and open a PR into `development`.
-
-When implementing a story, add a short developer note to its PR containing:
-
-- what user-visible behavior changed
-- API contract and stored data changes
-- logs introduced and redaction considerations
-- tests run and gaps
-- how to demonstrate it with a sample or a newly uploaded audio file
-
-## Story 0.2: Core developer workflow
-
-Story 0.2 makes the local POC state repeatable. It adds a SQLite database, versioned migrations, a metadata-only seed path, JSON-safe lifecycle logs, and a health endpoint.
-
-```bash
-# Create or upgrade the local database.
-npm run db:migrate
-
-# Seed five bundled sample metadata records. Audio is never copied or read.
-npm run db:seed
-
-# Verify the live API after npm run dev.
-curl http://127.0.0.1:8000/api/health
-```
-
-Configuration is local and optional. Copy `.env.example` to `.env`, then set `CALL_RADAR_DATABASE_PATH` only when you need a different SQLite file. Do not commit `.env` or generated files under `data/`.
-
-Operational logs are JSON lines written to standard output. They report lifecycle, migration, and seed events only; raw audio, full transcripts, customer names, and tokens must not be logged.
-
-### Next boundaries
-
-- Story 0.3 owns coverage thresholds, CI workflow, and pre-commit automation.
-- Story 1.1 owns the first manager upload workflow and may extend `apps/web/src` and `apps/api/src/app` together.
-
-## Story 0.3: CI baseline
-
-Every pull request into `development` and every change merged there runs the same quality gates in GitHub Actions: linting, formatting, tests with coverage, and a production web build. The workflow deliberately keeps its step names explicit so a failure can be diagnosed from the Actions page without needing to reproduce it first.
-
-Run the full CI-equivalent check locally:
+Run the pull-request quality gate before requesting review:
 
 ```bash
 npm run lint
@@ -105,16 +48,20 @@ npm run test:coverage
 npm run build
 ```
 
-Coverage reports are generated under `apps/web/coverage/` and `coverage/api-coverage.xml`; both are local artifacts and remain untracked. Coverage reporting establishes a visible baseline for the POC. Story 10.2 owns the project-wide coverage target and enforcement policy.
-
-Install the optional local pre-commit gate after completing the normal local setup:
+Optionally install local commit checks after setup:
 
 ```bash
 npm run precommit:install
 ```
 
-It runs linting, formatting, and the fast test suite before each commit. It does not replace CI: GitHub Actions remains the required source of truth for pull requests. To run the same hooks on demand, use:
+## Engineering Rules
 
-```bash
-./.venv/bin/pre-commit run --all-files
-```
+- Keep stories vertical: UI, API, persistence, logging, and tests travel together whenever a user-visible outcome needs them.
+- Keep product logic in feature modules, not in route handlers or React page components.
+- Treat saved transcript turns as immutable evidence. AI output may reference a `transcript_turn_id`; it may not invent a timestamp or quote.
+- SQLite is the only POC database. Schema changes require a versioned migration and a documented rollback or recovery note.
+- Do not call paid AI services from default development or demo flows. Provider integrations must remain behind an interface.
+- Do not log raw audio, customer PII, access tokens, or full transcripts unless an explicit later story defines redaction and retention.
+- Start from updated `development`, use a focused `feature/story-x.y-description` branch, and merge through a PR into `development`.
+
+Project scope, architecture, and delivery order remain in [`Implementation_Backlog_Plan.md`](Implementation_Backlog_Plan.md) and the [wiki documents](wiki/Home.md).
