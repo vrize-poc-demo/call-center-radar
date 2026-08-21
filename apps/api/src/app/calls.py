@@ -4,6 +4,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, status
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from app.config import Settings
@@ -14,6 +15,7 @@ router = APIRouter(prefix="/api/calls", tags=["calls"])
 
 SUPPORTED_AUDIO_EXTENSIONS = {".mp3", ".wav"}
 SUPPORTED_METADATA_EXTENSIONS = {".json"}
+MEDIA_TYPES = {".mp3": "audio/mpeg", ".wav": "audio/wav"}
 
 
 class CallRegistration(BaseModel):
@@ -27,6 +29,17 @@ class ProcessingStatus(BaseModel):
     status: str
     audio_channels: int | None
     failure_reason: str | None
+
+
+class CallDetail(BaseModel):
+    call_id: str
+    agent_name: str
+    customer_name: str
+    created_at: str
+    processing_status: str
+    audio_channels: int | None
+    failure_reason: str | None
+    transcript_turn_count: int
 
 
 @dataclass(frozen=True)
@@ -176,6 +189,24 @@ def normalize_participant_names(
     return normalized_agent_name, normalized_customer_name
 
 
+def load_call_detail(database, call_id: str):
+    with database.connect() as connection:
+        return connection.execute(
+            """
+            SELECT calls.call_id, calls.audio_path, calls.agent_name, calls.customer_name,
+                   calls.created_at, processing_jobs.status AS processing_status,
+                   processing_jobs.audio_channels, processing_jobs.failure_reason,
+                   COUNT(transcript_turns.id) AS transcript_turn_count
+            FROM calls
+            JOIN processing_jobs ON processing_jobs.call_id = calls.id
+            LEFT JOIN transcript_turns ON transcript_turns.call_id = calls.id
+            WHERE calls.call_id = ?
+            GROUP BY calls.id, processing_jobs.id
+            """,
+            (call_id,),
+        ).fetchone()
+
+
 @router.post("", response_model=CallRegistration, status_code=status.HTTP_201_CREATED)
 async def register_call(
     request: Request,
@@ -222,6 +253,45 @@ async def register_call(
         job_id=uploaded_call.job_id,
         status="queued",
     )
+
+
+@router.get("/{call_id}", response_model=CallDetail)
+def get_call_detail(call_id: str, request: Request) -> CallDetail:
+    row = load_call_detail(request.app.state.database, call_id)
+    if row is None:
+        log_event(
+            request.app.state.logger,
+            "call_detail_missing",
+            "Call detail requested for an unknown call",
+            context={"call_id": call_id},
+        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Call not found.")
+    log_event(
+        request.app.state.logger,
+        "call_detail_loaded",
+        "Call detail loaded",
+        context={"call_id": call_id},
+    )
+    return CallDetail(**dict(row))
+
+
+@router.get("/{call_id}/audio")
+def get_call_audio(call_id: str, request: Request) -> FileResponse:
+    row = load_call_detail(request.app.state.database, call_id)
+    if row is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Call not found.")
+    audio_path = Path(row["audio_path"])
+    if not audio_path.is_file():
+        log_event(
+            request.app.state.logger,
+            "call_audio_missing",
+            "Call detail audio asset is unavailable",
+            context={"call_id": call_id},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Call audio is not available."
+        )
+    return FileResponse(audio_path, media_type=MEDIA_TYPES.get(audio_path.suffix.lower()))
 
 
 @router.post("/{job_id}/process", response_model=ProcessingStatus)

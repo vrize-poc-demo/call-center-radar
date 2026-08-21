@@ -109,6 +109,86 @@ h1 {
   gap: 10px;
 }
 
+.processing-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.detail-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 24px 56px;
+}
+.detail-message {
+  max-width: 680px;
+}
+.back-link {
+  display: inline-block;
+  margin-bottom: 24px;
+}
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: start;
+  border-bottom: 1px solid #d7dde5;
+  padding-bottom: 24px;
+}
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+  gap: 16px;
+  margin-top: 24px;
+}
+.detail-panel {
+  border: 1px solid #d7dde5;
+  border-radius: 8px;
+  padding: 20px;
+  background: #fff;
+}
+.detail-panel h2 {
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+.audio-panel {
+  grid-column: 1 / -1;
+}
+.audio-panel audio {
+  width: 100%;
+}
+.transcript-panel {
+  min-height: 230px;
+}
+.empty-region {
+  color: #536273;
+  line-height: 1.5;
+}
+.status-badge {
+  display: inline-flex;
+  padding: 5px 10px;
+  border-radius: 999px;
+  text-transform: capitalize;
+  background: #e8edf3;
+  color: #263646;
+  white-space: nowrap;
+}
+.status-completed {
+  background: #d9f3e4;
+  color: #17643a;
+}
+.status-failed {
+  background: #fde2e2;
+  color: #9f1c1c;
+}
+@media (max-width: 720px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .detail-header {
+    flex-direction: column;
+  }
+}
+
 .processing-status button {
   justify-self: start;
   padding: 9px 14px;

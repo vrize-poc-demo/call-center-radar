@@ -163,13 +163,16 @@ export function CallUploadForm() {
                 : `Processing failed: ${processingResult.failure_reason}.`}
             </p>
           ) : (
-            <button
-              disabled={isSubmitting}
-              onClick={handleProcessing}
-              type="button"
-            >
-              Run processing skeleton
-            </button>
+            <div className="processing-actions">
+              <button
+                disabled={isSubmitting}
+                onClick={handleProcessing}
+                type="button"
+              >
+                Run processing skeleton
+              </button>
+              <a href={`?call=${result.call_id}`}>Open call detail</a>
+            </div>
           )}
         </div>
       ) : null}

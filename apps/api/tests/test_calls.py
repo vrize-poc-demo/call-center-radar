@@ -111,3 +111,31 @@ def test_register_call_rejects_files_over_the_configured_limit(tmp_path) -> None
     assert response.status_code == 413
     with app.state.database.connect() as connection:
         assert connection.execute("SELECT COUNT(*) FROM calls").fetchone()[0] == 0
+
+
+def test_call_detail_returns_processing_context_and_audio(tmp_path) -> None:
+    app = create_app(build_settings(tmp_path))
+    with TestClient(app) as client:
+        registered = client.post(
+            "/api/calls",
+            data={"agent_name": "Agent", "customer_name": "Customer"},
+            files={"audio": ("sample.wav", b"audio bytes", "audio/wav")},
+        ).json()
+        detail = client.get(f"/api/calls/{registered['call_id']}")
+        audio = client.get(f"/api/calls/{registered['call_id']}/audio")
+        missing = client.get("/api/calls/unknown-call")
+
+    assert detail.status_code == 200
+    assert detail.json() == {
+        "call_id": registered["call_id"],
+        "agent_name": "Agent",
+        "customer_name": "Customer",
+        "created_at": detail.json()["created_at"],
+        "processing_status": "queued",
+        "audio_channels": None,
+        "failure_reason": None,
+        "transcript_turn_count": 0,
+    }
+    assert audio.status_code == 200
+    assert audio.content == b"audio bytes"
+    assert missing.status_code == 404
