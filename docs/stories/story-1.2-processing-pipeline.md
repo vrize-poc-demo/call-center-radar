@@ -99,6 +99,7 @@ Invalid or unsupported audio transitions the job to `failed` and persists the re
 | --- | --- | --- |
 | Pending | Added the initial durable processing pipeline skeleton and migration. | Establish the Story 1.2 state-machine foundation before transcript or AI behavior. |
 | Pending | Added a visible processing action and result status to the upload UI. | Make the durable pipeline skeleton demonstrable without implementing AI behavior. |
+| Pending | Treat an empty optional metadata file input as manual-entry mode. | Allow valid manual call registration when the browser submits an empty file field. |
 
 ### PR Readiness and Review
 

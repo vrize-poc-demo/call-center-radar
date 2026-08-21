@@ -190,7 +190,7 @@ async def register_call(
 
     log_event(logger, "call_upload_received", "Call upload received")
     try:
-        if metadata is None:
+        if metadata is None or not metadata.filename:
             agent_name, customer_name = normalize_participant_names(agent_name, customer_name)
             metadata_payload = None
         else:
