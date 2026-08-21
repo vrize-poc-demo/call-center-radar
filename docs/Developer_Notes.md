@@ -68,8 +68,26 @@ When implementing a story, add a short developer note to its PR containing:
 - tests run and gaps
 - how to demonstrate it with a sample or a newly uploaded audio file
 
+## Story 0.2: Core developer workflow
+
+Story 0.2 makes the local POC state repeatable. It adds a SQLite database, versioned migrations, a metadata-only seed path, JSON-safe lifecycle logs, and a health endpoint.
+
+```bash
+# Create or upgrade the local database.
+npm run db:migrate
+
+# Seed five bundled sample metadata records. Audio is never copied or read.
+npm run db:seed
+
+# Verify the live API after npm run dev.
+curl http://127.0.0.1:8000/api/health
+```
+
+Configuration is local and optional. Copy `.env.example` to `.env`, then set `CALL_RADAR_DATABASE_PATH` only when you need a different SQLite file. Do not commit `.env` or generated files under `data/`.
+
+Operational logs are JSON lines written to standard output. They report lifecycle, migration, and seed events only; raw audio, full transcripts, customer names, and tokens must not be logged.
+
 ### Next boundaries
 
-- Story 0.2 owns SQLite setup, migrations, sample-data wiring, structured logging, and the health endpoint.
 - Story 0.3 owns coverage thresholds, CI workflow, and pre-commit automation.
 - Story 1.1 owns the first manager upload workflow and may extend `apps/web/src` and `apps/api/src/app` together.

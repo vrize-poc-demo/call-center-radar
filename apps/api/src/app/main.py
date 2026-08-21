@@ -1,13 +1,45 @@
-from fastapi import FastAPI
+from contextlib import asynccontextmanager
 
-app = FastAPI(
-    title="Call Center Radar API",
-    version="0.1.0",
-    description="Evidence-first call intelligence POC API.",
-)
+from fastapi import FastAPI, Request
+
+from app.config import Settings
+from app.database import Database
+from app.logging import configure_logging, log_event
+from app.migrator import migrate
 
 
-@app.get("/api")
-def api_root() -> dict[str, str]:
-    """Expose the bootstrap state until Story 0.2 adds operational endpoints."""
-    return {"service": "call-center-radar-api", "status": "bootstrap-ready"}
+def create_app(settings: Settings | None = None) -> FastAPI:
+    app_settings = settings or Settings.from_environment()
+    logger = configure_logging(app_settings.log_level)
+    database = Database(app_settings.database_path)
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        applied_migrations = migrate(database)
+        app.state.database = database
+        log_event(logger, "api_started", "Call Center Radar API started")
+        if applied_migrations:
+            log_event(logger, "database_migrated", "SQLite migrations applied at startup")
+        yield
+        log_event(logger, "api_stopped", "Call Center Radar API stopped")
+
+    app = FastAPI(
+        title="Call Center Radar API",
+        version="0.1.0",
+        description="Evidence-first call intelligence POC API.",
+        lifespan=lifespan,
+    )
+
+    @app.get("/api")
+    def api_root() -> dict[str, str]:
+        return {"service": "call-center-radar-api", "status": "ready"}
+
+    @app.get("/api/health")
+    def health(request: Request) -> dict[str, str]:
+        request.app.state.database.check_connection()
+        return {"status": "ok", "database": "reachable"}
+
+    return app
+
+
+app = create_app()
