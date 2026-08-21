@@ -163,6 +163,48 @@ h1 {
   color: #536273;
   line-height: 1.5;
 }
+.transcript-turns {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.transcript-turns button,
+.jump-button {
+  width: 100%;
+  padding: 10px;
+  text-align: left;
+  border: 1px solid #d7dde5;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+.transcript-turns button {
+  display: grid;
+  grid-template-columns: 84px 56px 1fr;
+  gap: 8px;
+}
+.transcript-turns span,
+.transcript-turns time {
+  color: #536273;
+  text-transform: capitalize;
+  font-size: 0.85rem;
+}
+.active-turn button {
+  background: #dff4f1;
+  border-color: #096b72;
+}
+.jump-button {
+  margin-top: 16px;
+  color: #096b72;
+  font-weight: 700;
+}
+.playback-position {
+  margin: 8px 0 0;
+  color: #536273;
+  font-variant-numeric: tabular-nums;
+}
 .status-badge {
   display: inline-flex;
   padding: 5px 10px;

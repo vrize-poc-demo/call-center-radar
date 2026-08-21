@@ -1,15 +1,31 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { CallDetail, getCallAudioUrl, getCallDetail } from "../../api/calls";
+import {
+  CallDetail,
+  getCallAudioUrl,
+  getCallDetail,
+  getTranscript,
+  TranscriptTurn,
+} from "../../api/calls";
+
+function formatPlaybackTime(milliseconds: number) {
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
 
 export function CallDetailPage({ callId }: { callId: string }) {
   const [detail, setDetail] = useState<CallDetail | null>(null);
+  const [turns, setTurns] = useState<TranscriptTurn[]>([]);
+  const [timeMs, setTimeMs] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const audio = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     let active = true;
     getCallDetail(callId)
-      .then((response) => active && setDetail(response))
+      .then((value) => active && setDetail(value))
       .catch(
         (reason: unknown) =>
           active &&
@@ -19,12 +35,25 @@ export function CallDetailPage({ callId }: { callId: string }) {
               : "The call detail could not be loaded.",
           ),
       );
+    getTranscript(callId)
+      .then((value) => active && setTurns(value))
+      .catch(() => active && setTurns([]));
     return () => {
       active = false;
     };
   }, [callId]);
 
-  if (error) {
+  const seekTo = (milliseconds: number) => {
+    if (!audio.current) return;
+    audio.current.currentTime = milliseconds / 1000;
+    setTimeMs(milliseconds);
+    const playback = audio.current.play();
+    if (playback) {
+      void playback.catch(() => console.warn("call_audio_playback_failed"));
+    }
+  };
+
+  if (error)
     return (
       <main className="detail-page detail-message">
         <a className="back-link" href="/">
@@ -34,8 +63,7 @@ export function CallDetailPage({ callId }: { callId: string }) {
         <p role="alert">{error}</p>
       </main>
     );
-  }
-  if (!detail) {
+  if (!detail)
     return (
       <main aria-busy="true" className="detail-page detail-message">
         <a className="back-link" href="/">
@@ -48,7 +76,6 @@ export function CallDetailPage({ callId }: { callId: string }) {
         </p>
       </main>
     );
-  }
 
   const status = detail.processing_status.replaceAll("_", " ");
   return (
@@ -71,11 +98,19 @@ export function CallDetailPage({ callId }: { callId: string }) {
           <h2>Call recording</h2>
           <audio
             controls
+            onError={() => console.warn("call_audio_load_failed")}
+            onTimeUpdate={(event) =>
+              setTimeMs(event.currentTarget.currentTime * 1000)
+            }
             preload="metadata"
+            ref={audio}
             src={getCallAudioUrl(detail.call_id)}
           >
             Your browser cannot play this call recording.
           </audio>
+          <p aria-live="polite" className="playback-position">
+            Playback position: {formatPlaybackTime(timeMs)}
+          </p>
         </section>
         <section className="detail-panel">
           <h2>Processing</h2>
@@ -93,10 +128,30 @@ export function CallDetailPage({ callId }: { callId: string }) {
         <section className="detail-panel transcript-panel">
           <h2>Transcript</h2>
           <p>{detail.transcript_turn_count} saved turns</p>
-          <div className="empty-region">
-            Transcript rendering, timestamps, and sync arrive in Stories 2.2 and
-            2.3.
-          </div>
+          {turns.length ? (
+            <ol className="transcript-turns">
+              {turns.map((turn) => (
+                <li
+                  className={
+                    timeMs >= turn.start_ms && timeMs < turn.end_ms
+                      ? "active-turn"
+                      : ""
+                  }
+                  key={turn.transcript_turn_id}
+                >
+                  <button onClick={() => seekTo(turn.start_ms)} type="button">
+                    <span>{turn.speaker}</span>
+                    <time>{(turn.start_ms / 1000).toFixed(1)}s</time>
+                    <strong>{turn.text}</strong>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <div className="empty-region">
+              No transcript turns are saved for this call yet.
+            </div>
+          )}
         </section>
         <aside className="detail-panel evidence-panel">
           <h2>Evidence</h2>
@@ -104,6 +159,13 @@ export function CallDetailPage({ callId }: { callId: string }) {
             Evidence-backed findings and score explanations will appear here in
             later stories.
           </div>
+          <button
+            className="jump-button"
+            onClick={() => seekTo(0)}
+            type="button"
+          >
+            Jump to call start
+          </button>
         </aside>
       </div>
     </main>

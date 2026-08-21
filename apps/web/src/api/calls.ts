@@ -24,6 +24,14 @@ export type CallDetail = {
   transcript_turn_count: number;
 };
 
+export type TranscriptTurn = {
+  transcript_turn_id: string;
+  speaker: "agent" | "customer";
+  start_ms: number;
+  end_ms: number;
+  text: string;
+};
+
 export async function registerCall(
   formData: FormData,
 ): Promise<CallRegistration> {
@@ -68,4 +76,10 @@ export async function getCallDetail(callId: string): Promise<CallDetail> {
 
 export function getCallAudioUrl(callId: string): string {
   return `${apiBaseUrl}/api/calls/${callId}/audio`;
+}
+
+export async function getTranscript(callId: string): Promise<TranscriptTurn[]> {
+  const response = await fetch(`${apiBaseUrl}/api/calls/${callId}/transcript`);
+  if (!response.ok) throw new Error("The transcript could not be loaded.");
+  return ((await response.json()) as { turns: TranscriptTurn[] }).turns;
 }
