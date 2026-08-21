@@ -1,0 +1,26 @@
+{
+  "name": "call-center-radar",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Evidence-first call intelligence POC",
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=@call-center-radar/web\" \"./.venv/bin/python -m uvicorn app.main:app --app-dir apps/api/src --reload --host 127.0.0.1 --port 8000\"",
+    "dev:web": "npm run dev --workspace=@call-center-radar/web",
+    "dev:api": "./.venv/bin/python -m uvicorn app.main:app --app-dir apps/api/src --reload --host 127.0.0.1 --port 8000",
+    "build": "npm run build --workspace=@call-center-radar/web",
+    "lint": "npm run lint --workspace=@call-center-radar/web && ./.venv/bin/ruff check apps/api",
+    "format:check": "npm run format:check --workspace=@call-center-radar/web && ./.venv/bin/ruff format --check apps/api",
+    "format": "npm run format --workspace=@call-center-radar/web && ./.venv/bin/ruff format apps/api",
+    "test": "npm run test --workspace=@call-center-radar/web && ./.venv/bin/python -m pytest apps/api"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=20.15.0",
+    "npm": ">=10.7.0"
+  }
+}

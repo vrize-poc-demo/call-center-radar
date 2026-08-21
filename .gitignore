@@ -1,2 +1,16 @@
 .DS_Store
 .codex/
+node_modules/
+dist/
+coverage/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.env
+.env.*
+!.env.example
+data/*.db
+data/*.sqlite
