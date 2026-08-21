@@ -13,6 +13,17 @@ export type ProcessingStatus = {
   failure_reason: string | null;
 };
 
+export type CallDetail = {
+  call_id: string;
+  agent_name: string;
+  customer_name: string;
+  created_at: string;
+  processing_status: string;
+  audio_channels: number | null;
+  failure_reason: string | null;
+  transcript_turn_count: number;
+};
+
 export async function registerCall(
   formData: FormData,
 ): Promise<CallRegistration> {
@@ -42,4 +53,19 @@ export async function processCall(jobId: string): Promise<ProcessingStatus> {
     throw new Error(body?.detail ?? "The call could not be processed.");
   }
   return (await response.json()) as ProcessingStatus;
+}
+
+export async function getCallDetail(callId: string): Promise<CallDetail> {
+  const response = await fetch(`${apiBaseUrl}/api/calls/${callId}`);
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as {
+      detail?: string;
+    } | null;
+    throw new Error(body?.detail ?? "The call detail could not be loaded.");
+  }
+  return (await response.json()) as CallDetail;
+}
+
+export function getCallAudioUrl(callId: string): string {
+  return `${apiBaseUrl}/api/calls/${callId}/audio`;
 }
