@@ -13,11 +13,11 @@
 
 ### User-Visible Goal
 
-A manager can upload a supported call recording, identify the agent and customer, and immediately see that the call was registered with a queued processing job.
+A manager can upload a supported call recording and its Call Radar metadata, then immediately see that the call was registered with a queued processing job.
 
 ### Scope
 
-- Included: MP3/WAV upload form, API validation, local generated-name audio storage, call and queued-job persistence, safe registration logs, immediate UI status, and focused tests.
+- Included: MP3/WAV and Call Radar JSON metadata upload form, API validation, local generated-name audio/metadata storage, call and queued-job persistence, safe registration logs, immediate UI status, and focused tests.
 - Excluded: audio inspection, transcription, speaker detection, job execution, retries, job-event history, transcript persistence, and AI analysis.
 
 ### Acceptance Criteria
@@ -32,7 +32,7 @@ A manager can upload a supported call recording, identify the agent and customer
 
 ```mermaid
 flowchart LR
-  U[Manager selects MP3 or WAV] --> F[React upload form]
+  U[Manager selects MP3/WAV and JSON] --> F[React upload form]
   F --> A[POST /api/calls]
   A --> V[Validate extension, size, and required fields]
   V --> S[Generated local audio path]
@@ -45,7 +45,7 @@ flowchart LR
 
 | Area | Files or module | Responsibility |
 | --- | --- | --- |
-| UI | `apps/web/src/features/calls/CallUploadForm.tsx` | Captures audio and participant names; displays queued or validation error state. |
+| UI | `apps/web/src/features/calls/CallUploadForm.tsx` | Captures audio and Call Radar JSON metadata; displays queued or validation error state. |
 | Web API client | `apps/web/src/api/calls.ts` | Sends multipart data and exposes a typed registration response. |
 | API | `apps/api/src/app/calls.py` | Validates and registers the upload without starting processing. |
 | Persistence | `migrations/002_upload_jobs.sql` | Adds the minimal linked `processing_jobs` record. |
@@ -54,7 +54,7 @@ flowchart LR
 
 ### Contracts and Data
 
-`POST /api/calls` accepts multipart fields `audio`, `agent_name`, and `customer_name`. It returns HTTP 201 with generated `call_id`, `job_id`, and `status: "queued"`. The service accepts `.mp3` and `.wav` files up to `CALL_RADAR_MAX_UPLOAD_BYTES`, and stores audio under a generated ID rather than an untrusted filename. `source_metadata_path` retains a non-null `upload://<call_id>` source marker; Story 1.2 owns processing lifecycle expansion.
+`POST /api/calls` accepts multipart fields `audio` and `metadata`. Metadata must be a `.json` Call Radar export containing `agent.metadata.agent_name` and `caller.metadata["first and last name"]`; those values populate the call record. It returns HTTP 201 with generated `call_id`, `job_id`, and `status: "queued"`. The service accepts `.mp3` and `.wav` files and a JSON metadata file up to `CALL_RADAR_MAX_UPLOAD_BYTES`, stores both under generated IDs, and records the local metadata path in `source_metadata_path`. Story 1.2 owns processing lifecycle expansion.
 
 ## 3. Operational Behavior
 
@@ -64,7 +64,7 @@ Events are `call_upload_received`, `call_upload_rejected`, and `call_registered`
 
 ### Failure and Recovery
 
-Unsupported, empty, or oversized files return a clear 4xx response and create no database records. If persistence fails after the file is written, the generated local file is removed before the error is propagated. An orphaned file after a process crash can be removed manually from the ignored upload directory. Story 1.2 owns retries and durable job events.
+Unsupported, empty, oversized, or malformed metadata files return a clear 4xx response and create no database records. If persistence fails after files are written, both generated local files are removed before the error is propagated. Orphaned files after a process crash can be removed manually from the ignored upload directory. Story 1.2 owns retries and durable job events.
 
 ## 4. Verification
 
@@ -83,7 +83,7 @@ Unsupported, empty, or oversized files return a clear 4xx response and create no
 ### Manual Verification and Demo Path
 
 1. Start the web and API services.
-2. Upload a short MP3 or WAV with agent/customer names.
+2. Upload a short MP3 or WAV and its paired JSON file from `sample-data/callradar-data/metadata`.
 3. Show the immediate `Queued` status.
 4. Inspect the SQLite call and processing-job records without exposing call content.
 
@@ -97,8 +97,8 @@ Unsupported, empty, or oversized files return a clear 4xx response and create no
 ## 5. Delivery Record
 
 - Branch: `feature/story-1.1-upload-register-call`
-- Pull request: Pending
-- Commit(s): Pending
+- Pull request: [#46](https://github.com/vrize-poc-demo/call-center-radar/pull/46)
+- Commit(s): `67f798e` plus pending metadata-upload update
 - Review result: Pending
 
 ### Change Log
@@ -107,7 +107,8 @@ Update this table before every commit. Explain both the change and its reason; d
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Added the Story 1.1 registration flow, migration, UI, validation, tests, and delivery record. | Deliver the smallest end-to-end upload-to-queued-job slice while preserving the Story 1.2 processing boundary. |
+| 67f798e | Added the Story 1.1 registration flow, migration, UI, validation, tests, and delivery record. | Deliver the smallest end-to-end upload-to-queued-job slice while preserving the Story 1.2 processing boundary. |
+| Pending | Replaced manual participant-name fields with Call Radar JSON metadata upload, extraction, storage, and validation. | The supplied dataset already provides authoritative agent and caller names, reducing manual entry errors. |
 
 ### PR Readiness and Review
 

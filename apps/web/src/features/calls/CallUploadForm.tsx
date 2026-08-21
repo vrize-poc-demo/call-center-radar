@@ -36,7 +36,7 @@ export function CallUploadForm() {
         <p className="eyebrow">New call</p>
         <h2 id="upload-title">Register a call for review</h2>
         <p className="supporting-copy">
-          Upload an MP3 or WAV recording and add the two participants.
+          Upload an MP3 or WAV recording with its Call Radar JSON metadata.
         </p>
       </div>
 
@@ -51,12 +51,16 @@ export function CallUploadForm() {
           />
         </label>
         <label>
-          Agent name
-          <input maxLength={120} name="agent_name" required type="text" />
-        </label>
-        <label>
-          Customer name
-          <input maxLength={120} name="customer_name" required type="text" />
+          Call metadata
+          <input
+            accept="application/json,.json"
+            name="metadata"
+            required
+            type="file"
+          />
+          <span className="field-hint">
+            The JSON supplies the agent and caller names automatically.
+          </span>
         </label>
         <button disabled={isSubmitting} type="submit">
           {isSubmitting ? "Registering…" : "Register call"}

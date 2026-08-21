@@ -1,8 +1,9 @@
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile, status
 from pydantic import BaseModel
 
 from app.config import Settings
@@ -11,6 +12,7 @@ from app.logging import log_event
 router = APIRouter(prefix="/api/calls", tags=["calls"])
 
 SUPPORTED_AUDIO_EXTENSIONS = {".mp3", ".wav"}
+SUPPORTED_METADATA_EXTENSIONS = {".json"}
 
 
 class CallRegistration(BaseModel):
@@ -33,7 +35,13 @@ class CallRegistrationService:
         self.settings = settings
         self.database = database
 
-    def register(self, audio: UploadFile, agent_name: str, customer_name: str) -> UploadedCall:
+    def register(
+        self,
+        audio: UploadFile,
+        metadata_payload: bytes,
+        agent_name: str,
+        customer_name: str,
+    ) -> UploadedCall:
         extension = Path(audio.filename or "").suffix.lower()
         if extension not in SUPPORTED_AUDIO_EXTENSIONS:
             raise HTTPException(
@@ -60,9 +68,11 @@ class CallRegistrationService:
             raise RuntimeError("Upload directory is not configured.")
         upload_dir.mkdir(parents=True, exist_ok=True)
         audio_path = upload_dir / f"{call_id}{extension}"
+        metadata_path = upload_dir / f"{call_id}.json"
 
         try:
             audio_path.write_bytes(payload)
+            metadata_path.write_bytes(metadata_payload)
             with self.database.connect() as connection:
                 cursor = connection.execute(
                     """
@@ -73,7 +83,7 @@ class CallRegistrationService:
                     (
                         call_id,
                         str(audio_path),
-                        f"upload://{call_id}",
+                        str(metadata_path),
                         agent_name,
                         customer_name,
                     ),
@@ -87,17 +97,62 @@ class CallRegistrationService:
                 )
         except Exception:
             audio_path.unlink(missing_ok=True)
+            metadata_path.unlink(missing_ok=True)
             raise
 
         return UploadedCall(call_id=call_id, job_id=job_id, audio_path=audio_path)
+
+
+def read_participant_names(metadata: UploadFile, max_upload_bytes: int) -> tuple[str, str, bytes]:
+    """Read the supported metadata file without retaining user-controlled names in logs."""
+
+    extension = Path(metadata.filename or "").suffix.lower()
+    if extension not in SUPPORTED_METADATA_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Only JSON metadata files are supported.",
+        )
+
+    payload = metadata.file.read(max_upload_bytes + 1)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Metadata is empty.",
+        )
+    if len(payload) > max_upload_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail="Metadata exceeds the configured upload limit.",
+        )
+
+    try:
+        document = json.loads(payload)
+        agent_name = document["agent"]["metadata"]["agent_name"].strip()
+        customer_name = document["caller"]["metadata"]["first and last name"].strip()
+    except (AttributeError, KeyError, TypeError, UnicodeDecodeError, json.JSONDecodeError):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Metadata must be valid JSON with agent and caller names.",
+        ) from None
+
+    if not agent_name or not customer_name:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Metadata must include non-empty agent and caller names.",
+        )
+    if len(agent_name) > 120 or len(customer_name) > 120:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Metadata participant names must be at most 120 characters.",
+        )
+    return agent_name, customer_name, payload
 
 
 @router.post("", response_model=CallRegistration, status_code=status.HTTP_201_CREATED)
 async def register_call(
     request: Request,
     audio: UploadFile = File(...),
-    agent_name: str = Form(..., min_length=1, max_length=120),
-    customer_name: str = Form(..., min_length=1, max_length=120),
+    metadata: UploadFile = File(...),
 ) -> CallRegistration:
     settings: Settings = request.app.state.settings
     logger = request.app.state.logger
@@ -105,14 +160,10 @@ async def register_call(
 
     log_event(logger, "call_upload_received", "Call upload received")
     try:
-        normalized_agent_name = agent_name.strip()
-        normalized_customer_name = customer_name.strip()
-        if not normalized_agent_name or not normalized_customer_name:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail="Agent and customer names are required.",
-            )
-        uploaded_call = service.register(audio, normalized_agent_name, normalized_customer_name)
+        agent_name, customer_name, metadata_payload = read_participant_names(
+            metadata, settings.max_upload_bytes
+        )
+        uploaded_call = service.register(audio, metadata_payload, agent_name, customer_name)
     except HTTPException as error:
         log_event(
             logger,
@@ -123,6 +174,7 @@ async def register_call(
         raise
     finally:
         await audio.close()
+        await metadata.close()
 
     log_event(
         logger,
