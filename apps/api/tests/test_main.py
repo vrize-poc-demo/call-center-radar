@@ -1,13 +1,23 @@
 from fastapi.testclient import TestClient
 
-from app.main import app
+from app.config import Settings
+from app.main import create_app
 
 
-def test_api_root_reports_bootstrap_state() -> None:
-    response = TestClient(app).get("/api")
+def test_api_root_and_health_report_ready_state(tmp_path) -> None:
+    app = create_app(
+        Settings(
+            database_path=tmp_path / "call_radar.db",
+            sample_data_dir=tmp_path / "samples",
+        )
+    )
 
-    assert response.status_code == 200
-    assert response.json() == {
-        "service": "call-center-radar-api",
-        "status": "bootstrap-ready",
-    }
+    with TestClient(app) as client:
+        assert client.get("/api").json() == {
+            "service": "call-center-radar-api",
+            "status": "ready",
+        }
+        assert client.get("/api/health").json() == {
+            "status": "ok",
+            "database": "reachable",
+        }

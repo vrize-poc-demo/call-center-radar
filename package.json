@@ -10,11 +10,13 @@
     "dev": "concurrently \"npm run dev --workspace=@call-center-radar/web\" \"./.venv/bin/python -m uvicorn app.main:app --app-dir apps/api/src --reload --host 127.0.0.1 --port 8000\"",
     "dev:web": "npm run dev --workspace=@call-center-radar/web",
     "dev:api": "./.venv/bin/python -m uvicorn app.main:app --app-dir apps/api/src --reload --host 127.0.0.1 --port 8000",
+    "db:migrate": "PYTHONPATH=apps/api/src ./.venv/bin/python -m app.cli migrate",
+    "db:seed": "PYTHONPATH=apps/api/src ./.venv/bin/python -m app.cli seed --limit 5",
     "build": "npm run build --workspace=@call-center-radar/web",
     "lint": "npm run lint --workspace=@call-center-radar/web && ./.venv/bin/ruff check apps/api",
     "format:check": "npm run format:check --workspace=@call-center-radar/web && ./.venv/bin/ruff format --check apps/api",
     "format": "npm run format --workspace=@call-center-radar/web && ./.venv/bin/ruff format apps/api",
-    "test": "npm run test --workspace=@call-center-radar/web && ./.venv/bin/python -m pytest apps/api"
+    "test": "npm run test --workspace=@call-center-radar/web && PYTHONPATH=apps/api/src ./.venv/bin/python -m pytest apps/api"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
