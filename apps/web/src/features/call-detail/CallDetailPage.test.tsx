@@ -105,6 +105,104 @@ describe("CallDetailPage", () => {
     expect(screen.getByText("Playback position: 1:05")).toBeTruthy();
   });
 
+  it("searches, filters, and keeps the active turn visible", async () => {
+    mockedGetCallDetail.mockResolvedValue({
+      call_id: "call-1",
+      agent_name: "Agent",
+      customer_name: "Customer",
+      created_at: "2026-08-22",
+      processing_status: "completed",
+      audio_channels: 1,
+      failure_reason: null,
+      transcript_turn_count: 3,
+    });
+    mockedGetTranscript.mockResolvedValue([
+      {
+        transcript_turn_id: "turn-1",
+        speaker: "agent",
+        start_ms: 0,
+        end_ms: 1000,
+        text: "Welcome to support",
+      },
+      {
+        transcript_turn_id: "turn-2",
+        speaker: "customer",
+        start_ms: 1000,
+        end_ms: 2000,
+        text: "I need a password reset",
+      },
+      {
+        transcript_turn_id: "turn-3",
+        speaker: "agent",
+        start_ms: 2000,
+        end_ms: 3000,
+        text: "I can help with that",
+      },
+    ]);
+    const scrollIntoView = vi.fn();
+    const originalScrollIntoView = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "scrollIntoView",
+    );
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    });
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+    const searchLog = vi.spyOn(console, "info").mockImplementation(() => {});
+    const { container } = render(<CallDetailPage callId="call-1" />);
+    const page = within(container);
+
+    await page.findByText("Welcome to support");
+    expect(page.getAllByText("agent")).toHaveLength(2);
+    expect(page.getByText("0.0s")).toBeTruthy();
+    const audio = container.querySelector("audio") as HTMLAudioElement;
+    let playerTime = 4;
+    Object.defineProperty(audio, "currentTime", {
+      configurable: true,
+      get: () => playerTime,
+      set: (value: number) => {
+        playerTime = value;
+      },
+    });
+    fireEvent.timeUpdate(audio);
+
+    fireEvent.change(
+      page.getByRole("searchbox", { name: "Search transcript" }),
+      {
+        target: { value: "password" },
+      },
+    );
+
+    expect(page.getByText("I need a password reset")).toBeTruthy();
+    expect(page.queryByText("Welcome to support")).toBeNull();
+    expect(searchLog).toHaveBeenCalledWith("transcript_search_updated", {
+      query_length: 8,
+      speaker_filter: "all",
+    });
+
+    fireEvent.click(page.getByText("I need a password reset"));
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
+    fireEvent.change(page.getByRole("combobox", { name: "Show speaker" }), {
+      target: { value: "agent" },
+    });
+
+    expect(page.getByText("I need a password reset")).toBeTruthy();
+    expect(
+      page.getByText("Showing the active turn alongside your filters."),
+    ).toBeTruthy();
+
+    if (originalScrollIntoView)
+      Object.defineProperty(
+        HTMLElement.prototype,
+        "scrollIntoView",
+        originalScrollIntoView,
+      );
+    else
+      delete (HTMLElement.prototype as { scrollIntoView?: unknown })
+        .scrollIntoView;
+  });
+
   it("highlights and seeks the active transcript turn", async () => {
     mockedGetCallDetail.mockResolvedValue({
       call_id: "call-1",

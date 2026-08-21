@@ -15,12 +15,17 @@ function formatPlaybackTime(milliseconds: number) {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
+type SpeakerFilter = "all" | TranscriptTurn["speaker"];
+
 export function CallDetailPage({ callId }: { callId: string }) {
   const [detail, setDetail] = useState<CallDetail | null>(null);
   const [turns, setTurns] = useState<TranscriptTurn[]>([]);
   const [timeMs, setTimeMs] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [speakerFilter, setSpeakerFilter] = useState<SpeakerFilter>("all");
   const audio = useRef<HTMLAudioElement>(null);
+  const turnElements = useRef(new Map<string, HTMLLIElement>());
 
   useEffect(() => {
     let active = true;
@@ -37,7 +42,10 @@ export function CallDetailPage({ callId }: { callId: string }) {
       );
     getTranscript(callId)
       .then((value) => active && setTurns(value))
-      .catch(() => active && setTurns([]));
+      .catch(() => {
+        console.warn("transcript_load_failed");
+        if (active) setTurns([]);
+      });
     return () => {
       active = false;
     };
@@ -51,6 +59,53 @@ export function CallDetailPage({ callId }: { callId: string }) {
     if (playback) {
       void playback.catch(() => console.warn("call_audio_playback_failed"));
     }
+  };
+
+  const activeTurn = turns.find(
+    (turn) => timeMs >= turn.start_ms && timeMs < turn.end_ms,
+  );
+
+  useEffect(() => {
+    if (!activeTurn) return;
+    const activeElement = turnElements.current.get(
+      activeTurn.transcript_turn_id,
+    );
+    if (!activeElement?.scrollIntoView) return;
+
+    try {
+      activeElement.scrollIntoView({ block: "nearest" });
+    } catch {
+      console.warn("transcript_active_turn_scroll_failed");
+    }
+  }, [activeTurn]);
+
+  const normalizedSearchTerm = searchTerm.trim().toLocaleLowerCase();
+  const visibleTurns = turns.filter((turn) => {
+    const matchesSpeaker =
+      speakerFilter === "all" || turn.speaker === speakerFilter;
+    const matchesSearch = turn.text
+      .toLocaleLowerCase()
+      .includes(normalizedSearchTerm);
+    return (
+      turn.transcript_turn_id === activeTurn?.transcript_turn_id ||
+      (matchesSpeaker && matchesSearch)
+    );
+  });
+
+  const updateSearchTerm = (value: string) => {
+    setSearchTerm(value);
+    console.info("transcript_search_updated", {
+      query_length: value.length,
+      speaker_filter: speakerFilter,
+    });
+  };
+
+  const updateSpeakerFilter = (value: SpeakerFilter) => {
+    setSpeakerFilter(value);
+    console.info("transcript_search_updated", {
+      query_length: searchTerm.length,
+      speaker_filter: value,
+    });
   };
 
   if (error)
@@ -129,24 +184,86 @@ export function CallDetailPage({ callId }: { callId: string }) {
           <h2>Transcript</h2>
           <p>{detail.transcript_turn_count} saved turns</p>
           {turns.length ? (
-            <ol className="transcript-turns">
-              {turns.map((turn) => (
-                <li
-                  className={
-                    timeMs >= turn.start_ms && timeMs < turn.end_ms
-                      ? "active-turn"
-                      : ""
-                  }
-                  key={turn.transcript_turn_id}
-                >
-                  <button onClick={() => seekTo(turn.start_ms)} type="button">
-                    <span>{turn.speaker}</span>
-                    <time>{(turn.start_ms / 1000).toFixed(1)}s</time>
-                    <strong>{turn.text}</strong>
-                  </button>
-                </li>
-              ))}
-            </ol>
+            <>
+              <div className="transcript-controls">
+                <label>
+                  Search transcript
+                  <input
+                    onChange={(event) => updateSearchTerm(event.target.value)}
+                    placeholder="Find a phrase"
+                    type="search"
+                    value={searchTerm}
+                  />
+                </label>
+                <label>
+                  Show speaker
+                  <select
+                    onChange={(event) =>
+                      updateSpeakerFilter(event.target.value as SpeakerFilter)
+                    }
+                    value={speakerFilter}
+                  >
+                    <option value="all">All speakers</option>
+                    <option value="agent">Agent</option>
+                    <option value="customer">Customer</option>
+                  </select>
+                </label>
+              </div>
+              <p aria-live="polite" className="transcript-result-count">
+                Showing {visibleTurns.length} of {turns.length} turns
+              </p>
+              {activeTurn &&
+              !(
+                (speakerFilter === "all" ||
+                  activeTurn.speaker === speakerFilter) &&
+                activeTurn.text
+                  .toLocaleLowerCase()
+                  .includes(normalizedSearchTerm)
+              ) ? (
+                <p className="active-turn-note">
+                  Showing the active turn alongside your filters.
+                </p>
+              ) : null}
+              {visibleTurns.length ? (
+                <ol className="transcript-turns">
+                  {visibleTurns.map((turn) => {
+                    const isActive =
+                      turn.transcript_turn_id ===
+                      activeTurn?.transcript_turn_id;
+                    return (
+                      <li
+                        className={isActive ? "active-turn" : ""}
+                        key={turn.transcript_turn_id}
+                        ref={(element) => {
+                          if (element)
+                            turnElements.current.set(
+                              turn.transcript_turn_id,
+                              element,
+                            );
+                          else
+                            turnElements.current.delete(
+                              turn.transcript_turn_id,
+                            );
+                        }}
+                      >
+                        <button
+                          onClick={() => seekTo(turn.start_ms)}
+                          type="button"
+                        >
+                          <span>{turn.speaker}</span>
+                          <time>{(turn.start_ms / 1000).toFixed(1)}s</time>
+                          <strong>{turn.text}</strong>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+              ) : (
+                <div className="empty-region">
+                  No saved transcript turns match these filters.
+                </div>
+              )}
+            </>
           ) : (
             <div className="empty-region">
               No transcript turns are saved for this call yet.
