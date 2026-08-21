@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.calls import router as calls_router
 from app.config import Settings
 from app.database import Database
+from app.evidence import router as evidence_router
 from app.logging import configure_logging, log_event
 from app.migrator import migrate
 from app.transcripts import router as transcripts_router
@@ -53,6 +54,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.include_router(calls_router)
     app.include_router(transcripts_router)
+    app.include_router(evidence_router)
 
     return app
 

@@ -32,6 +32,16 @@ export type TranscriptTurn = {
   text: string;
 };
 
+export type EvidenceCandidate = {
+  evidence_id: string;
+  rule_id: string;
+  label: string;
+  transcript_turn_id: string;
+  start_ms: number;
+  end_ms: number;
+  quote: string;
+};
+
 export async function registerCall(
   formData: FormData,
 ): Promise<CallRegistration> {
@@ -82,4 +92,13 @@ export async function getTranscript(callId: string): Promise<TranscriptTurn[]> {
   const response = await fetch(`${apiBaseUrl}/api/calls/${callId}/transcript`);
   if (!response.ok) throw new Error("The transcript could not be loaded.");
   return ((await response.json()) as { turns: TranscriptTurn[] }).turns;
+}
+
+export async function getEvidence(
+  callId: string,
+): Promise<EvidenceCandidate[]> {
+  const response = await fetch(`${apiBaseUrl}/api/calls/${callId}/evidence`);
+  if (!response.ok) throw new Error("Evidence could not be loaded.");
+  return ((await response.json()) as { candidates: EvidenceCandidate[] })
+    .candidates;
 }
