@@ -44,6 +44,7 @@ flowchart LR
 
 | Area | Files or module | Responsibility |
 | --- | --- | --- |
+| UI | `apps/web/src/features/calls/CallUploadForm.tsx` | Starts and displays the skeleton result. |
 | API | `app/calls.py` | Starts a processing job. |
 | Pipeline | `app/pipeline.py` | Validates WAV audio and performs durable transitions. |
 | Persistence | `003_processing_pipeline.sql` | Stores audio metadata and transition events. |
@@ -51,7 +52,7 @@ flowchart LR
 
 ### Contracts and Data
 
-`POST /api/calls/{job_id}/process` starts a queued job and returns its terminal skeleton result. `processing_job_events` records every transition. No transcript or raw audio content is persisted in events.
+`POST /api/calls/{job_id}/process` starts a queued job and returns its terminal skeleton result. The upload UI invokes this endpoint after registration and shows its safe result. `processing_job_events` records every transition. No transcript or raw audio content is persisted in events.
 
 ## 3. Operational Behavior
 
@@ -97,6 +98,7 @@ Invalid or unsupported audio transitions the job to `failed` and persists the re
 | Commit | What changed | Why |
 | --- | --- | --- |
 | Pending | Added the initial durable processing pipeline skeleton and migration. | Establish the Story 1.2 state-machine foundation before transcript or AI behavior. |
+| Pending | Added a visible processing action and result status to the upload UI. | Make the durable pipeline skeleton demonstrable without implementing AI behavior. |
 
 ### PR Readiness and Review
 
