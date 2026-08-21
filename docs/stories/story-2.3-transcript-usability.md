@@ -99,9 +99,9 @@ The isolated Story 2.3 UI is available locally at `http://127.0.0.1:5174/?call=e
 ## 5. Delivery Record
 
 - Branch: `feature/story-2.3-transcript-usability`
-- Pull request: Pending
-- Commit(s): This feature-branch commit
-- Review result: Pending
+- Pull request: [#51](https://github.com/vrize-poc-demo/call-center-radar/pull/51) (draft, targets `development`)
+- Commit(s): `2a0e1fd` - transcript usability controls and tests
+- Review result: Approved for human review; no blocking findings.
 
 ### Change Log
 
@@ -109,11 +109,12 @@ Update this table before every commit. Explain both the change and its reason; d
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| This commit | Added searchable and filterable transcript controls, active-turn visibility/scroll behavior, focused tests, and this delivery record. | Help managers find the relevant moment without widening the POC into broader search or changing evidence data. |
+| `2a0e1fd` | Added searchable and filterable transcript controls, active-turn visibility/scroll behavior, focused tests, and this delivery record. | Help managers find the relevant moment without widening the POC into broader search or changing evidence data. |
+| Pending | Recorded the verified pull request and self-review result. | Keep Story 2.3 delivery traceable through human review and merge. |
 
 ### PR Readiness and Review
 
-- Mergeability verification: Pending - `npm run pr:verify -- <pr-number>`
-- Code quality grade: Pending - A to F
-- Testing quality grade: Pending - A to F
-- Review findings and follow-up: Pending self-review after the pull request is created.
+- Mergeability verification: Passed - `npm run pr:verify -- 51` confirms a clean merge into `development` with passing CI.
+- Code quality grade: A - the feature is limited to a single persisted transcript, respects active playback context, and does not expose transcript search terms in logs.
+- Testing quality grade: A - focused tests cover labels, timestamps, local search, speaker filter, active-turn retention, scroll behavior, and safe search logging; the full repository quality gate passed.
+- Review findings and follow-up: No blocking findings. Semantic or cross-call search remains out of scope.
