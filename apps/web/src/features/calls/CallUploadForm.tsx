@@ -1,9 +1,16 @@
 import { ChangeEvent, FormEvent, useState } from "react";
 
-import { CallRegistration, registerCall } from "../../api/calls";
+import {
+  CallRegistration,
+  processCall,
+  ProcessingStatus,
+  registerCall,
+} from "../../api/calls";
 
 export function CallUploadForm() {
   const [result, setResult] = useState<CallRegistration | null>(null);
+  const [processingResult, setProcessingResult] =
+    useState<ProcessingStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [agentName, setAgentName] = useState("");
@@ -41,6 +48,7 @@ export function CallUploadForm() {
     const form = event.currentTarget;
     setError(null);
     setResult(null);
+    setProcessingResult(null);
     setIsSubmitting(true);
 
     try {
@@ -54,6 +62,23 @@ export function CallUploadForm() {
         submissionError instanceof Error
           ? submissionError.message
           : "The call could not be registered.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleProcessing() {
+    if (!result) return;
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      setProcessingResult(await processCall(result.job_id));
+    } catch (processingError) {
+      setError(
+        processingError instanceof Error
+          ? processingError.message
+          : "The call could not be processed.",
       );
     } finally {
       setIsSubmitting(false);
@@ -126,9 +151,27 @@ export function CallUploadForm() {
         </p>
       ) : null}
       {result ? (
-        <p className="form-success" role="status">
-          Call registered. Processing status: <strong>{result.status}</strong>.
-        </p>
+        <div className="processing-status" role="status">
+          <p className="form-success">
+            Call registered. Processing status:{" "}
+            <strong>{processingResult?.status ?? result.status}</strong>.
+          </p>
+          {processingResult ? (
+            <p className="field-hint">
+              {processingResult.status === "completed"
+                ? `Validated ${processingResult.audio_channels === 1 ? "mono" : "stereo"} audio.`
+                : `Processing failed: ${processingResult.failure_reason}.`}
+            </p>
+          ) : (
+            <button
+              disabled={isSubmitting}
+              onClick={handleProcessing}
+              type="button"
+            >
+              Run processing skeleton
+            </button>
+          )}
+        </div>
       ) : null}
     </section>
   );
