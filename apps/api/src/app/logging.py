@@ -12,6 +12,8 @@ class JsonFormatter(logging.Formatter):
         }
         if hasattr(record, "event"):
             payload["event"] = record.event
+        if hasattr(record, "context"):
+            payload["context"] = record.context
         return json.dumps(payload, sort_keys=True)
 
 
@@ -28,5 +30,7 @@ def configure_logging(level: str) -> logging.Logger:
     return logger
 
 
-def log_event(logger: logging.Logger, event: str, message: str) -> None:
-    logger.info(message, extra={"event": event})
+def log_event(
+    logger: logging.Logger, event: str, message: str, *, context: dict[str, Any] | None = None
+) -> None:
+    logger.info(message, extra={"event": event, "context": context or {}})
