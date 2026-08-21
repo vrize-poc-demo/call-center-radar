@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from app.logging import log_event
 from app.transcripts import TranscriptTurn
+from app.validation import ClaimValidationError, EvidenceClaim, validate_claims
 
 router = APIRouter(prefix="/api/calls", tags=["analysis"])
 
@@ -19,6 +20,7 @@ class CallAnalysis(BaseModel):
     summary: str = Field(min_length=1, max_length=600)
     manager_brief: str = Field(min_length=1, max_length=400)
     recommended_action: str = Field(min_length=1, max_length=300)
+    claims: list[EvidenceClaim]
     model_version: str
 
 
@@ -61,6 +63,10 @@ def local_demo_model(turns: list[TranscriptTurn]) -> str:
         "recommended_action": "Confirm ownership and follow up with the customer."
         if has_problem
         else "Monitor the call outcome in normal workflow.",
+        "claims": [
+            {"claim": "Customer support concern", "transcript_turn_id": turn.transcript_turn_id, "quote": turn.text, "start_ms": turn.start_ms, "end_ms": turn.end_ms}
+            for turn in turns[:1]
+        ],
         "model_version": MODEL_VERSION,
     }
     return json.dumps(payload)
@@ -81,12 +87,13 @@ def get_analysis(call_id: str, request: Request) -> AnalysisResponse:
     turns = [TranscriptTurn(**dict(row)) for row in rows]
     try:
         analysis = parse_model_output(local_demo_model(turns))
-    except (json.JSONDecodeError, ValidationError):
+        analysis.claims = validate_claims(analysis.claims, turns)
+    except (json.JSONDecodeError, ValidationError, ClaimValidationError) as error:
         log_event(
             request.app.state.logger,
             "analysis_schema_failed",
             "Structured analysis schema failed",
-            context={"call_id": call_id, "model_version": MODEL_VERSION},
+            context={"call_id": call_id, "model_version": MODEL_VERSION, "reason": str(error)},
         )
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY, detail="Analysis output was invalid."
