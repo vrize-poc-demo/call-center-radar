@@ -10,6 +10,7 @@ Only structured claims that exactly match a persisted transcript turn are return
 
 - Focused unit and integration suite: 7 passed.
 - Five-call integration test creates five independent calls, saves distinct customer transcripts, requests analysis, and verifies each returned claim has the saved turn ID, exact quote, and persisted timestamp range.
+- CI merge gate: the required `Quality gates` workflow runs web unit tests with coverage and API unit tests with coverage as separate steps before the build.
 
 ## Delivery Record
 
