@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from app.config import Settings
 from app.logging import log_event
+from app.pipeline import ProcessingPipeline, ProcessingResult
 
 router = APIRouter(prefix="/api/calls", tags=["calls"])
 
@@ -19,6 +20,13 @@ class CallRegistration(BaseModel):
     call_id: str
     job_id: str
     status: str
+
+
+class ProcessingStatus(BaseModel):
+    job_id: str
+    status: str
+    audio_channels: int | None
+    failure_reason: str | None
 
 
 @dataclass(frozen=True)
@@ -214,3 +222,11 @@ async def register_call(
         job_id=uploaded_call.job_id,
         status="queued",
     )
+
+
+@router.post("/{job_id}/process", response_model=ProcessingStatus)
+def process_call(job_id: str, request: Request) -> ProcessingStatus:
+    result: ProcessingResult = ProcessingPipeline(
+        request.app.state.database, request.app.state.logger
+    ).process(job_id)
+    return ProcessingStatus(**result.__dict__)
