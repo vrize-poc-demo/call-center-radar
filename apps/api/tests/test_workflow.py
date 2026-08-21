@@ -12,6 +12,7 @@ def test_migrations_are_versioned_and_idempotent(tmp_path) -> None:
         "001_initial.sql",
         "002_upload_jobs.sql",
         "003_processing_pipeline.sql",
+        "004_transcript_turns.sql",
     ]
     assert migrate(database) == []
 

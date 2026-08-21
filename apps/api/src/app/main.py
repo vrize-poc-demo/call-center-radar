@@ -8,6 +8,7 @@ from app.config import Settings
 from app.database import Database
 from app.logging import configure_logging, log_event
 from app.migrator import migrate
+from app.transcripts import router as transcripts_router
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -51,6 +52,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"status": "ok", "database": "reachable"}
 
     app.include_router(calls_router)
+    app.include_router(transcripts_router)
 
     return app
 
