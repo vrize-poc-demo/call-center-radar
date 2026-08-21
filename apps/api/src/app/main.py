@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.analysis import router as analysis_router
 from app.calls import router as calls_router
 from app.config import Settings
 from app.database import Database
@@ -55,6 +56,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(calls_router)
     app.include_router(transcripts_router)
     app.include_router(evidence_router)
+    app.include_router(analysis_router)
 
     return app
 
