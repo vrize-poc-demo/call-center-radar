@@ -54,7 +54,7 @@ flowchart LR
 
 ### Contracts and Data
 
-`POST /api/calls` accepts multipart fields `audio` and `metadata`. Metadata must be a `.json` Call Radar export containing `agent.metadata.agent_name` and `caller.metadata["first and last name"]`; those values populate the call record. It returns HTTP 201 with generated `call_id`, `job_id`, and `status: "queued"`. The service accepts `.mp3` and `.wav` files and a JSON metadata file up to `CALL_RADAR_MAX_UPLOAD_BYTES`, stores both under generated IDs, and records the local metadata path in `source_metadata_path`. Story 1.2 owns processing lifecycle expansion.
+`POST /api/calls` accepts `audio`, editable `agent_name`/`customer_name`, and optional `metadata`. A `.json` Call Radar export containing `agent.metadata.agent_name` and `caller.metadata["first and last name"]` fills the UI fields and becomes the submitted source when present. Without metadata, the entered names are required. It returns HTTP 201 with generated `call_id`, `job_id`, and `status: "queued"`. The service accepts `.mp3` and `.wav` files and an optional JSON metadata file up to `CALL_RADAR_MAX_UPLOAD_BYTES`, stores files under generated IDs, and records either the metadata path or a `manual://` source marker in `source_metadata_path`.
 
 ## 3. Operational Behavior
 
@@ -83,7 +83,7 @@ Unsupported, empty, oversized, or malformed metadata files return a clear 4xx re
 ### Manual Verification and Demo Path
 
 1. Start the web and API services.
-2. Upload a short MP3 or WAV and its paired JSON file from `sample-data/callradar-data/metadata`.
+2. Upload a short MP3 or WAV. Enter agent/customer names manually, or choose its paired JSON file from `sample-data/callradar-data/metadata` to fill those fields.
 3. Show the immediate `Queued` status.
 4. Inspect the SQLite call and processing-job records without exposing call content.
 
@@ -109,6 +109,7 @@ Update this table before every commit. Explain both the change and its reason; d
 | --- | --- | --- |
 | 67f798e | Added the Story 1.1 registration flow, migration, UI, validation, tests, and delivery record. | Deliver the smallest end-to-end upload-to-queued-job slice while preserving the Story 1.2 processing boundary. |
 | Pending | Replaced manual participant-name fields with Call Radar JSON metadata upload, extraction, storage, and validation. | The supplied dataset already provides authoritative agent and caller names, reducing manual entry errors. |
+| Pending | Added editable manual participant names, optional metadata upload with automatic UI population, and a safe form reset after submission. | Support both intake workflows and prevent the post-upload form-reset error. |
 
 ### PR Readiness and Review
 
