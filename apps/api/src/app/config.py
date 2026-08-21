@@ -10,6 +10,8 @@ class Settings:
     database_path: Path
     sample_data_dir: Path
     log_level: str = "INFO"
+    upload_dir: Path | None = None
+    max_upload_bytes: int = 25 * 1024 * 1024
 
     @classmethod
     def from_environment(cls) -> "Settings":
@@ -22,6 +24,8 @@ class Settings:
             database_path=_from_project_root(database_path),
             sample_data_dir=_from_project_root(sample_data_dir),
             log_level=os.getenv("CALL_RADAR_LOG_LEVEL", "INFO").upper(),
+            upload_dir=_from_project_root(Path(os.getenv("CALL_RADAR_UPLOAD_DIR", "data/uploads"))),
+            max_upload_bytes=int(os.getenv("CALL_RADAR_MAX_UPLOAD_BYTES", str(25 * 1024 * 1024))),
         )
 
 

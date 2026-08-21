@@ -28,3 +28,72 @@ h1 {
   margin: 0;
   font-size: 2.25rem;
 }
+
+.upload-card {
+  display: grid;
+  gap: 24px;
+  margin-top: 40px;
+  padding: 28px;
+  background: #fff;
+  border: 1px solid #d8e2e7;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgb(23 33 43 / 6%);
+}
+
+.upload-card h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.supporting-copy {
+  margin-bottom: 0;
+  color: #52616d;
+}
+
+.upload-form {
+  display: grid;
+  gap: 16px;
+}
+
+.upload-form label {
+  display: grid;
+  gap: 6px;
+  font-weight: 650;
+}
+
+.upload-form input {
+  width: 100%;
+  padding: 10px;
+  font: inherit;
+  border: 1px solid #aab7c2;
+  border-radius: 8px;
+}
+
+.upload-form button {
+  justify-self: start;
+  padding: 11px 16px;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  background: #096b72;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.upload-form button:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.form-error {
+  margin: 0;
+  color: #b42318;
+  font-weight: 650;
+}
+
+.form-success {
+  margin: 0;
+  color: #096b72;
+  font-weight: 650;
+}
