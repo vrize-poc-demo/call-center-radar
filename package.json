@@ -16,7 +16,9 @@
     "lint": "npm run lint --workspace=@call-center-radar/web && ./.venv/bin/ruff check apps/api",
     "format:check": "npm run format:check --workspace=@call-center-radar/web && ./.venv/bin/ruff format --check apps/api",
     "format": "npm run format --workspace=@call-center-radar/web && ./.venv/bin/ruff format apps/api",
-    "test": "npm run test --workspace=@call-center-radar/web && PYTHONPATH=apps/api/src ./.venv/bin/python -m pytest apps/api"
+    "test": "npm run test --workspace=@call-center-radar/web && PYTHONPATH=apps/api/src ./.venv/bin/python -m pytest apps/api",
+    "test:coverage": "npm run test:coverage --workspace=@call-center-radar/web && PYTHONPATH=apps/api/src ./.venv/bin/python -m pytest apps/api --cov=app --cov-report=term-missing --cov-report=xml:coverage/api-coverage.xml",
+    "precommit:install": "./.venv/bin/pre-commit install"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

@@ -91,3 +91,30 @@ Operational logs are JSON lines written to standard output. They report lifecycl
 
 - Story 0.3 owns coverage thresholds, CI workflow, and pre-commit automation.
 - Story 1.1 owns the first manager upload workflow and may extend `apps/web/src` and `apps/api/src/app` together.
+
+## Story 0.3: CI baseline
+
+Every pull request into `development` and every change merged there runs the same quality gates in GitHub Actions: linting, formatting, tests with coverage, and a production web build. The workflow deliberately keeps its step names explicit so a failure can be diagnosed from the Actions page without needing to reproduce it first.
+
+Run the full CI-equivalent check locally:
+
+```bash
+npm run lint
+npm run format:check
+npm run test:coverage
+npm run build
+```
+
+Coverage reports are generated under `apps/web/coverage/` and `coverage/api-coverage.xml`; both are local artifacts and remain untracked. Coverage reporting establishes a visible baseline for the POC. Story 10.2 owns the project-wide coverage target and enforcement policy.
+
+Install the optional local pre-commit gate after completing the normal local setup:
+
+```bash
+npm run precommit:install
+```
+
+It runs linting, formatting, and the fast test suite before each commit. It does not replace CI: GitHub Actions remains the required source of truth for pull requests. To run the same hooks on demand, use:
+
+```bash
+./.venv/bin/pre-commit run --all-files
+```
