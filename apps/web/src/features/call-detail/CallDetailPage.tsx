@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from "react";
 
 import {
   CallDetail,
+  EvidenceCandidate,
   getCallAudioUrl,
   getCallDetail,
+  getEvidence,
   getTranscript,
   TranscriptTurn,
 } from "../../api/calls";
@@ -20,6 +22,7 @@ type SpeakerFilter = "all" | TranscriptTurn["speaker"];
 export function CallDetailPage({ callId }: { callId: string }) {
   const [detail, setDetail] = useState<CallDetail | null>(null);
   const [turns, setTurns] = useState<TranscriptTurn[]>([]);
+  const [evidence, setEvidence] = useState<EvidenceCandidate[]>([]);
   const [timeMs, setTimeMs] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,6 +49,9 @@ export function CallDetailPage({ callId }: { callId: string }) {
         console.warn("transcript_load_failed");
         if (active) setTurns([]);
       });
+    getEvidence(callId)
+      .then((value) => active && setEvidence(value))
+      .catch(() => console.warn("evidence_load_failed"));
     return () => {
       active = false;
     };
@@ -272,10 +278,26 @@ export function CallDetailPage({ callId }: { callId: string }) {
         </section>
         <aside className="detail-panel evidence-panel">
           <h2>Evidence</h2>
-          <div className="empty-region">
-            Evidence-backed findings and score explanations will appear here in
-            later stories.
-          </div>
+          {evidence.length ? (
+            <ol className="evidence-candidates">
+              {evidence.map((candidate) => (
+                <li key={candidate.evidence_id}>
+                  <button
+                    onClick={() => seekTo(candidate.start_ms)}
+                    type="button"
+                  >
+                    <strong>{candidate.label}</strong>
+                    <time>{(candidate.start_ms / 1000).toFixed(1)}s</time>
+                    <span>{candidate.quote}</span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <div className="empty-region">
+              No deterministic evidence candidates were found.
+            </div>
+          )}
           <button
             className="jump-button"
             onClick={() => seekTo(0)}

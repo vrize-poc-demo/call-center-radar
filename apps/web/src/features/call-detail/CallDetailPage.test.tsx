@@ -5,19 +5,25 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getCallDetail, getTranscript } from "../../api/calls";
+import { getCallDetail, getEvidence, getTranscript } from "../../api/calls";
 import { CallDetailPage } from "./CallDetailPage";
 
 vi.mock("../../api/calls", () => ({
   getCallDetail: vi.fn(),
+  getEvidence: vi.fn(),
   getTranscript: vi.fn(),
   getCallAudioUrl: (callId: string) => `/api/calls/${callId}/audio`,
 }));
 
 const mockedGetCallDetail = vi.mocked(getCallDetail);
 const mockedGetTranscript = vi.mocked(getTranscript);
+const mockedGetEvidence = vi.mocked(getEvidence);
+
+beforeEach(() => {
+  mockedGetEvidence.mockResolvedValue([]);
+});
 
 afterEach(() => {
   vi.resetAllMocks();
@@ -103,6 +109,45 @@ describe("CallDetailPage", () => {
     fireEvent.timeUpdate(audio);
 
     expect(screen.getByText("Playback position: 1:05")).toBeTruthy();
+  });
+
+  it("shows deterministic evidence and jumps to its saved timestamp", async () => {
+    mockedGetCallDetail.mockResolvedValue({
+      call_id: "call-1",
+      agent_name: "Agent",
+      customer_name: "Customer",
+      created_at: "2026-08-22",
+      processing_status: "completed",
+      audio_channels: 1,
+      failure_reason: null,
+      transcript_turn_count: 1,
+    });
+    mockedGetTranscript.mockResolvedValue([]);
+    mockedGetEvidence.mockResolvedValue([
+      {
+        evidence_id: "evidence-1",
+        rule_id: "problem_phrase",
+        label: "Problem statement",
+        transcript_turn_id: "turn-1",
+        start_ms: 1500,
+        end_ms: 2000,
+        quote: "I need help with this error.",
+      },
+    ]);
+    const { container } = render(<CallDetailPage callId="call-1" />);
+    const currentTimeSetter = vi.spyOn(
+      HTMLMediaElement.prototype,
+      "currentTime",
+      "set",
+    );
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+
+    fireEvent.click(
+      await within(container).findByText("I need help with this error."),
+    );
+
+    expect(currentTimeSetter).toHaveBeenCalledWith(1.5);
+    expect(within(container).getByText("Problem statement")).toBeTruthy();
   });
 
   it("searches, filters, and keeps the active turn visible", async () => {

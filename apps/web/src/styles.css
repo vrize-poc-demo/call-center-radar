@@ -214,6 +214,30 @@ h1 {
   background: #fff;
   cursor: pointer;
 }
+.evidence-candidates {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.evidence-candidates button {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 10px;
+  text-align: left;
+  color: #17212b;
+  border: 1px solid #c7d7d7;
+  border-radius: 6px;
+  background: #f5fbfa;
+  cursor: pointer;
+}
+.evidence-candidates time,
+.evidence-candidates span {
+  color: #536273;
+  font-size: 0.85rem;
+}
 .transcript-turns button {
   display: grid;
   grid-template-columns: 84px 56px 1fr;
