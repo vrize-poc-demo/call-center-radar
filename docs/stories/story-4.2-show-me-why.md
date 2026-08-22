@@ -85,15 +85,16 @@ If priority or analysis cannot load, its panel displays an unavailable state whi
 ## 5. Delivery Record
 
 - Branch: `feature/story-4.2-show-me-why`
-- Pull request: Pending
-- Commit(s): Pending
+- Pull request: [#61](https://github.com/vrize-poc-demo/call-center-radar/pull/61) (draft, targets `development`)
+- Commit(s): `9a92133 feat: add score evidence explanation flow`
 - Review result: Pending
 
 ### Change Log
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Added score and claim explanation flows with transcript and audio traceability. | Let reviewers verify the evidence behind a score or claim. |
+| `9a92133` | Added score and claim explanation flows with transcript and audio traceability. | Let reviewers verify the evidence behind a score or claim. |
+| Pending | Recorded draft PR #61 and completed web verification results. | Give reviewers an accurate delivery record before human review. |
 
 ### PR Readiness and Review
 
