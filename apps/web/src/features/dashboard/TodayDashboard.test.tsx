@@ -66,6 +66,18 @@ describe("TodayDashboard", () => {
     expect(screen.getByText("Analyzed calls")).toBeTruthy();
   });
 
+  it("ranks every call by priority and keeps drill-down navigation", async () => {
+    mockedGetDashboardTriage.mockResolvedValue([
+      { call_id: "low", created_at: "now", radar_priority: 10, risk_level: "low", analysis: { intent: "Low", mood: "neutral", resolution: "resolved", manager_brief: "Low", recommended_action: "Monitor", model_version: "v1", analysis_version: 1, analyzed_at: "now" } },
+      { call_id: "high", created_at: "now", radar_priority: 90, risk_level: "high", analysis: { intent: "High", mood: "negative", resolution: "unresolved", manager_brief: "High", recommended_action: "Act", model_version: "v1", analysis_version: 1, analyzed_at: "now" } },
+    ]);
+    render(<TodayDashboard />);
+    const links = await screen.findAllByRole("link", { name: /High|Low/ });
+    expect(links.map((link) => link.getAttribute("href"))).toContain("/?call=high");
+    expect(screen.getByRole("heading", { name: "All analyzed calls" })).toBeTruthy();
+    expect(screen.getAllByText("High")[0]).toBeTruthy();
+  });
+
   it("shows a useful failure state", async () => {
     mockedGetDashboardTriage.mockRejectedValue(
       new Error("Dashboard unavailable."),
