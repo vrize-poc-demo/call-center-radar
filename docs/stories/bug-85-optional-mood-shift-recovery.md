@@ -2,7 +2,7 @@
 
 **GitHub issue:** [#85](https://github.com/vrize-poc-demo/call-center-radar/issues/85)
 
-**Status:** In Progress
+**Status:** In Review
 
 **Owner:** Vipin
 
@@ -63,8 +63,10 @@ shifts. No transcript text is added to logs.
 ## 4. Delivery Record
 
 - Branch: `fix/bug-85-canonical-evidence`
-- Pull request: Pending
-- Commit(s): `ec68528` - canonical evidence derivation and regression coverage.
+- Pull request: [#86](https://github.com/vrize-poc-demo/call-center-radar/pull/86)
+  (targets `development`; human merge only)
+- Commit(s): `ec68528` - canonical evidence derivation and regression coverage;
+  `f148624` - branch and delivery record.
 
 ### Change Log
 
@@ -72,4 +74,5 @@ shifts. No transcript text is added to logs.
 | --- | --- | --- |
 | `ec68528` | Derived evidence from immutable IDs, recovered optional shifts, and added regressions. | Keep unknown IDs fail-closed while preventing model-owned duplicate fields from blocking manager analysis. |
 | `ec68528` | Re-ran the complete quality gate and the exact manual local-model call. | Confirm the recovered API path is not only unit-tested but usable in Call Detail. |
-| Pending | Rebased the bug fix onto merged `development` after PR #84 landed. | Keep the bug fix independent, reviewable, and compliant with the repository Git flow. |
+| `f148624` | Rebased the bug fix onto merged `development` after PR #84 landed. | Keep the bug fix independent, reviewable, and compliant with the repository Git flow. |
+| Pending | Opened PR #86 and confirmed its GitHub Quality Gates passed. | Hand Bug #85 to human review only after independent repository checks complete. |
