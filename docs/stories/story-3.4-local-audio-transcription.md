@@ -130,9 +130,9 @@ error rate (WER).
 ## 5. Delivery Record
 
 - Branch: `feature/story-3.4-local-audio-transcription`
-- Pull request: Pending
-- Commit(s): Pending
-- Review result: Pending
+- Pull request: #57 (draft, targets `development`)
+- Commit(s): `0a793bd` local transcription implementation
+- Review result: Code quality A; testing quality A; no blocking self-review findings.
 
 ### Change Log
 
@@ -140,12 +140,13 @@ Update this table before every commit. Explain both the change and its reason; d
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Added local faster-whisper transcription, durable generated turns, stereo routing, and UI terminology/type support. | Replaces the placeholder processing path with evidence-ready local STT while retaining the existing API contracts. |
-| Pending | Added provider, pipeline, transcript, migration, and UI tests; ran five real recordings and full quality gates. | Proves correctness without model downloads in CI and records honest operational evidence for the POC. |
+| `0a793bd` | Added local faster-whisper transcription, durable generated turns, stereo routing, UI terminology/type support, tests, and developer documentation. | Replaces the placeholder processing path with evidence-ready local STT and proves the behavior without model downloads in CI. |
+| Pending | Recorded the draft PR, exact commit, and self-review outcome. | Keeps the story record aligned with the reviewable GitHub delivery. |
 
 ### PR Readiness and Review
 
-- Mergeability verification: `Pending - npm run pr:verify -- <pr-number>`
-- Code quality grade: `Pending - A to F`
-- Testing quality grade: `Pending - A to F`
-- Review findings and follow-up: Pending implementation.
+- Mergeability verification: `Pending - npm run pr:verify -- 57` after GitHub CI completes.
+- Code quality grade: `A`
+- Testing quality grade: `A`
+- Review findings and follow-up: No blocking findings. Mono diarization and WER evaluation remain
+  explicitly deferred to later scoped stories.
