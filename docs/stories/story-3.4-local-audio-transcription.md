@@ -131,7 +131,7 @@ error rate (WER).
 
 - Branch: `feature/story-3.4-local-audio-transcription`
 - Pull request: #57 (draft, targets `development`)
-- Commit(s): `0a793bd` local transcription implementation
+- Commit(s): `659dbbf` local transcription implementation; `5d8354d` local CORS fix
 - Review result: Code quality A; testing quality A; no blocking self-review findings.
 
 ### Change Log
@@ -140,9 +140,10 @@ Update this table before every commit. Explain both the change and its reason; d
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| `0a793bd` | Added local faster-whisper transcription, durable generated turns, stereo routing, UI terminology/type support, tests, and developer documentation. | Replaces the placeholder processing path with evidence-ready local STT and proves the behavior without model downloads in CI. |
-| Pending | Recorded the draft PR, exact commit, and self-review outcome. | Keeps the story record aligned with the reviewable GitHub delivery. |
-| Pending | Allowed the alternate local Vite port and added a CORS preflight regression test. | Ensures the manual app running on `127.0.0.1:5174` can reach the API instead of failing in the browser. |
+| `659dbbf` | Added local faster-whisper transcription, durable generated turns, stereo routing, UI terminology/type support, tests, and developer documentation. | Replaces the placeholder processing path with evidence-ready local STT and proves the behavior without model downloads in CI. |
+| `140a890` | Recorded the draft PR, exact commit, and self-review outcome. | Keeps the story record aligned with the reviewable GitHub delivery. |
+| `5d8354d` | Allowed the alternate local Vite port and added a CORS preflight regression test. | Ensures the manual app running on `127.0.0.1:5174` can reach the API instead of failing in the browser. |
+| Pending | Rebased on current development and moved the transcription speaker migration from `005` to `006`. | Preserves the merged Radar Priority migration and removes the PR migration-number conflict. |
 
 ### PR Readiness and Review
 
