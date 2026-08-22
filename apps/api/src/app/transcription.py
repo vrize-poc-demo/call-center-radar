@@ -47,7 +47,7 @@ def inspect_audio(audio_path: Path) -> AudioInfo:
                 "-select_streams",
                 "a:0",
                 "-show_entries",
-                "stream=channels,duration",
+                "stream=channels,duration:format=duration",
                 "-of",
                 "json",
                 str(audio_path),
@@ -56,9 +56,13 @@ def inspect_audio(audio_path: Path) -> AudioInfo:
             capture_output=True,
             text=True,
         )
-        stream = json.loads(result.stdout)["streams"][0]
+        document = json.loads(result.stdout)
+        stream = document["streams"][0]
         channels = int(stream["channels"])
-        duration_ms = round(float(stream["duration"]) * 1000)
+        duration_seconds = stream.get("duration")
+        if duration_seconds in {None, "N/A"}:
+            duration_seconds = document.get("format", {}).get("duration")
+        duration_ms = round(float(duration_seconds) * 1000)
     except (
         FileNotFoundError,
         IndexError,

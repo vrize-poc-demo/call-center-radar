@@ -144,6 +144,7 @@ Update this table before every commit. Explain both the change and its reason; d
 | `140a890` | Recorded the draft PR, exact commit, and self-review outcome. | Keeps the story record aligned with the reviewable GitHub delivery. |
 | `5d8354d` | Allowed the alternate local Vite port and added a CORS preflight regression test. | Ensures the manual app running on `127.0.0.1:5174` can reach the API instead of failing in the browser. |
 | Pending | Rebased on current development and moved the transcription speaker migration from `005` to `006`. | Preserves the merged Radar Priority migration and removes the PR migration-number conflict. |
+| Pending | Added an FFprobe container-duration fallback and Linux regression test. | WAV stream duration is not consistently populated by FFprobe across platforms, so valid CI audio was incorrectly rejected. |
 
 ### PR Readiness and Review
 

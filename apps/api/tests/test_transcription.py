@@ -1,3 +1,4 @@
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -33,6 +34,25 @@ def test_inspect_audio_rejects_unreadable_audio(tmp_path) -> None:
 
     with pytest.raises(AudioInspectionError):
         inspect_audio(audio_path)
+
+
+def test_inspect_audio_uses_container_duration_when_stream_duration_is_unavailable(
+    monkeypatch, tmp_path
+) -> None:
+    def ffprobe_result(*args, **kwargs):
+        return subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=(
+                '{"streams": [{"channels": 1, "duration": "N/A"}], "format": {"duration": "2.5"}}'
+            ),
+        )
+
+    monkeypatch.setattr(subprocess, "run", ffprobe_result)
+
+    inspected = inspect_audio(tmp_path / "source.wav")
+
+    assert inspected == AudioInfo(channels=1, duration_ms=2500)
 
 
 def test_stereo_provider_assigns_configured_channel_speakers(monkeypatch, tmp_path) -> None:
