@@ -12,17 +12,19 @@ from app.transcription import (
 )
 
 
-def test_inspect_audio_reads_wav_channel_count_and_duration(tmp_path) -> None:
-    import wave
+def test_inspect_audio_reads_wav_channel_count_and_duration(tmp_path, monkeypatch) -> None:
+    def ffprobe_result(*args, **kwargs):
+        return subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=(
+                '{"streams": [{"channels": 2, "duration": "1.0"}], "format": {"duration": "1.0"}}'
+            ),
+        )
 
-    audio_path = tmp_path / "stereo.wav"
-    with wave.open(str(audio_path), "wb") as audio:
-        audio.setnchannels(2)
-        audio.setsampwidth(2)
-        audio.setframerate(8000)
-        audio.writeframes(b"\x00\x00" * 2 * 8000)
+    monkeypatch.setattr(subprocess, "run", ffprobe_result)
 
-    inspected = inspect_audio(audio_path)
+    inspected = inspect_audio(tmp_path / "stereo.wav")
 
     assert inspected.channels == 2
     assert inspected.duration_ms == 1000

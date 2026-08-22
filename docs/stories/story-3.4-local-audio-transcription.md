@@ -145,6 +145,7 @@ Update this table before every commit. Explain both the change and its reason; d
 | `5d8354d` | Allowed the alternate local Vite port and added a CORS preflight regression test. | Ensures the manual app running on `127.0.0.1:5174` can reach the API instead of failing in the browser. |
 | Pending | Rebased on current development and moved the transcription speaker migration from `005` to `006`. | Preserves the merged Radar Priority migration and removes the PR migration-number conflict. |
 | Pending | Added an FFprobe container-duration fallback and Linux regression test. | WAV stream duration is not consistently populated by FFprobe across platforms, so valid CI audio was incorrectly rejected. |
+| Pending | Replaced CI unit-test dependencies on the host FFprobe binary with deterministic inspection fakes. | GitHub runners do not guarantee FFmpeg installation; unit tests now validate application behavior independently while the documented local smoke test verifies real FFmpeg inference. |
 
 ### PR Readiness and Review
 
