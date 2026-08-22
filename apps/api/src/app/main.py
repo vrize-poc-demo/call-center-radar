@@ -10,6 +10,7 @@ from app.database import Database
 from app.evidence import router as evidence_router
 from app.logging import configure_logging, log_event
 from app.migrator import migrate
+from app.priority import router as priority_router
 from app.transcripts import router as transcripts_router
 
 
@@ -57,6 +58,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(transcripts_router)
     app.include_router(evidence_router)
     app.include_router(analysis_router)
+    app.include_router(priority_router)
 
     return app
 
