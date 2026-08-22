@@ -61,6 +61,7 @@ def replace_transcript_turns(
 
 def _replace_transcript_turns(connection, call_id: str, turns: list[TranscriptTurnInput]):
     call = _get_call_row(connection, call_id)
+    connection.execute("DELETE FROM call_analyses WHERE call_id = ?", (call["id"],))
     connection.execute("DELETE FROM transcript_turns WHERE call_id = ?", (call["id"],))
     saved = []
     for turn in turns:

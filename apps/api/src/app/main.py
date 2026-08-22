@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.analysis import router as analysis_router
 from app.calls import router as calls_router
 from app.config import Settings
+from app.dashboard import router as dashboard_router
 from app.database import Database
 from app.evidence import router as evidence_router
 from app.logging import configure_logging, log_event
@@ -63,6 +64,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(transcripts_router)
     app.include_router(evidence_router)
     app.include_router(analysis_router)
+    app.include_router(dashboard_router)
     app.include_router(priority_router)
 
     return app

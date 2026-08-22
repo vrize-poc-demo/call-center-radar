@@ -65,3 +65,91 @@ def test_analyzes_five_calls_with_evidence_backed_claims(tmp_path) -> None:
             assert claim["quote"] == text
             assert claim["start_ms"] == 0
             assert claim["end_ms"] == 1000
+
+
+def test_analysis_is_persisted_refreshed_and_exposed_for_dashboard_triage(tmp_path) -> None:
+    settings = Settings(
+        database_path=tmp_path / "calls.db",
+        sample_data_dir=tmp_path / "samples",
+        upload_dir=tmp_path / "uploads",
+        max_upload_bytes=1024,
+    )
+    with TestClient(create_app(settings)) as client:
+        call_id = client.post(
+            "/api/calls",
+            data={"agent_name": "Agent", "customer_name": "Customer"},
+            files={"audio": ("call.wav", b"audio", "audio/wav")},
+        ).json()["call_id"]
+        saved = client.put(
+            f"/api/calls/{call_id}/transcript",
+            json={
+                "turns": [
+                    {
+                        "speaker": "customer",
+                        "start_ms": 100,
+                        "end_ms": 900,
+                        "text": "This issue is still not working.",
+                    }
+                ]
+            },
+        ).json()
+
+        first = client.get(f"/api/calls/{call_id}/analysis")
+        cached = client.get(f"/api/calls/{call_id}/analysis")
+        refreshed = client.post(f"/api/calls/{call_id}/analysis")
+        priority = client.post(f"/api/calls/{call_id}/priority")
+        triage = client.get("/api/dashboard/triage")
+
+    assert first.status_code == 200
+    assert cached.status_code == 200
+    assert first.json()["analysis"] == cached.json()["analysis"]
+    assert first.json()["analysis"]["analysis_version"] == 1
+    assert refreshed.status_code == 200
+    assert refreshed.json()["analysis"]["analysis_version"] == 2
+    assert priority.status_code == 200
+    assert triage.status_code == 200
+    item = triage.json()["calls"][0]
+    assert item["call_id"] == call_id
+    assert item["analysis"]["analysis_version"] == 2
+    assert item["analysis"]["mood"] == "negative"
+    assert item["radar_priority"] == 100
+    assert item["risk_level"] == "high"
+    assert "quote" not in item["analysis"]
+    assert (
+        first.json()["analysis"]["claims"][0]["transcript_turn_id"]
+        == saved["turns"][0]["transcript_turn_id"]
+    )
+
+
+def test_replacing_a_transcript_invalidates_its_persisted_analysis(tmp_path) -> None:
+    settings = Settings(
+        database_path=tmp_path / "calls.db",
+        sample_data_dir=tmp_path / "samples",
+        upload_dir=tmp_path / "uploads",
+        max_upload_bytes=1024,
+    )
+    with TestClient(create_app(settings)) as client:
+        call_id = client.post(
+            "/api/calls",
+            data={"agent_name": "Agent", "customer_name": "Customer"},
+            files={"audio": ("call.wav", b"audio", "audio/wav")},
+        ).json()["call_id"]
+        client.put(
+            f"/api/calls/{call_id}/transcript",
+            json={"turns": [{"speaker": "customer", "start_ms": 0, "end_ms": 1, "text": "Help"}]},
+        )
+        client.get(f"/api/calls/{call_id}/analysis")
+        client.put(
+            f"/api/calls/{call_id}/transcript",
+            json={
+                "turns": [
+                    {"speaker": "customer", "start_ms": 2, "end_ms": 3, "text": "All resolved"}
+                ]
+            },
+        )
+
+        triage = client.get("/api/dashboard/triage")
+        regenerated = client.get(f"/api/calls/{call_id}/analysis")
+
+    assert triage.json() == {"calls": []}
+    assert regenerated.json()["analysis"]["claims"][0]["quote"] == "All resolved"
