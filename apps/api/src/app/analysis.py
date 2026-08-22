@@ -184,15 +184,29 @@ def persist_analysis(connection, call_db_id: int, analysis: CallAnalysis) -> Cal
 
 
 def local_demo_model(turns: list[TranscriptTurn]) -> str:
-    text = " ".join(turn.text for turn in turns).casefold()
-    has_problem = any(term in text for term in ("issue", "error", "help", "problem", "not working"))
+    customer_text = " ".join(turn.text for turn in turns if turn.speaker == "customer").casefold()
+    has_problem = any(
+        term in customer_text
+        for term in ("issue", "error", "problem", "not working", "unable", "cannot", "can't")
+    )
     has_unresolved = any(
-        term in text for term in ("not resolved", "still not working", "cannot", "can't", "unable")
+        term in customer_text
+        for term in ("not resolved", "still not working", "cannot", "can't", "unable")
+    )
+    has_confirmed_service_outcome = any(
+        turn.speaker == "agent"
+        and any(
+            phrase in turn.text.casefold()
+            for phrase in ("has been sent", "is working now", "has been resolved")
+        )
+        for turn in turns
     )
     resolution = "unresolved" if has_unresolved else "unclear" if has_problem else "resolved"
     mood_shifts = []
     current_mood = "neutral"
     for turn in turns:
+        if turn.speaker != "customer":
+            continue
         turn_text = turn.text.casefold()
         next_mood = current_mood
         if any(
@@ -200,7 +214,6 @@ def local_demo_model(turns: list[TranscriptTurn]) -> str:
             for term in (
                 "issue",
                 "error",
-                "help",
                 "problem",
                 "not working",
                 "unable",
@@ -227,6 +240,8 @@ def local_demo_model(turns: list[TranscriptTurn]) -> str:
                 }
             )
             current_mood = next_mood
+    if current_mood == "neutral" and has_confirmed_service_outcome:
+        current_mood = "positive"
     payload = {
         "intent": "Request support" if has_problem else "General service enquiry",
         "mood": current_mood,

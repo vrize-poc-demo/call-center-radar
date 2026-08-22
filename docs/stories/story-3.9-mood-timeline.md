@@ -132,6 +132,7 @@ cascade deletion.
 | Pending | Added mood-shift persistence, validation, local-demo detection, Call Detail drill-down, tests, and this delivery record. | Make mood changes explainable at a real transcript/audio moment instead of relying on an opaque overall label. |
 | Pending | Ran the complete automated test, lint, format, and production-build gate. | Confirm the new analysis contract and UI drill-down do not regress the POC. |
 | Pending | Recorded PR #80, passing CI, mergeability verification, and the project review state. | Preserve a complete human-review handoff. |
+| Pending | Made the local mood detector customer-aware, removed bare `help` as a negative trigger, and added a successful-service outcome rule with regression coverage. | Prevent agent greetings and routine requests from being incorrectly presented as negative customer mood. |
 
 ### PR Readiness and Review
 

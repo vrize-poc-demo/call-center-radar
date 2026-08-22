@@ -1,9 +1,10 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.analysis import parse_model_output
+from app.analysis import local_demo_model, parse_model_output
 from app.config import Settings
 from app.main import create_app
+from app.transcripts import TranscriptTurn
 
 
 def test_parses_structured_analysis_output() -> None:
@@ -24,6 +25,39 @@ def test_parses_structured_analysis_output() -> None:
 def test_rejects_malformed_structured_analysis_output() -> None:
     with pytest.raises(ValueError):
         parse_model_output('{"intent":"Support"}')
+
+
+def test_does_not_treat_an_agent_help_greeting_as_customer_negativity() -> None:
+    analysis = parse_model_output(
+        local_demo_model(
+            [
+                TranscriptTurn(
+                    transcript_turn_id="agent-greeting",
+                    speaker="agent",
+                    start_ms=0,
+                    end_ms=1000,
+                    text="I am going to help you today.",
+                ),
+                TranscriptTurn(
+                    transcript_turn_id="customer-request",
+                    speaker="customer",
+                    start_ms=1000,
+                    end_ms=2000,
+                    text="I would like to reset my password.",
+                ),
+                TranscriptTurn(
+                    transcript_turn_id="agent-outcome",
+                    speaker="agent",
+                    start_ms=2000,
+                    end_ms=3000,
+                    text="The password reset link has been sent to your phone.",
+                ),
+            ]
+        )
+    )
+
+    assert analysis.mood == "positive"
+    assert analysis.mood_shifts == []
 
 
 def test_analyzes_five_calls_with_evidence_backed_claims(tmp_path) -> None:
