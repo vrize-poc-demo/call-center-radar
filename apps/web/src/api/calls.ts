@@ -100,6 +100,19 @@ export type RepeatedQuestionEvent = {
   repeated: EvidenceClaim;
 };
 
+export type SilenceWindow = {
+  before: EvidenceClaim;
+  after: EvidenceClaim;
+  duration_ms: number;
+};
+
+export type ConversationBalance = {
+  agent_talk_ms: number;
+  customer_talk_ms: number;
+  agent_share_pct: number;
+  customer_share_pct: number;
+};
+
 export type CallAnalysis = {
   intent: string;
   mood: string;
@@ -111,6 +124,8 @@ export type CallAnalysis = {
   mood_shifts: MoodShift[];
   false_resolution: FalseResolutionSignal | null;
   repeated_questions: RepeatedQuestionEvent[];
+  silence_windows: SilenceWindow[];
+  conversation_balance: ConversationBalance;
   model_version: string;
 };
 

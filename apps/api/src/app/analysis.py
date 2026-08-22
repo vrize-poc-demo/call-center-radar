@@ -9,6 +9,10 @@ from app.false_resolution import RULE_ID, detect_false_resolution
 from app.logging import log_event
 from app.repeated_questions import RULE_ID as REPEATED_QUESTION_RULE_ID
 from app.repeated_questions import detect_repeated_questions
+from app.silence_and_balance import (
+    calculate_conversation_balance,
+    detect_silence_windows,
+)
 from app.summary import SummaryValidationError, count_summary_words, normalize_summary
 from app.transcripts import TranscriptTurn
 from app.validation import (
@@ -35,19 +39,41 @@ class AnalysisProposal(BaseModel):
     mood_shifts: list[MoodShift] = Field(default_factory=list, max_length=6)
 
 
-class CallAnalysis(AnalysisProposal):
-    model_version: str
-    analysis_version: int = Field(default=0, ge=0)
-    analyzed_at: str | None = None
-    false_resolution: FalseResolutionSignal | None = None
-    repeated_questions: list["RepeatedQuestionEvent"] = Field(default_factory=list, max_length=6)
-
-
 class RepeatedQuestionEvent(BaseModel):
     rule_id: str = Field(min_length=1, max_length=120)
     speaker: str = Field(pattern="^(agent|customer)$")
     original: EvidenceClaim
     repeated: EvidenceClaim
+
+
+class SilenceWindowEvent(BaseModel):
+    before: EvidenceClaim
+    after: EvidenceClaim
+    duration_ms: int = Field(ge=3000)
+
+
+class ConversationBalance(BaseModel):
+    agent_talk_ms: int = Field(ge=0)
+    customer_talk_ms: int = Field(ge=0)
+    agent_share_pct: float = Field(ge=0, le=100)
+    customer_share_pct: float = Field(ge=0, le=100)
+
+
+class CallAnalysis(AnalysisProposal):
+    model_version: str
+    analysis_version: int = Field(default=0, ge=0)
+    analyzed_at: str | None = None
+    false_resolution: FalseResolutionSignal | None = None
+    repeated_questions: list[RepeatedQuestionEvent] = Field(default_factory=list, max_length=6)
+    silence_windows: list[SilenceWindowEvent] = Field(default_factory=list, max_length=12)
+    conversation_balance: ConversationBalance = Field(
+        default_factory=lambda: ConversationBalance(
+            agent_talk_ms=0,
+            customer_talk_ms=0,
+            agent_share_pct=0,
+            customer_share_pct=0,
+        )
+    )
 
 
 class AnalysisResponse(BaseModel):
@@ -186,12 +212,60 @@ def load_persisted_analysis(connection, call_id: str) -> CallAnalysis | None:
         )
         for event in repeated_question_rows
     ]
+    silence_rows = connection.execute(
+        """
+        SELECT before_turn.transcript_turn_id AS before_transcript_turn_id,
+               before_turn.text AS before_quote, before_turn.start_ms AS before_start_ms,
+               before_turn.end_ms AS before_end_ms,
+               after_turn.transcript_turn_id AS after_transcript_turn_id,
+               after_turn.text AS after_quote, after_turn.start_ms AS after_start_ms,
+               after_turn.end_ms AS after_end_ms, window.duration_ms
+        FROM call_analysis_silence_windows AS window
+        JOIN transcript_turns AS before_turn
+          ON before_turn.transcript_turn_id = window.before_transcript_turn_id
+        JOIN transcript_turns AS after_turn
+          ON after_turn.transcript_turn_id = window.after_transcript_turn_id
+        WHERE window.analysis_id = ?
+        ORDER BY before_turn.end_ms, window.id
+        """,
+        (row["id"],),
+    ).fetchall()
+    balance_rows = connection.execute(
+        "SELECT speaker, start_ms, end_ms, text, transcript_turn_id FROM transcript_turns "
+        "JOIN calls ON calls.id = transcript_turns.call_id WHERE calls.call_id = ? "
+        "ORDER BY transcript_turns.start_ms, transcript_turns.id",
+        (call_id,),
+    ).fetchall()
+    balance = calculate_conversation_balance(
+        [TranscriptTurn(**dict(balance_row)) for balance_row in balance_rows]
+    )
     return CallAnalysis(
         **{key: row[key] for key in row.keys() if key != "id"},
         claims=[EvidenceClaim(**dict(claim)) for claim in claims],
         mood_shifts=[MoodShift(**dict(shift)) for shift in mood_shifts],
         false_resolution=false_resolution,
         repeated_questions=repeated_questions,
+        silence_windows=[
+            SilenceWindowEvent(
+                before=EvidenceClaim(
+                    claim="Speech before silence",
+                    transcript_turn_id=window["before_transcript_turn_id"],
+                    quote=window["before_quote"],
+                    start_ms=window["before_start_ms"],
+                    end_ms=window["before_end_ms"],
+                ),
+                after=EvidenceClaim(
+                    claim="Speech after silence",
+                    transcript_turn_id=window["after_transcript_turn_id"],
+                    quote=window["after_quote"],
+                    start_ms=window["after_start_ms"],
+                    end_ms=window["after_end_ms"],
+                ),
+                duration_ms=window["duration_ms"],
+            )
+            for window in silence_rows
+        ],
+        conversation_balance=ConversationBalance(**balance.__dict__),
     )
 
 
@@ -304,6 +378,24 @@ def persist_analysis(connection, call_db_id: int, analysis: CallAnalysis) -> Cal
                 event.speaker,
                 event.original.transcript_turn_id,
                 event.repeated.transcript_turn_id,
+            ),
+        )
+    connection.execute(
+        "DELETE FROM call_analysis_silence_windows WHERE analysis_id = ?",
+        (analysis_row["id"],),
+    )
+    for window in analysis.silence_windows:
+        connection.execute(
+            """
+            INSERT INTO call_analysis_silence_windows (
+                analysis_id, before_transcript_turn_id, after_transcript_turn_id, duration_ms
+            ) VALUES (?, ?, ?, ?)
+            """,
+            (
+                analysis_row["id"],
+                window.before.transcript_turn_id,
+                window.after.transcript_turn_id,
+                window.duration_ms,
             ),
         )
     # Resolve the public identifier from the database row before rebuilding response quotes.
@@ -422,6 +514,39 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
                         "rule_id": REPEATED_QUESTION_RULE_ID,
                     },
                 )
+            analysis.silence_windows = [
+                SilenceWindowEvent(
+                    before=EvidenceClaim(
+                        claim="Speech before silence",
+                        transcript_turn_id=window.before_turn.transcript_turn_id,
+                        quote=window.before_turn.text,
+                        start_ms=window.before_turn.start_ms,
+                        end_ms=window.before_turn.end_ms,
+                    ),
+                    after=EvidenceClaim(
+                        claim="Speech after silence",
+                        transcript_turn_id=window.after_turn.transcript_turn_id,
+                        quote=window.after_turn.text,
+                        start_ms=window.after_turn.start_ms,
+                        end_ms=window.after_turn.end_ms,
+                    ),
+                    duration_ms=window.duration_ms,
+                )
+                for window in detect_silence_windows(turns)
+            ]
+            balance = calculate_conversation_balance(turns)
+            analysis.conversation_balance = ConversationBalance(**balance.__dict__)
+            log_event(
+                request.app.state.logger,
+                "conversation_timing_calculated",
+                "Silence windows and attributed talk balance calculated",
+                context={
+                    "call_id": call_id,
+                    "silence_window_count": len(analysis.silence_windows),
+                    "agent_talk_ms": balance.agent_talk_ms,
+                    "customer_talk_ms": balance.customer_talk_ms,
+                },
+            )
             analysis = persist_analysis(connection, call["id"], analysis)
         except AnalysisProviderError as error:
             log_event(
