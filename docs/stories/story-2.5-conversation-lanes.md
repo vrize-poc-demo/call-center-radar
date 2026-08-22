@@ -124,7 +124,7 @@ look populated.
 
 - Branch: `feature/story-2.5-conversation-lanes`
 - Pull request: Pending
-- Commit(s): Pending
+- Commit(s): `88d84eb` - speaker lanes, timestamp range presentation, tests, and delivery record
 - Review result: Pending
 
 ### Change Log
@@ -134,7 +134,8 @@ do not use generic entries such as "updates" or "fixes".
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Added speaker conversation lanes, full saved timestamp ranges, responsive styling, regression coverage, and this delivery record. | Let managers scan each side of a call without rewriting the evidence-backed transcript. |
+| `88d84eb` | Added speaker conversation lanes, full saved timestamp ranges, responsive styling, regression coverage, and this delivery record. | Let managers scan each side of a call without rewriting the evidence-backed transcript. |
+| Pending | Recorded the verified quality gate before raising the pull request. | Keep implementation, verification, and the human review handoff traceable. |
 
 ### PR Readiness and Review
 
