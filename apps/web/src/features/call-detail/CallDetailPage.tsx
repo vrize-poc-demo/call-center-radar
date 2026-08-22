@@ -15,6 +15,7 @@ import {
   PriorityFactor,
   RadarPriority,
   RepeatedQuestionEvent,
+  SilenceWindow,
   MoodShift,
   TranscriptTurn,
 } from "../../api/calls";
@@ -273,6 +274,13 @@ export function CallDetailPage({ callId }: { callId: string }) {
     source: "original" | "repeated",
   ) => {
     openTrace("analysis_claim", event[source]);
+  };
+
+  const openSilenceEvidence = (
+    window: SilenceWindow,
+    source: "before" | "after",
+  ) => {
+    openTrace("analysis_claim", window[source]);
   };
 
   if (error)
@@ -606,6 +614,72 @@ export function CallDetailPage({ callId }: { callId: string }) {
               ) : (
                 <p className="supporting-copy">
                   No repeated information requests were detected.
+                </p>
+              )}
+              <h3>Conversation balance</h3>
+              {analysis.conversation_balance.agent_talk_ms ||
+              analysis.conversation_balance.customer_talk_ms ? (
+                <>
+                  <div
+                    className="conversation-balance-bar"
+                    aria-label="Attributed talk balance"
+                  >
+                    <span
+                      className="agent-balance"
+                      style={{
+                        width: `${analysis.conversation_balance.agent_share_pct}%`,
+                      }}
+                    />
+                    <span
+                      className="customer-balance"
+                      style={{
+                        width: `${analysis.conversation_balance.customer_share_pct}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="conversation-balance-labels">
+                    Agent {analysis.conversation_balance.agent_share_pct}% ·
+                    Customer {analysis.conversation_balance.customer_share_pct}%
+                    of attributed speech
+                  </p>
+                </>
+              ) : (
+                <p className="supporting-copy">
+                  Speaker labels are unavailable for talk-balance calculation.
+                </p>
+              )}
+              <h3>Silence windows</h3>
+              {analysis.silence_windows.length ? (
+                <ol className="silence-windows">
+                  {analysis.silence_windows.map((window) => (
+                    <li key={window.after.transcript_turn_id}>
+                      <strong>
+                        {(window.duration_ms / 1000).toFixed(1)}s silence
+                      </strong>
+                      <span>
+                        {(window.before.end_ms / 1000).toFixed(1)}s to{" "}
+                        {(window.after.start_ms / 1000).toFixed(1)}s
+                      </span>
+                      <div>
+                        <button
+                          onClick={() => openSilenceEvidence(window, "before")}
+                          type="button"
+                        >
+                          Show before
+                        </button>
+                        <button
+                          onClick={() => openSilenceEvidence(window, "after")}
+                          type="button"
+                        >
+                          Show after
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="supporting-copy">
+                  No silence windows of three seconds or longer were detected.
                 </p>
               )}
               <h3>Mood timeline</h3>

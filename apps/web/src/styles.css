@@ -543,6 +543,59 @@ h1 {
   background: #ffffff;
   color: #075d63;
 }
+.conversation-balance-bar {
+  display: flex;
+  height: 12px;
+  overflow: hidden;
+  border: 1px solid #c7d7d7;
+  border-radius: 4px;
+  background: #edf2f3;
+}
+.conversation-balance-bar span {
+  min-width: 0;
+}
+.agent-balance {
+  background: #096b72;
+}
+.customer-balance {
+  background: #b76e00;
+}
+.conversation-balance-labels {
+  margin: 8px 0 0;
+  color: #536273;
+}
+.silence-windows {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.silence-windows li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 10px;
+  padding: 10px;
+  border: 1px solid #c7d7d7;
+  border-radius: 6px;
+  background: #f5fbfa;
+}
+.silence-windows span {
+  color: #536273;
+  font-size: 0.85rem;
+}
+.silence-windows div {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.silence-windows button {
+  border: 1px solid #096b72;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #075d63;
+}
 .evidence-drawer {
   position: fixed;
   right: 24px;

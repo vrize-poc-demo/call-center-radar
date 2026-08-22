@@ -513,6 +513,54 @@ def test_persists_repeated_question_events_with_saved_evidence(tmp_path) -> None
     assert cached["repeated_questions"] == analysis["repeated_questions"]
 
 
+def test_persists_silence_windows_and_conversation_balance(tmp_path) -> None:
+    settings = Settings(
+        database_path=tmp_path / "calls.db",
+        sample_data_dir=tmp_path / "samples",
+        upload_dir=tmp_path / "uploads",
+        max_upload_bytes=1024,
+    )
+    with TestClient(create_test_app(settings)) as client:
+        call_id = client.post(
+            "/api/calls",
+            data={"agent_name": "Agent", "customer_name": "Customer"},
+            files={"audio": ("call.wav", b"audio", "audio/wav")},
+        ).json()["call_id"]
+        saved = client.put(
+            f"/api/calls/{call_id}/transcript",
+            json={
+                "turns": [
+                    {"speaker": "agent", "start_ms": 0, "end_ms": 1000, "text": "Hello."},
+                    {
+                        "speaker": "customer",
+                        "start_ms": 5000,
+                        "end_ms": 7000,
+                        "text": "I need help.",
+                    },
+                ]
+            },
+        ).json()
+        analysis = client.get(f"/api/calls/{call_id}/analysis").json()["analysis"]
+        cached = client.get(f"/api/calls/{call_id}/analysis").json()["analysis"]
+
+    assert analysis["conversation_balance"] == {
+        "agent_talk_ms": 1000,
+        "customer_talk_ms": 2000,
+        "agent_share_pct": 33.3,
+        "customer_share_pct": 66.7,
+    }
+    assert analysis["silence_windows"][0]["duration_ms"] == 4000
+    assert (
+        analysis["silence_windows"][0]["before"]["transcript_turn_id"]
+        == saved["turns"][0]["transcript_turn_id"]
+    )
+    assert (
+        analysis["silence_windows"][0]["after"]["transcript_turn_id"]
+        == saved["turns"][1]["transcript_turn_id"]
+    )
+    assert cached["silence_windows"] == analysis["silence_windows"]
+
+
 def test_replacing_a_transcript_invalidates_its_persisted_analysis(tmp_path) -> None:
     settings = Settings(
         database_path=tmp_path / "calls.db",

@@ -53,6 +53,13 @@ beforeEach(() => {
     mood_shifts: [],
     false_resolution: null,
     repeated_questions: [],
+    silence_windows: [],
+    conversation_balance: {
+      agent_talk_ms: 0,
+      customer_talk_ms: 0,
+      agent_share_pct: 0,
+      customer_share_pct: 0,
+    },
     model_version: "test-v1",
   });
 });
@@ -653,6 +660,13 @@ describe("CallDetailPage", () => {
       ],
       false_resolution: null,
       repeated_questions: [],
+      silence_windows: [],
+      conversation_balance: {
+        agent_talk_ms: 0,
+        customer_talk_ms: 0,
+        agent_share_pct: 0,
+        customer_share_pct: 0,
+      },
       model_version: "test-v1",
     });
     vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
@@ -715,6 +729,13 @@ describe("CallDetailPage", () => {
       ],
       false_resolution: null,
       repeated_questions: [],
+      silence_windows: [],
+      conversation_balance: {
+        agent_talk_ms: 0,
+        customer_talk_ms: 0,
+        agent_share_pct: 0,
+        customer_share_pct: 0,
+      },
       model_version: "test-v1",
     });
     vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
@@ -787,6 +808,13 @@ describe("CallDetailPage", () => {
         },
       },
       repeated_questions: [],
+      silence_windows: [],
+      conversation_balance: {
+        agent_talk_ms: 0,
+        customer_talk_ms: 0,
+        agent_share_pct: 0,
+        customer_share_pct: 0,
+      },
       model_version: "test-v1",
     });
     vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
@@ -862,6 +890,13 @@ describe("CallDetailPage", () => {
           },
         },
       ],
+      silence_windows: [],
+      conversation_balance: {
+        agent_talk_ms: 0,
+        customer_talk_ms: 1000,
+        agent_share_pct: 0,
+        customer_share_pct: 100,
+      },
       model_version: "test-v1",
     });
     vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
@@ -876,5 +911,85 @@ describe("CallDetailPage", () => {
 
     expect(screen.getByText("Analysis claim")).toBeTruthy();
     expect(currentTimeSetter).toHaveBeenCalledWith(4);
+  });
+
+  it("shows balance and opens a silence window at the next speech turn", async () => {
+    mockedGetCallDetail.mockResolvedValue({
+      call_id: "call-1",
+      agent_name: "Agent",
+      customer_name: "Customer",
+      created_at: "2026-08-23",
+      processing_status: "completed",
+      audio_channels: 1,
+      failure_reason: null,
+      transcript_turn_count: 2,
+    });
+    mockedGetTranscript.mockResolvedValue([
+      {
+        transcript_turn_id: "before-silence",
+        speaker: "agent",
+        start_ms: 0,
+        end_ms: 1000,
+        text: "Let me check.",
+      },
+      {
+        transcript_turn_id: "after-silence",
+        speaker: "customer",
+        start_ms: 5000,
+        end_ms: 7000,
+        text: "I still need help.",
+      },
+    ]);
+    mockedGetAnalysis.mockResolvedValue({
+      intent: "Support",
+      mood: "neutral",
+      resolution: "unclear",
+      summary: "The customer needs account support.",
+      manager_brief: "Review the support interaction.",
+      recommended_action: "Follow up.",
+      claims: [],
+      mood_shifts: [],
+      false_resolution: null,
+      repeated_questions: [],
+      silence_windows: [
+        {
+          before: {
+            claim: "Speech before silence",
+            transcript_turn_id: "before-silence",
+            quote: "Let me check.",
+            start_ms: 0,
+            end_ms: 1000,
+          },
+          after: {
+            claim: "Speech after silence",
+            transcript_turn_id: "after-silence",
+            quote: "I still need help.",
+            start_ms: 5000,
+            end_ms: 7000,
+          },
+          duration_ms: 4000,
+        },
+      ],
+      conversation_balance: {
+        agent_talk_ms: 1000,
+        customer_talk_ms: 2000,
+        agent_share_pct: 33.3,
+        customer_share_pct: 66.7,
+      },
+      model_version: "test-v1",
+    });
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+    const currentTimeSetter = vi.spyOn(
+      HTMLMediaElement.prototype,
+      "currentTime",
+      "set",
+    );
+
+    render(<CallDetailPage callId="call-1" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Show after" }));
+
+    expect(screen.getByText(/Agent 33.3%/)).toBeTruthy();
+    expect(screen.getByText("Analysis claim")).toBeTruthy();
+    expect(currentTimeSetter).toHaveBeenCalledWith(5);
   });
 });
