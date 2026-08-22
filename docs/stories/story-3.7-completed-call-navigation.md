@@ -2,7 +2,7 @@
 
 **GitHub issue:** [#60](https://github.com/vrize-poc-demo/call-center-radar/issues/60)
 
-**Status:** In Progress
+**Status:** In Review
 
 **Owner:** Vipin
 
@@ -132,10 +132,12 @@ sample call content in test output or source control.
 ## 5. Delivery Record
 
 - Branch: `feature/story-3.7-completed-call-navigation`
-- Pull request: Pending
-- Commit(s): `21d22a5` - completed call navigation, terminal refresh, tests, and delivery record.
-- Review result: Full local quality gate passed; pending PR mergeability check
-  and human review.
+- Pull request: [#73](https://github.com/vrize-poc-demo/call-center-radar/pull/73)
+  (draft, targets `development`)
+- Commit(s): `21d22a5` - completed call navigation, terminal refresh, tests,
+  and delivery record; `bba9fae` - delivery metadata update.
+- Review result: GitHub CI and `npm run pr:verify -- 73` passed; pending human
+  review and merge.
 
 ### Change Log
 
@@ -146,10 +148,16 @@ do not use generic entries such as "updates" or "fixes".
 | --- | --- | --- |
 | `21d22a5` | Added completed-only queue navigation, active Call Detail refresh, terminal failure guidance, tests, and this delivery record. | Let managers reach finished calls reliably without accidentally treating failed work as review-ready. |
 | `21d22a5` | Ran the full test, lint, format, build, and fresh-SQLite sample-registration checks. | Provide an auditable local handoff before creating the review branch commit. |
+| Pending | Recorded the draft PR, passing CI, mergeability check, and project review status. | Preserve an auditable handoff for the human maintainer. |
 
 ### PR Readiness and Review
 
-- Mergeability verification: `Pending - npm run pr:verify -- <pr-number>`
-- Code quality grade: `Pending - A to F`
-- Testing quality grade: `Pending - A to F`
-- Review findings and follow-up: Pending full quality gate and PR review.
+- Mergeability verification: Passed - `npm run pr:verify -- 73` confirmed a
+  clean merge into `development` with passing GitHub CI.
+- Code quality grade: A - persisted navigation, terminal-aware polling, and
+  failure boundaries are small, explicit, and use existing API contracts.
+- Testing quality grade: A - focused tests exercise queue actions and active
+  detail refresh; full web/API suites, lint, formatting, and build all pass.
+- Review findings and follow-up: No blocking findings. The intentional POC
+  boundary is polling rather than push updates, and failed uploads require a
+  corrected re-upload.
