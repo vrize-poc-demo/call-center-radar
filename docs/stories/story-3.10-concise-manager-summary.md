@@ -2,7 +2,7 @@
 
 **GitHub issue:** [#78](https://github.com/vrize-poc-demo/call-center-radar/issues/78)
 
-**Status:** In Progress
+**Status:** In Review
 
 **Owner:** Vipin
 
@@ -111,9 +111,11 @@ fallback because it could change the model's meaning.
 ## 5. Delivery Record
 
 - Branch: `feature/story-3.10-concise-manager-summary`
-- Pull request: Pending
-- Commit(s): Pending
-- Review result: Local full gate and live local-LLM check passed; PR pending.
+- Pull request: [#83](https://github.com/vrize-poc-demo/call-center-radar/pull/83)
+  (draft, targets `development`)
+- Commit(s): `9918111` - concise-summary rule, rendering, tests, and record.
+- Review result: local full gate, live local-LLM check, and GitHub CI passed;
+  mergeability verification and human review are pending.
 
 ### Change Log
 
@@ -121,6 +123,7 @@ fallback because it could change the model's meaning.
 | --- | --- | --- |
 | Pending | Added deterministic concise-summary enforcement, manager rendering, tests, and this record. | Keep generated call summaries scannable without trusting client-side truncation. |
 | Pending | Ran the complete test, lint, format, build, and live local-Ollama checks. | Confirm the bounded-summary contract works in both automated and real-model paths. |
+| Pending | Created draft PR #83 after a passing GitHub Quality Gates run. | Preserve a human-review step before any merge to `development`. |
 
 ### PR Readiness and Review
 
