@@ -99,19 +99,20 @@ durable queue endpoint reported `completed` with no failure reason.
 
 - Branch: `feature/story-3.6-durable-worker-queue`
 - Pull request: [#72](https://github.com/vrize-poc-demo/call-center-radar/pull/72) (draft, targets `development`)
-- Commit(s): `809078d` - durable worker, non-blocking process start, tests, and delivery record
-- Review result: Pending CI and merge-readiness verification.
+- Commit(s): `809078d` - durable worker, non-blocking process start, tests, and delivery record; `c56b96e` - draft PR record
+- Review result: Ready for human review; CI and merge-readiness verification passed.
 
 ### Change Log
 
 | Commit | What changed | Why |
 | --- | --- | --- |
 | `809078d` | Added a durable FIFO worker, non-blocking process start, recovery behavior, tests, upload UX update, and this record. | Let managers queue calls without freezing the POC or holding SQLite locks while STT runs. |
-| Pending | Recorded the draft PR and local real-sample result. | Keep the review handoff tied to the tested Story 3.6 delivery. |
+| `c56b96e` | Recorded the draft PR and local real-sample result. | Keep the review handoff tied to the tested Story 3.6 delivery. |
+| Pending | Recorded passing CI and merge-readiness verification for PR #72. | Give the human reviewer an auditable final handoff. |
 
 ### PR Readiness and Review
 
-- Mergeability verification: Pending - `npm run pr:verify -- <pr-number>`
-- Code quality grade: Pending - A to F
-- Testing quality grade: Pending - A to F
-- Review findings and follow-up: Pending human review.
+- Mergeability verification: Passed - `npm run pr:verify -- 72` confirms a clean merge into `development` with passing CI.
+- Code quality grade: A - SQLite remains authoritative, no write transaction spans inference, and restart recovery is explicit and auditable.
+- Testing quality grade: A - focused API tests cover non-blocking acceptance, FIFO, duplicate starts, failure, recovery, and read access during inference; upload behavior is also covered in the web suite.
+- Review findings and follow-up: No blocking findings. In-process execution and no terminal retry controls are deliberate POC boundaries.
