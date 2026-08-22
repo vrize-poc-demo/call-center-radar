@@ -13,6 +13,7 @@ import {
   getTranscript,
   PriorityFactor,
   RadarPriority,
+  MoodShift,
   TranscriptTurn,
 } from "../../api/calls";
 import { selectActiveTranscriptTurn } from "./transcriptPlayback";
@@ -229,6 +230,33 @@ export function CallDetailPage({ callId }: { callId: string }) {
       evidence_id: factor?.evidence_id,
     });
     seekTo(trace.start_ms);
+  };
+
+  const openMoodShift = (shift: MoodShift) => {
+    const matchingTurn = turns.find(
+      (turn) => turn.transcript_turn_id === shift.transcript_turn_id,
+    );
+    const trace: EvidenceTrace = {
+      title: `Mood shift: ${shift.from_mood} to ${shift.to_mood}`,
+      detail: shift.reason,
+      transcript_turn_id: shift.transcript_turn_id,
+      start_ms: shift.start_ms,
+      end_ms: shift.end_ms,
+      broken: !matchingTurn,
+    };
+    setSelectedTrace(trace);
+    if (!matchingTurn) {
+      console.warn("mood_shift_link_broken", {
+        call_id: callId,
+        transcript_turn_id: shift.transcript_turn_id,
+      });
+      return;
+    }
+    console.info("mood_shift_opened", {
+      call_id: callId,
+      transcript_turn_id: shift.transcript_turn_id,
+    });
+    seekTo(shift.start_ms);
   };
 
   if (error)
@@ -491,6 +519,30 @@ export function CallDetailPage({ callId }: { callId: string }) {
           {analysis ? (
             <>
               <p>{analysis.manager_brief}</p>
+              <h3>Mood timeline</h3>
+              <p className="mood-overall">Overall mood: {analysis.mood}</p>
+              {analysis.mood_shifts.length ? (
+                <ol className="evidence-candidates mood-shifts">
+                  {analysis.mood_shifts.map((shift) => (
+                    <li key={`${shift.transcript_turn_id}-${shift.to_mood}`}>
+                      <button
+                        onClick={() => openMoodShift(shift)}
+                        type="button"
+                      >
+                        <strong>
+                          {shift.from_mood} to {shift.to_mood}
+                        </strong>
+                        <time>{(shift.start_ms / 1000).toFixed(1)}s</time>
+                        <span>{shift.reason}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="supporting-copy">
+                  No evidence-backed mood shift was detected.
+                </p>
+              )}
               <h3>Evidence-backed claims</h3>
               {analysis.claims.length ? (
                 <ol className="evidence-candidates">

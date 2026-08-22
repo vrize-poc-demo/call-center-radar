@@ -77,6 +77,16 @@ export type EvidenceClaim = {
   end_ms: number;
 };
 
+export type MoodShift = {
+  from_mood: "positive" | "neutral" | "negative" | "mixed";
+  to_mood: "positive" | "neutral" | "negative" | "mixed";
+  reason: string;
+  transcript_turn_id: string;
+  quote: string;
+  start_ms: number;
+  end_ms: number;
+};
+
 export type CallAnalysis = {
   intent: string;
   mood: string;
@@ -85,6 +95,7 @@ export type CallAnalysis = {
   manager_brief: string;
   recommended_action: string;
   claims: EvidenceClaim[];
+  mood_shifts: MoodShift[];
   model_version: string;
 };
 
