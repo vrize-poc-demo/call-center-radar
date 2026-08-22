@@ -1,4 +1,5 @@
 import {
+  cleanup,
   fireEvent,
   render,
   screen,
@@ -7,25 +8,52 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getCallDetail, getEvidence, getTranscript } from "../../api/calls";
+import {
+  calculatePriority,
+  getAnalysis,
+  getCallDetail,
+  getEvidence,
+  getTranscript,
+} from "../../api/calls";
 import { CallDetailPage } from "./CallDetailPage";
 
 vi.mock("../../api/calls", () => ({
   getCallDetail: vi.fn(),
   getEvidence: vi.fn(),
   getTranscript: vi.fn(),
+  calculatePriority: vi.fn(),
+  getAnalysis: vi.fn(),
   getCallAudioUrl: (callId: string) => `/api/calls/${callId}/audio`,
 }));
 
 const mockedGetCallDetail = vi.mocked(getCallDetail);
 const mockedGetTranscript = vi.mocked(getTranscript);
 const mockedGetEvidence = vi.mocked(getEvidence);
+const mockedCalculatePriority = vi.mocked(calculatePriority);
+const mockedGetAnalysis = vi.mocked(getAnalysis);
 
 beforeEach(() => {
   mockedGetEvidence.mockResolvedValue([]);
+  mockedCalculatePriority.mockResolvedValue({
+    call_id: "call-1",
+    score: 0,
+    scoring_version: "radar-priority-v1",
+    factors: [],
+  });
+  mockedGetAnalysis.mockResolvedValue({
+    intent: "Support",
+    mood: "negative",
+    resolution: "unresolved",
+    summary: "Summary",
+    manager_brief: "Review the support concern.",
+    recommended_action: "Follow up.",
+    claims: [],
+    model_version: "test-v1",
+  });
 });
 
 afterEach(() => {
+  cleanup();
   vi.resetAllMocks();
 });
 
@@ -291,5 +319,125 @@ describe("CallDetailPage", () => {
     );
 
     expect(currentTimeSetter).toHaveBeenLastCalledWith(0);
+  });
+
+  it("opens a score explanation drawer and jumps to its exact evidence", async () => {
+    mockedGetCallDetail.mockResolvedValue({
+      call_id: "call-1",
+      agent_name: "Agent",
+      customer_name: "Customer",
+      created_at: "2026-08-22",
+      processing_status: "completed",
+      audio_channels: 1,
+      failure_reason: null,
+      transcript_turn_count: 1,
+    });
+    mockedGetTranscript.mockResolvedValue([
+      {
+        transcript_turn_id: "turn-1",
+        speaker: "customer",
+        start_ms: 1500,
+        end_ms: 2000,
+        text: "This issue is still not working.",
+      },
+    ]);
+    mockedCalculatePriority.mockResolvedValue({
+      call_id: "call-1",
+      score: 60,
+      scoring_version: "radar-priority-v1",
+      factors: [
+        {
+          factor_key: "unresolved_phrase",
+          label: "Unresolved customer concern",
+          contribution: 60,
+          evidence_id: "evidence-1",
+          transcript_turn_id: "turn-1",
+          start_ms: 1500,
+          end_ms: 2000,
+        },
+      ],
+    });
+    const audioPlay = vi
+      .spyOn(HTMLMediaElement.prototype, "play")
+      .mockResolvedValue();
+    const currentTimeSetter = vi.spyOn(
+      HTMLMediaElement.prototype,
+      "currentTime",
+      "set",
+    );
+
+    render(<CallDetailPage callId="call-1" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Show me why" }));
+
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Unresolved customer concern/ }),
+    );
+
+    expect(screen.getByText("Evidence details")).toBeTruthy();
+    expect(
+      within(screen.getByRole("dialog")).getByText(
+        "This issue is still not working.",
+      ),
+    ).toBeTruthy();
+    expect(currentTimeSetter).toHaveBeenCalledWith(1.5);
+    expect(audioPlay).toHaveBeenCalled();
+  });
+
+  it("opens an analysis claim using its saved transcript evidence", async () => {
+    mockedGetCallDetail.mockResolvedValue({
+      call_id: "call-1",
+      agent_name: "Agent",
+      customer_name: "Customer",
+      created_at: "2026-08-22",
+      processing_status: "completed",
+      audio_channels: 1,
+      failure_reason: null,
+      transcript_turn_count: 1,
+    });
+    mockedGetTranscript.mockResolvedValue([
+      {
+        transcript_turn_id: "turn-claim",
+        speaker: "customer",
+        start_ms: 2500,
+        end_ms: 3000,
+        text: "I need help with my account.",
+      },
+    ]);
+    mockedGetAnalysis.mockResolvedValue({
+      intent: "Support",
+      mood: "negative",
+      resolution: "unresolved",
+      summary: "Summary",
+      manager_brief: "Review the concern.",
+      recommended_action: "Follow up.",
+      claims: [
+        {
+          claim: "Customer support concern",
+          transcript_turn_id: "turn-claim",
+          quote: "I need help with my account.",
+          start_ms: 2500,
+          end_ms: 3000,
+        },
+      ],
+      model_version: "test-v1",
+    });
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+    const currentTimeSetter = vi.spyOn(
+      HTMLMediaElement.prototype,
+      "currentTime",
+      "set",
+    );
+
+    render(<CallDetailPage callId="call-1" />);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: /Customer support concern/,
+      }),
+    );
+
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(screen.getByText("Analysis claim")).toBeTruthy();
+    expect(currentTimeSetter).toHaveBeenCalledWith(2.5);
   });
 });

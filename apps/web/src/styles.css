@@ -214,6 +214,63 @@ h1 {
   background: #fff;
   cursor: pointer;
 }
+.priority-score {
+  margin: 0;
+  color: #096b72;
+  font-variant-numeric: tabular-nums;
+}
+.priority-score strong {
+  font-size: 2rem;
+}
+.analysis-panel h3 {
+  margin: 20px 0 10px;
+  font-size: 1rem;
+}
+.evidence-drawer {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1;
+  width: min(420px, calc(100vw - 48px));
+  padding: 20px;
+  border: 1px solid #096b72;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgb(23 33 43 / 20%);
+}
+.evidence-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.evidence-drawer h2,
+.evidence-drawer p {
+  margin-top: 0;
+}
+.evidence-drawer-header button {
+  padding: 6px 10px;
+  font: inherit;
+  color: #096b72;
+  border: 1px solid #096b72;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+.drawer-back-button {
+  margin: 0 0 12px;
+  padding: 0;
+  color: #096b72;
+  font: inherit;
+  font-weight: 700;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.trace-meta {
+  color: #536273;
+  font-size: 0.9rem;
+}
 .evidence-candidates {
   display: grid;
   gap: 8px;
