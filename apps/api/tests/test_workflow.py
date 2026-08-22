@@ -16,6 +16,7 @@ def test_migrations_are_versioned_and_idempotent(tmp_path) -> None:
         "005_radar_priority.sql",
         "006_unknown_transcript_speaker.sql",
         "007_persisted_call_analysis.sql",
+        "008_processing_queue_dismissal.sql",
     ]
     assert migrate(database) == []
 
