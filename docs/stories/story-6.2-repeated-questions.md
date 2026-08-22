@@ -104,16 +104,20 @@ its parent analysis and event rows through foreign-key cascade.
 ## 5. Delivery Record
 
 - Branch: `feature/story-6.2-repeated-questions`
-- Pull request: Pending
-- Commit(s): Pending
-- Review result: Pending
+- Pull request: [#87](https://github.com/vrize-poc-demo/call-center-radar/pull/87)
+  (targets `development`; human merge only)
+- Commit(s): `6293b54` - detection, persistence, Call Detail controls, tests,
+  and developer record.
+- Review result: Local full gate and live local-Ollama verification passed;
+  GitHub Quality Gates passed before this documentation update.
 
 ### Change Log
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Added deterministic repeated-question detection, SQLite event persistence, Call Detail evidence controls, tests, and this record. | Make repeated information requests visible without relying on an opaque semantic model. |
-| Pending | Completed full automated gate and local Ollama API smoke test. | Verify the event is persisted and returned through the real demo pipeline. |
+| `6293b54` | Added deterministic repeated-question detection, SQLite event persistence, Call Detail evidence controls, tests, and this record. | Make repeated information requests visible without relying on an opaque semantic model. |
+| `6293b54` | Completed full automated gate and local Ollama API smoke test. | Verify the event is persisted and returned through the real demo pipeline. |
+| Pending | Opened PR #87 and confirmed GitHub Quality Gates passed. | Hand the work to human review only after independent repository checks complete. |
 
 ### PR Readiness and Review
 
