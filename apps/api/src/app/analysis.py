@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from app.analysis_provider import AnalysisProviderError
 from app.logging import log_event
+from app.summary import SummaryValidationError, count_summary_words, normalize_summary
 from app.transcripts import TranscriptTurn
 from app.validation import (
     ClaimValidationError,
@@ -22,7 +23,7 @@ class AnalysisProposal(BaseModel):
     intent: str = Field(min_length=1, max_length=160)
     mood: str = Field(pattern="^(positive|neutral|negative|mixed)$")
     resolution: str = Field(pattern="^(resolved|unresolved|unclear)$")
-    summary: str = Field(min_length=1, max_length=600)
+    summary: str = Field(min_length=1)
     manager_brief: str = Field(min_length=1, max_length=400)
     recommended_action: str = Field(min_length=1, max_length=300)
     claims: list[EvidenceClaim] = Field(min_length=1, max_length=6)
@@ -42,6 +43,8 @@ class AnalysisResponse(BaseModel):
 
 def parse_model_output(raw_output: str, model_version: str) -> CallAnalysis:
     payload = json.loads(raw_output)
+    if isinstance(payload, dict) and "summary" in payload:
+        payload["summary"] = normalize_summary(payload["summary"])
     proposal = AnalysisProposal.model_validate(payload)
     return CallAnalysis(**proposal.model_dump(), model_version=model_version)
 
@@ -206,9 +209,16 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Local analysis model is unavailable. Start Ollama and try again.",
             ) from None
-        except (json.JSONDecodeError, ValidationError, ClaimValidationError) as error:
+        except (
+            json.JSONDecodeError,
+            ValidationError,
+            ClaimValidationError,
+            SummaryValidationError,
+        ) as error:
             failure_reason = (
-                str(error) if isinstance(error, ClaimValidationError) else "invalid_model_output"
+                str(error)
+                if isinstance(error, (ClaimValidationError, SummaryValidationError))
+                else "invalid_model_output"
             )
             log_event(
                 request.app.state.logger,
@@ -218,6 +228,9 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
                     "call_id": call_id,
                     "model_version": request.app.state.settings.ollama_model,
                     "reason": failure_reason,
+                    "summary_word_count": (
+                        error.word_count if isinstance(error, SummaryValidationError) else None
+                    ),
                     "rejected_mood_shift_count": int(isinstance(error, ClaimValidationError)),
                 },
             )
@@ -232,6 +245,7 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
             "call_id": call_id,
             "model_version": analysis.model_version,
             "analysis_version": analysis.analysis_version,
+            "summary_word_count": count_summary_words(analysis.summary),
             "mood_shift_count": len(analysis.mood_shifts),
             "latency_ms": round((time.perf_counter() - started_at) * 1000),
         },

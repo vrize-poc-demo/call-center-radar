@@ -31,6 +31,7 @@ describe("TodayDashboard", () => {
           intent: "Support",
           mood: "negative" as const,
           resolution: "unresolved" as const,
+          summary: `Call summary ${index}`,
           manager_brief: `Escalate call ${index}`,
           recommended_action: "Contact the customer.",
           model_version: "test-v1",
@@ -46,13 +47,12 @@ describe("TodayDashboard", () => {
     expect(screen.getAllByText("Needs attention").length).toBeGreaterThan(0);
     expect(screen.getAllByText("4").length).toBeGreaterThan(0);
     expect(screen.getAllByText("High risk").length).toBeGreaterThan(0);
-    expect(screen.getByText("Escalate call 0")).toBeTruthy();
-    expect(screen.queryByText("Escalate call 3")).toBeNull();
+    expect(screen.getAllByText("Call summary 0")).toHaveLength(2);
     expect(
       screen
-        .getByRole("link", { name: /Escalate call 0/ })
-        .getAttribute("href"),
-    ).toBe("/?call=call-0");
+        .getAllByRole("link", { name: /Call summary 0/ })
+        .map((link) => link.getAttribute("href")),
+    ).toContain("/?call=call-0");
   });
 
   it("explains the empty needs-attention state", async () => {
@@ -77,6 +77,7 @@ describe("TodayDashboard", () => {
           intent: "Low",
           mood: "neutral",
           resolution: "resolved",
+          summary: "Low call summary",
           manager_brief: "Low",
           recommended_action: "Monitor",
           model_version: "v1",
@@ -93,6 +94,7 @@ describe("TodayDashboard", () => {
           intent: "High",
           mood: "negative",
           resolution: "unresolved",
+          summary: "High call summary",
           manager_brief: "High",
           recommended_action: "Act",
           model_version: "v1",
@@ -102,14 +104,16 @@ describe("TodayDashboard", () => {
       },
     ]);
     render(<TodayDashboard />);
-    const links = await screen.findAllByRole("link", { name: /High|Low/ });
+    const links = await screen.findAllByRole("link", {
+      name: /High call summary|Low call summary/,
+    });
     expect(links.map((link) => link.getAttribute("href"))).toContain(
       "/?call=high",
     );
     expect(
       screen.getByRole("heading", { name: "All analyzed calls" }),
     ).toBeTruthy();
-    expect(screen.getAllByText("High")[0]).toBeTruthy();
+    expect(screen.getAllByText("High call summary")).toHaveLength(2);
   });
 
   it("shows a useful failure state", async () => {

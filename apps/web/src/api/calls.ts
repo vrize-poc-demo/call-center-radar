@@ -103,6 +103,7 @@ export type TriageAnalysis = {
   intent: string;
   mood: "positive" | "neutral" | "negative" | "mixed";
   resolution: "resolved" | "unresolved" | "unclear";
+  summary: string;
   manager_brief: string;
   recommended_action: string;
   model_version: string;

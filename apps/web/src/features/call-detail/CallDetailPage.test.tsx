@@ -62,6 +62,28 @@ afterEach(() => {
 });
 
 describe("CallDetailPage", () => {
+  it("shows the persisted concise summary before the manager brief", async () => {
+    mockedGetCallDetail.mockResolvedValue({
+      call_id: "call-1",
+      agent_name: "Agent",
+      customer_name: "Customer",
+      created_at: "2026-08-23 09:00:00",
+      processing_status: "completed",
+      audio_channels: 2,
+      transcript_turn_count: 1,
+      failure_reason: null,
+    });
+    mockedGetTranscript.mockResolvedValue([]);
+
+    render(<CallDetailPage callId="call-1" />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Summary" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Summary", { selector: "p" })).toBeTruthy();
+    expect(screen.getByText("Review the support concern.")).toBeTruthy();
+  });
+
   it("prefers the latest active turn when stereo transcript segments overlap", () => {
     const turns = [
       {

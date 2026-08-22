@@ -7,6 +7,7 @@ from app.analysis import parse_model_output
 from app.analysis_provider import AnalysisProviderError, GeneratedAnalysis
 from app.config import Settings
 from app.main import create_app
+from app.summary import MAX_SUMMARY_WORDS
 from app.transcripts import TranscriptTurn
 
 
@@ -102,6 +103,46 @@ def test_rejects_analysis_without_evidence_claims() -> None:
         )
 
 
+def test_normalizes_a_summary_before_exposing_it() -> None:
+    analysis = parse_model_output(
+        '{"intent":"Support","mood":"neutral","resolution":"unclear",'
+        '"summary":"  Card,   replacement\\narrives tomorrow.  ",'
+        '"manager_brief":"Brief","recommended_action":"Follow up",'
+        '"claims":[{"claim":"Support request","transcript_turn_id":"turn-1",'
+        '"quote":"Need help","start_ms":0,"end_ms":1000}],"mood_shifts":[]}',
+        "test-v1",
+    )
+
+    assert analysis.summary == "Card, replacement arrives tomorrow."
+
+
+def test_rejects_a_model_summary_above_forty_words() -> None:
+    with pytest.raises(ValueError, match="summary_word_limit_exceeded"):
+        parse_model_output(
+            json.dumps(
+                {
+                    "intent": "Support",
+                    "mood": "neutral",
+                    "resolution": "unclear",
+                    "summary": "word " * (MAX_SUMMARY_WORDS + 1),
+                    "manager_brief": "Brief",
+                    "recommended_action": "Follow up",
+                    "claims": [
+                        {
+                            "claim": "Support request",
+                            "transcript_turn_id": "turn-1",
+                            "quote": "Need help",
+                            "start_ms": 0,
+                            "end_ms": 1000,
+                        }
+                    ],
+                    "mood_shifts": [],
+                }
+            ),
+            "test-v1",
+        )
+
+
 def test_analyzes_five_calls_with_evidence_backed_claims(tmp_path) -> None:
     settings = Settings(
         database_path=tmp_path / "calls.db",
@@ -192,6 +233,7 @@ def test_analysis_is_persisted_refreshed_and_exposed_for_dashboard_triage(tmp_pa
     item = triage.json()["calls"][0]
     assert item["call_id"] == call_id
     assert item["analysis"]["analysis_version"] == 2
+    assert item["analysis"]["summary"] == "The customer requested support."
     assert item["analysis"]["mood"] == "negative"
     assert item["radar_priority"] == 100
     assert item["risk_level"] == "high"
@@ -308,3 +350,36 @@ def test_returns_a_retriable_error_when_the_local_model_is_unavailable(tmp_path)
     assert response.json()["detail"] == (
         "Local analysis model is unavailable. Start Ollama and try again."
     )
+
+
+def test_rejects_an_over_limit_summary_before_persistence(tmp_path) -> None:
+    class LongSummaryProvider(FixtureAnalysisProvider):
+        def generate(self, turns: list[TranscriptTurn]) -> GeneratedAnalysis:
+            generated = super().generate(turns)
+            payload = json.loads(generated.raw_output)
+            payload["summary"] = "word " * (MAX_SUMMARY_WORDS + 1)
+            return GeneratedAnalysis(
+                raw_output=json.dumps(payload), model_version=generated.model_version
+            )
+
+    settings = Settings(
+        database_path=tmp_path / "calls.db",
+        sample_data_dir=tmp_path / "samples",
+        upload_dir=tmp_path / "uploads",
+    )
+    app = create_app(settings)
+    app.state.analysis_provider = LongSummaryProvider()
+    with TestClient(app) as client:
+        call_id = client.post(
+            "/api/calls",
+            data={"agent_name": "Agent", "customer_name": "Customer"},
+            files={"audio": ("call.wav", b"audio", "audio/wav")},
+        ).json()["call_id"]
+        client.put(
+            f"/api/calls/{call_id}/transcript",
+            json={"turns": [{"speaker": "customer", "start_ms": 0, "end_ms": 1, "text": "Help"}]},
+        )
+        response = client.get(f"/api/calls/{call_id}/analysis")
+
+    assert response.status_code == 502
+    assert response.json()["detail"] == "Analysis output was invalid."
