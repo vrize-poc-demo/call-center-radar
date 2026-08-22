@@ -148,7 +148,7 @@ export function TodayDashboard() {
                     <span className={`risk-badge risk-${call.risk_level}`}>
                       {riskLabel(call)}
                     </span>
-                    <h3>{call.analysis.manager_brief}</h3>
+                    <h3>{call.analysis.summary}</h3>
                     <p>{call.analysis.recommended_action}</p>
                   </div>
                   <span className="priority-summary">
@@ -179,7 +179,7 @@ export function TodayDashboard() {
                   <span className={`risk-badge risk-${call.risk_level}`}>
                     {riskLabel(call)}
                   </span>
-                  <h3>{call.analysis.intent}</h3>
+                  <h3>{call.analysis.summary}</h3>
                   <p>
                     {call.analysis.resolution} · {call.analysis.mood}
                   </p>

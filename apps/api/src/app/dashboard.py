@@ -12,6 +12,7 @@ class TriageAnalysis(BaseModel):
     intent: str
     mood: str
     resolution: str
+    summary: str
     manager_brief: str
     recommended_action: str
     model_version: str
@@ -50,6 +51,7 @@ def get_triage_read_model(request: Request) -> TriageReadModel:
                 """
             SELECT calls.call_id, calls.created_at, radar_priority_scores.score AS radar_priority,
                    call_analyses.intent, call_analyses.mood, call_analyses.resolution,
+                   call_analyses.summary,
                    call_analyses.manager_brief, call_analyses.recommended_action,
                    call_analyses.model_version, call_analyses.analysis_version,
                    call_analyses.analyzed_at
@@ -90,6 +92,7 @@ def _to_triage_call(row) -> TriageCall:
             intent=data["intent"],
             mood=data["mood"],
             resolution=data["resolution"],
+            summary=data["summary"],
             manager_brief=data["manager_brief"],
             recommended_action=data["recommended_action"],
             model_version=data["model_version"],

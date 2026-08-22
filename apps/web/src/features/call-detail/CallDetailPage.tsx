@@ -518,6 +518,9 @@ export function CallDetailPage({ callId }: { callId: string }) {
           <h2>Call analysis</h2>
           {analysis ? (
             <>
+              <h3>Summary</h3>
+              <p>{analysis.summary}</p>
+              <h3>Manager brief</h3>
               <p>{analysis.manager_brief}</p>
               <h3>Mood timeline</h3>
               <p className="mood-overall">Overall mood: {analysis.mood}</p>
