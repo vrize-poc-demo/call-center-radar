@@ -82,9 +82,29 @@ body {
   font-size: 0.85rem;
 }
 
-.processing-queue-items a {
+.queue-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.processing-queue-items a,
+.queue-actions button {
   color: #096b72;
   font-weight: 700;
+}
+
+.queue-actions button {
+  padding: 0;
+  font: inherit;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.queue-actions button:disabled {
+  cursor: progress;
+  opacity: 0.7;
 }
 
 .app-shell {
@@ -362,7 +382,7 @@ h1 {
   .processing-queue-items li {
     grid-template-columns: minmax(0, 1fr) auto;
   }
-  .processing-queue-items a {
+  .queue-actions {
     grid-column: 1 / -1;
   }
   .detail-grid {

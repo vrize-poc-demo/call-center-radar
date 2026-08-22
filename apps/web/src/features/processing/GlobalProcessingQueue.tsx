@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 
-import { getProcessingQueue, ProcessingQueueItem } from "../../api/calls";
+import {
+  dismissProcessingQueueItem,
+  getProcessingQueue,
+  ProcessingQueueItem,
+} from "../../api/calls";
 
 const POLL_INTERVAL_MS = 3_000;
 
@@ -30,6 +34,7 @@ function refreshQueue(
 export function GlobalProcessingQueue() {
   const [items, setItems] = useState<ProcessingQueueItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [dismissingJobId, setDismissingJobId] = useState<string | null>(null);
 
   useEffect(() => {
     void refreshQueue(setItems, setError);
@@ -38,6 +43,27 @@ export function GlobalProcessingQueue() {
     }, POLL_INTERVAL_MS);
     return () => window.clearInterval(interval);
   }, []);
+
+  async function dismissItem(item: ProcessingQueueItem) {
+    setDismissingJobId(item.job_id);
+    setError(null);
+    try {
+      await dismissProcessingQueueItem(item.job_id);
+      setItems(
+        (currentItems) =>
+          currentItems?.filter(
+            (currentItem) => currentItem.job_id !== item.job_id,
+          ) ?? null,
+      );
+    } catch {
+      console.warn("processing_queue_dismiss_failed");
+      setError(
+        "The call could not be removed from the queue. Please try again.",
+      );
+    } finally {
+      setDismissingJobId(null);
+    }
+  }
 
   return (
     <section aria-label="Call processing" className="global-processing-queue">
@@ -65,7 +91,18 @@ export function GlobalProcessingQueue() {
                 {item.status}
               </span>
               {item.status === "completed" || item.status === "failed" ? (
-                <a href={`?call=${item.call_id}`}>Open call</a>
+                <div className="queue-actions">
+                  <a href={`?call=${item.call_id}`}>Open call</a>
+                  <button
+                    disabled={dismissingJobId === item.job_id}
+                    onClick={() => void dismissItem(item)}
+                    type="button"
+                  >
+                    {dismissingJobId === item.job_id
+                      ? "Removing…"
+                      : "Remove from queue"}
+                  </button>
+                </div>
               ) : null}
             </li>
           ))}

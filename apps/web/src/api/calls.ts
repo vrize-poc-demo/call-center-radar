@@ -91,6 +91,15 @@ export async function getProcessingQueue(): Promise<ProcessingQueueItem[]> {
   return ((await response.json()) as { items: ProcessingQueueItem[] }).items;
 }
 
+export async function dismissProcessingQueueItem(jobId: string): Promise<void> {
+  const response = await fetch(`${apiBaseUrl}/api/calls/${jobId}/queue-item`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    throw new Error("The call could not be removed from the queue.");
+  }
+}
+
 export async function getCallDetail(callId: string): Promise<CallDetail> {
   const response = await fetch(`${apiBaseUrl}/api/calls/${callId}`);
   if (!response.ok) {

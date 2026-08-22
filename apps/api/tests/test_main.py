@@ -33,7 +33,7 @@ def test_api_accepts_supported_local_vite_ports(tmp_path) -> None:
 
     with TestClient(app) as client:
         for port in (5174, 5175):
-            for method in ("GET", "POST"):
+            for method in ("DELETE", "GET", "POST"):
                 origin = f"http://127.0.0.1:{port}"
                 response = client.options(
                     "/api/calls/processing-queue",

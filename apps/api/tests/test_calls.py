@@ -181,3 +181,43 @@ def test_processing_queue_lists_recent_durable_jobs_without_call_content(tmp_pat
     assert failed["failure_reason"] == "invalid_audio"
     assert "agent_name" not in failed
     assert "transcript" not in failed
+
+
+def test_terminal_job_can_be_hidden_from_queue_without_deleting_call_data(tmp_path) -> None:
+    app = create_app(build_settings(tmp_path))
+    with TestClient(app) as client:
+        registered = client.post(
+            "/api/calls",
+            data={"agent_name": "Agent", "customer_name": "Customer"},
+            files={"audio": ("sample.wav", b"audio bytes", "audio/wav")},
+        ).json()
+        with app.state.database.connect() as connection:
+            connection.execute(
+                "UPDATE processing_jobs SET status = ? WHERE job_id = ?",
+                ("completed", registered["job_id"]),
+            )
+
+        dismissed = client.delete(f"/api/calls/{registered['job_id']}/queue-item")
+        queue = client.get("/api/calls/processing-queue")
+        detail = client.get(f"/api/calls/{registered['call_id']}")
+
+    assert dismissed.status_code == 204
+    assert queue.json() == {"items": []}
+    assert detail.status_code == 200
+    assert detail.json()["processing_status"] == "completed"
+
+
+def test_active_job_cannot_be_removed_from_queue(tmp_path) -> None:
+    app = create_app(build_settings(tmp_path))
+    with TestClient(app) as client:
+        registered = client.post(
+            "/api/calls",
+            data={"agent_name": "Agent", "customer_name": "Customer"},
+            files={"audio": ("sample.wav", b"audio bytes", "audio/wav")},
+        ).json()
+        response = client.delete(f"/api/calls/{registered['job_id']}/queue-item")
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == (
+        "Only completed or failed calls can be removed from the queue."
+    )
