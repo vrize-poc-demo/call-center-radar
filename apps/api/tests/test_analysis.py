@@ -187,6 +187,7 @@ def test_analyzes_five_calls_with_evidence_backed_claims(tmp_path) -> None:
             assert claim["start_ms"] == 0
             assert claim["end_ms"] == 1000
             assert response.json()["analysis"]["mood_shifts"] == []
+            assert response.json()["analysis"]["false_resolution"] is None
 
 
 def test_analysis_is_persisted_refreshed_and_exposed_for_dashboard_triage(tmp_path) -> None:
@@ -237,6 +238,7 @@ def test_analysis_is_persisted_refreshed_and_exposed_for_dashboard_triage(tmp_pa
     assert item["analysis"]["mood"] == "negative"
     assert item["radar_priority"] == 100
     assert item["risk_level"] == "high"
+    assert item["analysis"]["false_resolution"] is False
     assert "quote" not in item["analysis"]
     assert (
         first.json()["analysis"]["claims"][0]["transcript_turn_id"]
@@ -286,6 +288,50 @@ def test_persists_ordered_mood_shift_evidence(tmp_path) -> None:
     assert (
         analysis["mood_shifts"][1]["transcript_turn_id"] == saved["turns"][1]["transcript_turn_id"]
     )
+
+
+def test_persists_false_resolution_evidence_and_exposes_manager_triage(tmp_path) -> None:
+    settings = Settings(
+        database_path=tmp_path / "calls.db",
+        sample_data_dir=tmp_path / "samples",
+        upload_dir=tmp_path / "uploads",
+        max_upload_bytes=1024,
+    )
+    with TestClient(create_test_app(settings)) as client:
+        call_id = client.post(
+            "/api/calls",
+            data={"agent_name": "Agent", "customer_name": "Customer"},
+            files={"audio": ("call.wav", b"audio", "audio/wav")},
+        ).json()["call_id"]
+        saved = client.put(
+            f"/api/calls/{call_id}/transcript",
+            json={
+                "turns": [
+                    {
+                        "speaker": "agent",
+                        "start_ms": 1000,
+                        "end_ms": 1500,
+                        "text": "Your card is fixed now.",
+                    },
+                    {
+                        "speaker": "customer",
+                        "start_ms": 3000,
+                        "end_ms": 3500,
+                        "text": "It still is not working.",
+                    },
+                ]
+            },
+        ).json()
+        analysis = client.get(f"/api/calls/{call_id}/analysis").json()["analysis"]
+        cached = client.get(f"/api/calls/{call_id}/analysis").json()["analysis"]
+        triage = client.get("/api/dashboard/triage").json()["calls"]
+
+    signal = analysis["false_resolution"]
+    assert signal["rule_id"] == "false_resolution_contradiction_v1"
+    assert signal["resolution"]["transcript_turn_id"] == saved["turns"][0]["transcript_turn_id"]
+    assert signal["contradiction"]["transcript_turn_id"] == saved["turns"][1]["transcript_turn_id"]
+    assert cached["false_resolution"] == signal
+    assert triage[0]["analysis"]["false_resolution"] is True
 
 
 def test_replacing_a_transcript_invalidates_its_persisted_analysis(tmp_path) -> None:

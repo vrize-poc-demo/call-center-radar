@@ -6,6 +6,7 @@ import {
   calculatePriority,
   EvidenceCandidate,
   EvidenceClaim,
+  FalseResolutionSignal,
   getAnalysis,
   getCallAudioUrl,
   getCallDetail,
@@ -257,6 +258,13 @@ export function CallDetailPage({ callId }: { callId: string }) {
       transcript_turn_id: shift.transcript_turn_id,
     });
     seekTo(shift.start_ms);
+  };
+
+  const openFalseResolutionEvidence = (
+    signal: FalseResolutionSignal,
+    source: "resolution" | "contradiction",
+  ) => {
+    openTrace("analysis_claim", signal[source]);
   };
 
   if (error)
@@ -522,6 +530,41 @@ export function CallDetailPage({ callId }: { callId: string }) {
               <p>{analysis.summary}</p>
               <h3>Manager brief</h3>
               <p>{analysis.manager_brief}</p>
+              {analysis.false_resolution ? (
+                <section
+                  className="false-resolution"
+                  aria-label="Resolution check"
+                >
+                  <h3>Resolution check</h3>
+                  <p>
+                    A stated resolution was later contradicted by the customer.
+                  </p>
+                  <div className="false-resolution-actions">
+                    <button
+                      onClick={() =>
+                        openFalseResolutionEvidence(
+                          analysis.false_resolution!,
+                          "resolution",
+                        )
+                      }
+                      type="button"
+                    >
+                      Show stated resolution
+                    </button>
+                    <button
+                      onClick={() =>
+                        openFalseResolutionEvidence(
+                          analysis.false_resolution!,
+                          "contradiction",
+                        )
+                      }
+                      type="button"
+                    >
+                      Show later contradiction
+                    </button>
+                  </div>
+                </section>
+              ) : null}
               <h3>Mood timeline</h3>
               <p className="mood-overall">Overall mood: {analysis.mood}</p>
               {analysis.mood_shifts.length ? (

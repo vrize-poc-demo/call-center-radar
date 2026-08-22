@@ -4,11 +4,14 @@ import { getDashboardTriage, TriageCall } from "../../api/calls";
 
 function needsAttention(call: TriageCall) {
   return (
-    call.risk_level === "high" || call.analysis.resolution === "unresolved"
+    call.risk_level === "high" ||
+    call.analysis.resolution === "unresolved" ||
+    call.analysis.false_resolution
   );
 }
 
 function riskLabel(call: TriageCall) {
+  if (call.analysis.false_resolution) return "Resolution conflict";
   if (call.risk_level === "high") return "High risk";
   if (call.analysis.resolution === "unresolved") return "Needs follow-up";
   if (call.risk_level === "medium") return "Watch closely";
@@ -101,7 +104,7 @@ export function TodayDashboard() {
         <article className="kpi-card">
           <span>Needs attention</span>
           <strong>{summary.attention}</strong>
-          <small>High risk or unresolved</small>
+          <small>High risk, unresolved, or contradicted</small>
         </article>
         <article className="kpi-card kpi-high-risk">
           <span>High risk</span>
@@ -135,8 +138,8 @@ export function TodayDashboard() {
           <div className="empty-dashboard-state">
             <h3>No urgent calls right now</h3>
             <p>
-              Analyzed calls with high risk or an unresolved outcome will appear
-              here.
+              Analyzed calls with high risk, an unresolved outcome, or a
+              resolution contradiction will appear here.
             </p>
           </div>
         ) : (

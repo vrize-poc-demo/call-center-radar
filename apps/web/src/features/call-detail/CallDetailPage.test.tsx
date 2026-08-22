@@ -51,6 +51,7 @@ beforeEach(() => {
     recommended_action: "Follow up.",
     claims: [],
     mood_shifts: [],
+    false_resolution: null,
     model_version: "test-v1",
   });
 });
@@ -649,6 +650,7 @@ describe("CallDetailPage", () => {
           end_ms: 3000,
         },
       ],
+      false_resolution: null,
       model_version: "test-v1",
     });
     vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
@@ -709,6 +711,7 @@ describe("CallDetailPage", () => {
           end_ms: 5000,
         },
       ],
+      false_resolution: null,
       model_version: "test-v1",
     });
     vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
@@ -725,5 +728,76 @@ describe("CallDetailPage", () => {
 
     expect(screen.getByText("Mood shift: negative to positive")).toBeTruthy();
     expect(currentTimeSetter).toHaveBeenCalledWith(4);
+  });
+
+  it("shows a false resolution with saved evidence jumps", async () => {
+    mockedGetCallDetail.mockResolvedValue({
+      call_id: "call-1",
+      agent_name: "Agent",
+      customer_name: "Customer",
+      created_at: "2026-08-23",
+      processing_status: "completed",
+      audio_channels: 1,
+      failure_reason: null,
+      transcript_turn_count: 2,
+    });
+    mockedGetTranscript.mockResolvedValue([
+      {
+        transcript_turn_id: "resolution-turn",
+        speaker: "agent",
+        start_ms: 1000,
+        end_ms: 1500,
+        text: "Your card is fixed now.",
+      },
+      {
+        transcript_turn_id: "contradiction-turn",
+        speaker: "customer",
+        start_ms: 3000,
+        end_ms: 3500,
+        text: "It still is not working.",
+      },
+    ]);
+    mockedGetAnalysis.mockResolvedValue({
+      intent: "Card support",
+      mood: "negative",
+      resolution: "resolved",
+      summary: "The customer disputes a stated card resolution.",
+      manager_brief: "Review the unresolved card issue.",
+      recommended_action: "Contact the customer.",
+      claims: [],
+      mood_shifts: [],
+      false_resolution: {
+        rule_id: "false_resolution_contradiction_v1",
+        resolution: {
+          claim: "Agent stated the issue was resolved",
+          transcript_turn_id: "resolution-turn",
+          quote: "Your card is fixed now.",
+          start_ms: 1000,
+          end_ms: 1500,
+        },
+        contradiction: {
+          claim: "Customer later contradicted the resolution",
+          transcript_turn_id: "contradiction-turn",
+          quote: "It still is not working.",
+          start_ms: 3000,
+          end_ms: 3500,
+        },
+      },
+      model_version: "test-v1",
+    });
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+    const currentTimeSetter = vi.spyOn(
+      HTMLMediaElement.prototype,
+      "currentTime",
+      "set",
+    );
+
+    render(<CallDetailPage callId="call-1" />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Show later contradiction" }),
+    );
+
+    expect(screen.getByText("Analysis claim")).toBeTruthy();
+    expect(currentTimeSetter).toHaveBeenCalledWith(3);
   });
 });
