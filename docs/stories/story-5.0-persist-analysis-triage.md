@@ -89,15 +89,16 @@ Invalid model output returns HTTP 502 and does not replace the prior snapshot. R
 ## 5. Delivery Record
 
 - Branch: `feature/story-5.0-persist-analysis-triage`
-- Pull request: TBD
-- Commit(s): Pending
+- Pull request: [#64](https://github.com/vrize-poc-demo/call-center-radar/pull/64) (draft, targets `development`)
+- Commit(s): `e89f09b` (implementation); documentation delivery update pending
 - Review result: Pending
 
 ### Change Log
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending (next commit) | Added persistent analysis snapshots, trace references, refresh/cache behavior, transcript invalidation, and a dashboard-safe read model. | Give Epic 5 stable triage data without duplicating transcript text or rerunning analysis on every load. |
+| `e89f09b` | Added persistent analysis snapshots, trace references, refresh/cache behavior, transcript invalidation, and a dashboard-safe read model. | Give Epic 5 stable triage data without duplicating transcript text or rerunning analysis on every load. |
+| Pending (this documentation commit) | Recorded the draft PR and completed local verification evidence. | Give reviewers an accurate delivery record while the PR waits for GitHub checks. |
 
 ### PR Readiness and Review
 
