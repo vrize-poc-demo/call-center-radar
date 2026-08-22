@@ -1,20 +1,85 @@
+import json
+
 import pytest
 from fastapi.testclient import TestClient
 
-from app.analysis import local_demo_model, parse_model_output
+from app.analysis import parse_model_output
+from app.analysis_provider import AnalysisProviderError, GeneratedAnalysis
 from app.config import Settings
 from app.main import create_app
 from app.transcripts import TranscriptTurn
+
+
+class FixtureAnalysisProvider:
+    """A deterministic provider double; production uses only local Ollama."""
+
+    def generate(self, turns: list[TranscriptTurn]) -> GeneratedAnalysis:
+        first = turns[0]
+        mood_shifts = []
+        mood = "negative"
+        if len(turns) > 1:
+            recovery = turns[-1]
+            mood = "positive"
+            mood_shifts = [
+                _mood_shift("neutral", "negative", first),
+                _mood_shift("negative", "positive", recovery),
+            ]
+        return GeneratedAnalysis(
+            raw_output=json.dumps(
+                {
+                    "intent": "Support request",
+                    "mood": mood,
+                    "resolution": "unresolved",
+                    "summary": "The customer requested support.",
+                    "manager_brief": "Review the customer request.",
+                    "recommended_action": "Confirm the next owner.",
+                    "claims": [_claim(first)],
+                    "mood_shifts": mood_shifts,
+                }
+            ),
+            model_version="fixture:test-v1",
+        )
+
+
+def _claim(turn: TranscriptTurn) -> dict[str, object]:
+    return {
+        "claim": "Customer support concern",
+        "transcript_turn_id": turn.transcript_turn_id,
+        "quote": turn.text,
+        "start_ms": turn.start_ms,
+        "end_ms": turn.end_ms,
+    }
+
+
+def _mood_shift(from_mood: str, to_mood: str, turn: TranscriptTurn) -> dict[str, object]:
+    return {
+        "from_mood": from_mood,
+        "to_mood": to_mood,
+        "reason": "Fixture evidence-backed change.",
+        "transcript_turn_id": turn.transcript_turn_id,
+        "quote": turn.text,
+        "start_ms": turn.start_ms,
+        "end_ms": turn.end_ms,
+    }
+
+
+def create_test_app(settings: Settings):
+    app = create_app(settings)
+    app.state.analysis_provider = FixtureAnalysisProvider()
+    return app
 
 
 def test_parses_structured_analysis_output() -> None:
     analysis = parse_model_output(
         '{"intent":"Support","mood":"negative","resolution":"unresolved",'
         '"summary":"A summary","manager_brief":"A brief",'
-        '"recommended_action":"Follow up","claims":[],"mood_shifts":['
+        '"recommended_action":"Follow up","claims":[{"claim":"Support request",'
+        '"transcript_turn_id":"turn-1","quote":"Need help","start_ms":0,"end_ms":1000}],'
+        '"mood_shifts":['
         '{"from_mood":"neutral","to_mood":"negative","reason":"Issue raised",'
         '"transcript_turn_id":"turn-1","quote":"Need help","start_ms":0,'
-        '"end_ms":1000}],"model_version":"test-v1"}'
+        '"end_ms":1000}]}',
+        "test-v1",
     )
 
     assert analysis.resolution == "unresolved"
@@ -24,40 +89,17 @@ def test_parses_structured_analysis_output() -> None:
 
 def test_rejects_malformed_structured_analysis_output() -> None:
     with pytest.raises(ValueError):
-        parse_model_output('{"intent":"Support"}')
+        parse_model_output('{"intent":"Support"}', "test-v1")
 
 
-def test_does_not_treat_an_agent_help_greeting_as_customer_negativity() -> None:
-    analysis = parse_model_output(
-        local_demo_model(
-            [
-                TranscriptTurn(
-                    transcript_turn_id="agent-greeting",
-                    speaker="agent",
-                    start_ms=0,
-                    end_ms=1000,
-                    text="I am going to help you today.",
-                ),
-                TranscriptTurn(
-                    transcript_turn_id="customer-request",
-                    speaker="customer",
-                    start_ms=1000,
-                    end_ms=2000,
-                    text="I would like to reset my password.",
-                ),
-                TranscriptTurn(
-                    transcript_turn_id="agent-outcome",
-                    speaker="agent",
-                    start_ms=2000,
-                    end_ms=3000,
-                    text="The password reset link has been sent to your phone.",
-                ),
-            ]
+def test_rejects_analysis_without_evidence_claims() -> None:
+    with pytest.raises(ValueError):
+        parse_model_output(
+            '{"intent":"Support","mood":"neutral","resolution":"unclear",'
+            '"summary":"Summary","manager_brief":"Brief",'
+            '"recommended_action":"Follow up","claims":[],"mood_shifts":[]}',
+            "test-v1",
         )
-    )
-
-    assert analysis.mood == "positive"
-    assert analysis.mood_shifts == []
 
 
 def test_analyzes_five_calls_with_evidence_backed_claims(tmp_path) -> None:
@@ -75,7 +117,7 @@ def test_analyzes_five_calls_with_evidence_backed_claims(tmp_path) -> None:
         "There is an issue with my payment.",
     ]
 
-    with TestClient(create_app(settings)) as client:
+    with TestClient(create_test_app(settings)) as client:
         for index, text in enumerate(call_texts):
             call_id = client.post(
                 "/api/calls",
@@ -103,9 +145,7 @@ def test_analyzes_five_calls_with_evidence_backed_claims(tmp_path) -> None:
             assert claim["quote"] == text
             assert claim["start_ms"] == 0
             assert claim["end_ms"] == 1000
-            shift = response.json()["analysis"]["mood_shifts"][0]
-            assert shift["transcript_turn_id"] == saved["turns"][0]["transcript_turn_id"]
-            assert shift["quote"] == text
+            assert response.json()["analysis"]["mood_shifts"] == []
 
 
 def test_analysis_is_persisted_refreshed_and_exposed_for_dashboard_triage(tmp_path) -> None:
@@ -115,7 +155,7 @@ def test_analysis_is_persisted_refreshed_and_exposed_for_dashboard_triage(tmp_pa
         upload_dir=tmp_path / "uploads",
         max_upload_bytes=1024,
     )
-    with TestClient(create_app(settings)) as client:
+    with TestClient(create_test_app(settings)) as client:
         call_id = client.post(
             "/api/calls",
             data={"agent_name": "Agent", "customer_name": "Customer"},
@@ -169,7 +209,7 @@ def test_persists_ordered_mood_shift_evidence(tmp_path) -> None:
         upload_dir=tmp_path / "uploads",
         max_upload_bytes=1024,
     )
-    with TestClient(create_app(settings)) as client:
+    with TestClient(create_test_app(settings)) as client:
         call_id = client.post(
             "/api/calls",
             data={"agent_name": "Agent", "customer_name": "Customer"},
@@ -213,7 +253,7 @@ def test_replacing_a_transcript_invalidates_its_persisted_analysis(tmp_path) -> 
         upload_dir=tmp_path / "uploads",
         max_upload_bytes=1024,
     )
-    with TestClient(create_app(settings)) as client:
+    with TestClient(create_test_app(settings)) as client:
         call_id = client.post(
             "/api/calls",
             data={"agent_name": "Agent", "customer_name": "Customer"},
@@ -238,3 +278,33 @@ def test_replacing_a_transcript_invalidates_its_persisted_analysis(tmp_path) -> 
 
     assert triage.json() == {"calls": []}
     assert regenerated.json()["analysis"]["claims"][0]["quote"] == "All resolved"
+
+
+def test_returns_a_retriable_error_when_the_local_model_is_unavailable(tmp_path) -> None:
+    class UnavailableProvider:
+        def generate(self, turns: list[TranscriptTurn]) -> GeneratedAnalysis:
+            raise AnalysisProviderError("local_model_unavailable")
+
+    settings = Settings(
+        database_path=tmp_path / "calls.db",
+        sample_data_dir=tmp_path / "samples",
+        upload_dir=tmp_path / "uploads",
+    )
+    app = create_app(settings)
+    app.state.analysis_provider = UnavailableProvider()
+    with TestClient(app) as client:
+        call_id = client.post(
+            "/api/calls",
+            data={"agent_name": "Agent", "customer_name": "Customer"},
+            files={"audio": ("call.wav", b"audio", "audio/wav")},
+        ).json()["call_id"]
+        client.put(
+            f"/api/calls/{call_id}/transcript",
+            json={"turns": [{"speaker": "customer", "start_ms": 0, "end_ms": 1, "text": "Help"}]},
+        )
+        response = client.get(f"/api/calls/{call_id}/analysis")
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == (
+        "Local analysis model is unavailable. Start Ollama and try again."
+    )

@@ -17,6 +17,9 @@ class Settings:
     stereo_left_speaker: str = "agent"
     stereo_right_speaker: str = "customer"
     processing_worker_enabled: bool = False
+    ollama_base_url: str = "http://127.0.0.1:11434"
+    ollama_model: str = "qwen2.5:7b"
+    analysis_timeout_seconds: float = 90.0
 
     @classmethod
     def from_environment(cls) -> "Settings":
@@ -39,6 +42,9 @@ class Settings:
                 "CALL_RADAR_PROCESSING_WORKER_ENABLED", "true"
             ).lower()
             in {"1", "true", "yes"},
+            ollama_base_url=os.getenv("CALL_RADAR_OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
+            ollama_model=os.getenv("CALL_RADAR_OLLAMA_MODEL", "qwen2.5:7b"),
+            analysis_timeout_seconds=float(os.getenv("CALL_RADAR_ANALYSIS_TIMEOUT_SECONDS", "90")),
         )
 
 
