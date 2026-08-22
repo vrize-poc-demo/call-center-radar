@@ -98,15 +98,16 @@ durable queue endpoint reported `completed` with no failure reason.
 ## 5. Delivery Record
 
 - Branch: `feature/story-3.6-durable-worker-queue`
-- Pull request: Pending
-- Commit(s): Pending
-- Review result: Pending
+- Pull request: [#72](https://github.com/vrize-poc-demo/call-center-radar/pull/72) (draft, targets `development`)
+- Commit(s): `809078d` - durable worker, non-blocking process start, tests, and delivery record
+- Review result: Pending CI and merge-readiness verification.
 
 ### Change Log
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Added a durable FIFO worker, non-blocking process start, recovery behavior, tests, upload UX update, and this record. | Let managers queue calls without freezing the POC or holding SQLite locks while STT runs. |
+| `809078d` | Added a durable FIFO worker, non-blocking process start, recovery behavior, tests, upload UX update, and this record. | Let managers queue calls without freezing the POC or holding SQLite locks while STT runs. |
+| Pending | Recorded the draft PR and local real-sample result. | Keep the review handoff tied to the tested Story 3.6 delivery. |
 
 ### PR Readiness and Review
 
