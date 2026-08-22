@@ -23,6 +23,10 @@ function formatPlaybackTime(milliseconds: number) {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
+function formatTranscriptRange(turn: TranscriptTurn) {
+  return `${(turn.start_ms / 1000).toFixed(2)}s–${(turn.end_ms / 1000).toFixed(2)}s`;
+}
+
 type SpeakerFilter = "all" | TranscriptTurn["speaker"];
 
 type EvidenceTrace = {
@@ -126,6 +130,13 @@ export function CallDetailPage({ callId }: { callId: string }) {
       (matchesSpeaker && matchesSearch)
     );
   });
+  const customerTurns = visibleTurns.filter(
+    (turn) => turn.speaker === "customer",
+  );
+  const agentTurns = visibleTurns.filter((turn) => turn.speaker === "agent");
+  const unknownTurns = visibleTurns.filter(
+    (turn) => turn.speaker === "unknown",
+  );
 
   const updateSearchTerm = (value: string) => {
     setSearchTerm(value);
@@ -301,39 +312,100 @@ export function CallDetailPage({ callId }: { callId: string }) {
                 </p>
               ) : null}
               {visibleTurns.length ? (
-                <ol className="transcript-turns">
-                  {visibleTurns.map((turn) => {
-                    const isActive =
-                      turn.transcript_turn_id ===
-                      activeTurn?.transcript_turn_id;
-                    return (
-                      <li
-                        className={isActive ? "active-turn" : ""}
-                        key={turn.transcript_turn_id}
-                        ref={(element) => {
-                          if (element)
-                            turnElements.current.set(
-                              turn.transcript_turn_id,
-                              element,
+                <div className="transcript-lanes">
+                  {[
+                    {
+                      key: "customer",
+                      title: "Customer",
+                      turns: customerTurns,
+                    },
+                    { key: "agent", title: "Agent", turns: agentTurns },
+                  ].map((lane) => (
+                    <section
+                      aria-label={`${lane.title} messages`}
+                      className={`transcript-lane ${lane.key}-lane`}
+                      key={lane.key}
+                    >
+                      <h3>{lane.title}</h3>
+                      {lane.turns.length ? (
+                        <ol className="transcript-turns">
+                          {lane.turns.map((turn) => {
+                            const isActive =
+                              turn.transcript_turn_id ===
+                              activeTurn?.transcript_turn_id;
+                            return (
+                              <li
+                                className={isActive ? "active-turn" : ""}
+                                key={turn.transcript_turn_id}
+                                ref={(element) => {
+                                  if (element)
+                                    turnElements.current.set(
+                                      turn.transcript_turn_id,
+                                      element,
+                                    );
+                                  else
+                                    turnElements.current.delete(
+                                      turn.transcript_turn_id,
+                                    );
+                                }}
+                              >
+                                <button
+                                  onClick={() => seekTo(turn.start_ms)}
+                                  type="button"
+                                >
+                                  <time>{formatTranscriptRange(turn)}</time>
+                                  <strong>{turn.text}</strong>
+                                </button>
+                              </li>
                             );
-                          else
-                            turnElements.current.delete(
-                              turn.transcript_turn_id,
-                            );
-                        }}
-                      >
-                        <button
-                          onClick={() => seekTo(turn.start_ms)}
-                          type="button"
-                        >
-                          <span>{turn.speaker}</span>
-                          <time>{(turn.start_ms / 1000).toFixed(1)}s</time>
-                          <strong>{turn.text}</strong>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ol>
+                          })}
+                        </ol>
+                      ) : (
+                        <p className="lane-empty">No matching messages.</p>
+                      )}
+                    </section>
+                  ))}
+                  {unknownTurns.length ? (
+                    <section
+                      aria-label="Unattributed messages"
+                      className="transcript-lane unknown-lane"
+                    >
+                      <h3>Unattributed</h3>
+                      <ol className="transcript-turns">
+                        {unknownTurns.map((turn) => (
+                          <li
+                            className={
+                              turn.transcript_turn_id ===
+                              activeTurn?.transcript_turn_id
+                                ? "active-turn"
+                                : ""
+                            }
+                            key={turn.transcript_turn_id}
+                            ref={(element) => {
+                              if (element)
+                                turnElements.current.set(
+                                  turn.transcript_turn_id,
+                                  element,
+                                );
+                              else
+                                turnElements.current.delete(
+                                  turn.transcript_turn_id,
+                                );
+                            }}
+                          >
+                            <button
+                              onClick={() => seekTo(turn.start_ms)}
+                              type="button"
+                            >
+                              <time>{formatTranscriptRange(turn)}</time>
+                              <strong>{turn.text}</strong>
+                            </button>
+                          </li>
+                        ))}
+                      </ol>
+                    </section>
+                  ) : null}
+                </div>
               ) : (
                 <div className="empty-region">
                   No saved transcript turns match these filters.
