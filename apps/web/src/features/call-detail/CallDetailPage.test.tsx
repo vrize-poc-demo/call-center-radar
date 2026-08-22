@@ -16,6 +16,7 @@ import {
   getTranscript,
 } from "../../api/calls";
 import { CallDetailPage } from "./CallDetailPage";
+import { selectActiveTranscriptTurn } from "./transcriptPlayback";
 
 vi.mock("../../api/calls", () => ({
   getCallDetail: vi.fn(),
@@ -58,6 +59,52 @@ afterEach(() => {
 });
 
 describe("CallDetailPage", () => {
+  it("prefers the latest active turn when stereo transcript segments overlap", () => {
+    const turns = [
+      {
+        transcript_turn_id: "agent-long-turn",
+        speaker: "agent" as const,
+        start_ms: 11380,
+        end_ms: 21020,
+        text: "Long agent segment",
+      },
+      {
+        transcript_turn_id: "customer-current-turn",
+        speaker: "customer" as const,
+        start_ms: 16300,
+        end_ms: 18100,
+        text: "Current customer speech",
+      },
+    ];
+
+    expect(selectActiveTranscriptTurn(turns, 17000)?.transcript_turn_id).toBe(
+      "customer-current-turn",
+    );
+  });
+
+  it("uses the shortest active turn as a deterministic equal-start tie-breaker", () => {
+    const turns = [
+      {
+        transcript_turn_id: "long-turn",
+        speaker: "agent" as const,
+        start_ms: 1000,
+        end_ms: 5000,
+        text: "Long turn",
+      },
+      {
+        transcript_turn_id: "short-turn",
+        speaker: "customer" as const,
+        start_ms: 1000,
+        end_ms: 2000,
+        text: "Short turn",
+      },
+    ];
+
+    expect(selectActiveTranscriptTurn(turns, 1500)?.transcript_turn_id).toBe(
+      "short-turn",
+    );
+  });
+
   it("renders a clear loading state", () => {
     mockedGetCallDetail.mockReturnValue(new Promise(() => {}));
     mockedGetTranscript.mockResolvedValue([]);

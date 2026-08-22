@@ -15,6 +15,7 @@ import {
   RadarPriority,
   TranscriptTurn,
 } from "../../api/calls";
+import { selectActiveTranscriptTurn } from "./transcriptPlayback";
 
 function formatPlaybackTime(milliseconds: number) {
   const totalSeconds = Math.floor(milliseconds / 1000);
@@ -96,9 +97,7 @@ export function CallDetailPage({ callId }: { callId: string }) {
     }
   };
 
-  const activeTurn = turns.find(
-    (turn) => timeMs >= turn.start_ms && timeMs < turn.end_ms,
-  );
+  const activeTurn = selectActiveTranscriptTurn(turns, timeMs);
 
   useEffect(() => {
     if (!activeTurn) return;
