@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from app.config import Settings
 from app.logging import log_event
-from app.pipeline import ProcessingPipeline, ProcessingResult
+from app.pipeline import PROCESSING_STATUSES, ProcessingPipeline, ProcessingResult
 
 router = APIRouter(prefix="/api/calls", tags=["calls"])
 
@@ -30,6 +30,19 @@ class ProcessingStatus(BaseModel):
     audio_channels: int | None
     failure_reason: str | None
     transcript_turn_count: int = 0
+
+
+class ProcessingQueueItem(BaseModel):
+    job_id: str
+    call_id: str
+    customer_name: str
+    status: str
+    updated_at: str
+    failure_reason: str | None
+
+
+class ProcessingQueue(BaseModel):
+    items: list[ProcessingQueueItem]
 
 
 class CallDetail(BaseModel):
@@ -206,6 +219,36 @@ def load_call_detail(database, call_id: str):
             """,
             (call_id,),
         ).fetchone()
+
+
+@router.get("/processing-queue", response_model=ProcessingQueue)
+def get_processing_queue(request: Request) -> ProcessingQueue:
+    """Return recent durable processing jobs without exposing call content."""
+
+    with request.app.state.database.connect() as connection:
+        rows = connection.execute(
+            """
+            SELECT processing_jobs.job_id, calls.call_id, calls.customer_name,
+                   processing_jobs.status, processing_jobs.updated_at,
+                   processing_jobs.failure_reason
+            FROM processing_jobs
+            JOIN calls ON calls.id = processing_jobs.call_id
+            ORDER BY processing_jobs.updated_at DESC, processing_jobs.id DESC
+            LIMIT 20
+            """
+        ).fetchall()
+
+    items = [ProcessingQueueItem(**dict(row)) for row in rows]
+    status_counts = {
+        state: sum(item.status == state for item in items) for state in PROCESSING_STATUSES
+    }
+    log_event(
+        request.app.state.logger,
+        "processing_queue_loaded",
+        "Processing queue loaded",
+        context={"item_count": len(items), "status_counts": status_counts},
+    )
+    return ProcessingQueue(items=items)
 
 
 @router.post("", response_model=CallRegistration, status_code=status.HTTP_201_CREATED)

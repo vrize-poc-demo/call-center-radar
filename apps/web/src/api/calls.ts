@@ -14,6 +14,15 @@ export type ProcessingStatus = {
   transcript_turn_count: number;
 };
 
+export type ProcessingQueueItem = {
+  job_id: string;
+  call_id: string;
+  customer_name: string;
+  status: "queued" | "transcribing" | "analyzing" | "completed" | "failed";
+  updated_at: string;
+  failure_reason: string | null;
+};
+
 export type CallDetail = {
   call_id: string;
   agent_name: string;
@@ -72,6 +81,14 @@ export async function processCall(jobId: string): Promise<ProcessingStatus> {
     throw new Error(body?.detail ?? "The call could not be processed.");
   }
   return (await response.json()) as ProcessingStatus;
+}
+
+export async function getProcessingQueue(): Promise<ProcessingQueueItem[]> {
+  const response = await fetch(`${apiBaseUrl}/api/calls/processing-queue`);
+  if (!response.ok) {
+    throw new Error("Processing queue could not be loaded.");
+  }
+  return ((await response.json()) as { items: ProcessingQueueItem[] }).items;
 }
 
 export async function getCallDetail(callId: string): Promise<CallDetail> {
