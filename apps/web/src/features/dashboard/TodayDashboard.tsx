@@ -160,15 +160,35 @@ export function TodayDashboard() {
           </ul>
         )}
       </section>
-      <section className="attention-panel" aria-labelledby="ranked-calls-heading">
-        <div className="section-heading"><div><p className="eyebrow">Triage queue</p><h2 id="ranked-calls-heading">All analyzed calls</h2></div><span>Highest priority first</span></div>
+      <section
+        className="attention-panel"
+        aria-labelledby="ranked-calls-heading"
+      >
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Triage queue</p>
+            <h2 id="ranked-calls-heading">All analyzed calls</h2>
+          </div>
+          <span>Highest priority first</span>
+        </div>
         <ul className="attention-queue">
           {summary.ranked.map((call) => (
-            <li key={call.call_id}><a href={`/?call=${call.call_id}`}>
-              <div><span className={`risk-badge risk-${call.risk_level}`}>{riskLabel(call)}</span>
-                <h3>{call.analysis.intent}</h3><p>{call.analysis.resolution} · {call.analysis.mood}</p></div>
-              <span className="priority-summary">Priority {call.radar_priority ?? "—"}</span>
-            </a></li>
+            <li key={call.call_id}>
+              <a href={`/?call=${call.call_id}`}>
+                <div>
+                  <span className={`risk-badge risk-${call.risk_level}`}>
+                    {riskLabel(call)}
+                  </span>
+                  <h3>{call.analysis.intent}</h3>
+                  <p>
+                    {call.analysis.resolution} · {call.analysis.mood}
+                  </p>
+                </div>
+                <span className="priority-summary">
+                  Priority {call.radar_priority ?? "—"}
+                </span>
+              </a>
+            </li>
           ))}
         </ul>
       </section>
