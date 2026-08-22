@@ -88,8 +88,8 @@ Unknown calls return `404`. A score requested before calculation returns `404` a
 ## 5. Delivery Record
 
 - Branch: `feature/story-4.1-attention-score-engine`
-- Pull request: Pending
-- Commit(s): Pending
+- Pull request: [#56](https://github.com/vrize-poc-demo/call-center-radar/pull/56) (draft, targets `development`)
+- Commit(s): `a3a1b19 feat: add explainable radar priority scoring`
 - Review result: Pending
 
 ### Change Log
@@ -98,7 +98,8 @@ Update this table before every commit. Explain both the change and its reason; d
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Added the deterministic priority engine, persistence schema, tests, and API contract. | Make Radar Priority reproducible and preserve each contribution's evidence link for Story 4.2. |
+| `a3a1b19` | Added the deterministic priority engine, persistence schema, tests, and API contract. | Make Radar Priority reproducible and preserve each contribution's evidence link for Story 4.2. |
+| Pending | Recorded draft PR #56, the completed backend checks, and the existing web dependency blocker. | Give reviewers an accurate delivery and verification record without changing unrelated web dependencies. |
 
 ### PR Readiness and Review
 
