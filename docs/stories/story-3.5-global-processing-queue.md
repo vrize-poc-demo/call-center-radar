@@ -135,9 +135,9 @@ invalid-audio processing, and `Open call` navigated to
 ## 5. Delivery Record
 
 - Branch: `feature/story-3.5-global-processing-queue`
-- Pull request: Pending
-- Commit(s): Pending
-- Review result: Pending
+- Pull request: #63 (draft, targets `development`)
+- Commit(s): `3973a52` global processing queue implementation
+- Review result: Code quality A; testing quality A; no blocking self-review findings.
 
 ### Change Log
 
@@ -145,11 +145,13 @@ Update this table before every commit. Explain both the change and its reason; d
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Added a SQLite-backed global processing queue API, shared polling UI, readable state mapping, Call Detail actions, CORS coverage, automated tests, and this delivery record. | Managers need to follow call processing across pages without a browser refresh, while keeping queue data evidence-safe and tightly scoped ahead of durable worker scheduling in Story 3.6. |
+| `3973a52` | Added a SQLite-backed global processing queue API, shared polling UI, readable state mapping, Call Detail actions, CORS coverage, automated tests, and this delivery record. | Managers need to follow call processing across pages without a browser refresh, while keeping queue data evidence-safe and tightly scoped ahead of durable worker scheduling in Story 3.6. |
+| Pending | Recorded the draft PR and self-review outcome. | Keeps the in-repository delivery record aligned with the reviewable GitHub change. |
 
 ### PR Readiness and Review
 
-- Mergeability verification: Pending - `npm run pr:verify -- <pr-number>` after the draft PR and GitHub checks exist.
-- Code quality grade: Pending - A to F
-- Testing quality grade: Pending - A to F
-- Review findings and follow-up: Pending self-review.
+- Mergeability verification: Pending - `npm run pr:verify -- 63` after GitHub CI completes.
+- Code quality grade: `A`
+- Testing quality grade: `A`
+- Review findings and follow-up: No blocking findings. Durable background worker scheduling, retry
+  controls, and browser notifications remain intentionally deferred to Story 3.6 and later work.
