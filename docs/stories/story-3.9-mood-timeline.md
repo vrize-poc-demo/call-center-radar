@@ -2,7 +2,7 @@
 
 **GitHub issue:** [#77](https://github.com/vrize-poc-demo/call-center-radar/issues/77)
 
-**Status:** In Progress
+**Status:** In Review
 
 **Owner:** Vipin
 
@@ -119,9 +119,11 @@ cascade deletion.
 ## 5. Delivery Record
 
 - Branch: `feature/story-3.9-mood-timeline`
-- Pull request: Pending
-- Commit(s): Pending
-- Review result: Pending full quality gate and human review.
+- Pull request: [#80](https://github.com/vrize-poc-demo/call-center-radar/pull/80)
+  (draft, targets `development`)
+- Commit(s): `a84388e` - mood shift persistence, validation, UI, tests, and delivery record.
+- Review result: GitHub CI and `npm run pr:verify -- 80` passed; pending human
+  review and merge.
 
 ### Change Log
 
@@ -129,10 +131,16 @@ cascade deletion.
 | --- | --- | --- |
 | Pending | Added mood-shift persistence, validation, local-demo detection, Call Detail drill-down, tests, and this delivery record. | Make mood changes explainable at a real transcript/audio moment instead of relying on an opaque overall label. |
 | Pending | Ran the complete automated test, lint, format, and production-build gate. | Confirm the new analysis contract and UI drill-down do not regress the POC. |
+| Pending | Recorded PR #80, passing CI, mergeability verification, and the project review state. | Preserve a complete human-review handoff. |
 
 ### PR Readiness and Review
 
-- Mergeability verification: `Pending - npm run pr:verify -- <pr-number>`
-- Code quality grade: `Pending - A to F`
-- Testing quality grade: `Pending - A to F`
-- Review findings and follow-up: Pending full quality gate and PR review.
+- Mergeability verification: Passed - `npm run pr:verify -- 80` confirmed a
+  clean merge into `development` with passing GitHub CI.
+- Code quality grade: A - validation and persistence reuse existing immutable
+  transcript contracts; the UI stays a small evidence drill-down.
+- Testing quality grade: A - API persistence/reload, evidence validation,
+  invalid shifts, migration flow, UI drill-down, and the full gate are covered.
+- Review findings and follow-up: No blocking findings. The local detector is a
+  transparent POC heuristic; future model providers remain subject to the same
+  deterministic validation.
