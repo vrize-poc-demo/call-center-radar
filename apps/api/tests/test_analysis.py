@@ -42,6 +42,36 @@ class FixtureAnalysisProvider:
         )
 
 
+class InvalidOptionalMoodShiftProvider:
+    def generate(self, turns: list[TranscriptTurn]) -> GeneratedAnalysis:
+        first = turns[0]
+        return GeneratedAnalysis(
+            raw_output=json.dumps(
+                {
+                    "intent": "Support request",
+                    "mood": "negative",
+                    "resolution": "unclear",
+                    "summary": "The customer requested support.",
+                    "manager_brief": "Review the customer request.",
+                    "recommended_action": "Confirm the next owner.",
+                    "claims": [_claim(first)],
+                    "mood_shifts": [
+                        {
+                            "from_mood": "neutral",
+                            "to_mood": "negative",
+                            "reason": "Unsupported model quote.",
+                            "transcript_turn_id": "unknown-turn",
+                            "quote": "This text was never saved.",
+                            "start_ms": first.start_ms,
+                            "end_ms": first.end_ms,
+                        }
+                    ],
+                }
+            ),
+            model_version="fixture:invalid-optional-shift",
+        )
+
+
 def _claim(turn: TranscriptTurn) -> dict[str, object]:
     return {
         "claim": "Customer support concern",
@@ -288,6 +318,105 @@ def test_persists_ordered_mood_shift_evidence(tmp_path) -> None:
     assert (
         analysis["mood_shifts"][1]["transcript_turn_id"] == saved["turns"][1]["transcript_turn_id"]
     )
+
+
+def test_discards_invalid_optional_mood_shift_without_hiding_valid_analysis(tmp_path) -> None:
+    settings = Settings(
+        database_path=tmp_path / "calls.db",
+        sample_data_dir=tmp_path / "samples",
+        upload_dir=tmp_path / "uploads",
+        max_upload_bytes=1024,
+    )
+    app = create_app(settings)
+    app.state.analysis_provider = InvalidOptionalMoodShiftProvider()
+    with TestClient(app) as client:
+        call_id = client.post(
+            "/api/calls",
+            data={"agent_name": "Agent", "customer_name": "Customer"},
+            files={"audio": ("call.wav", b"audio", "audio/wav")},
+        ).json()["call_id"]
+        client.put(
+            f"/api/calls/{call_id}/transcript",
+            json={
+                "turns": [
+                    {
+                        "speaker": "customer",
+                        "start_ms": 0,
+                        "end_ms": 1000,
+                        "text": "I need help with my account.",
+                    }
+                ]
+            },
+        )
+        response = client.get(f"/api/calls/{call_id}/analysis")
+
+    assert response.status_code == 200
+    assert response.json()["analysis"]["claims"][0]["quote"] == "I need help with my account."
+    assert response.json()["analysis"]["mood_shifts"] == []
+
+
+def test_derives_claim_quote_and_timing_from_known_saved_turn(tmp_path) -> None:
+    class ShortenedQuoteProvider:
+        def generate(self, turns: list[TranscriptTurn]) -> GeneratedAnalysis:
+            first = turns[0]
+            return GeneratedAnalysis(
+                raw_output=json.dumps(
+                    {
+                        "intent": "Support request",
+                        "mood": "neutral",
+                        "resolution": "unclear",
+                        "summary": "The customer requested support.",
+                        "manager_brief": "Review the customer request.",
+                        "recommended_action": "Confirm the next owner.",
+                        "claims": [
+                            {
+                                **_claim(first),
+                                "quote": "Need help",
+                                "start_ms": 1,
+                                "end_ms": 2,
+                            }
+                        ],
+                        "mood_shifts": [],
+                    }
+                ),
+                model_version="fixture:shortened-quote",
+            )
+
+    settings = Settings(
+        database_path=tmp_path / "calls.db",
+        sample_data_dir=tmp_path / "samples",
+        upload_dir=tmp_path / "uploads",
+        max_upload_bytes=1024,
+    )
+    app = create_app(settings)
+    app.state.analysis_provider = ShortenedQuoteProvider()
+    with TestClient(app) as client:
+        call_id = client.post(
+            "/api/calls",
+            data={"agent_name": "Agent", "customer_name": "Customer"},
+            files={"audio": ("call.wav", b"audio", "audio/wav")},
+        ).json()["call_id"]
+        saved = client.put(
+            f"/api/calls/{call_id}/transcript",
+            json={
+                "turns": [
+                    {
+                        "speaker": "customer",
+                        "start_ms": 100,
+                        "end_ms": 900,
+                        "text": "I need help with my account.",
+                    }
+                ]
+            },
+        ).json()
+        response = client.get(f"/api/calls/{call_id}/analysis")
+
+    claim = response.json()["analysis"]["claims"][0]
+    assert response.status_code == 200
+    assert claim["transcript_turn_id"] == saved["turns"][0]["transcript_turn_id"]
+    assert claim["quote"] == "I need help with my account."
+    assert claim["start_ms"] == 100
+    assert claim["end_ms"] == 900
 
 
 def test_persists_false_resolution_evidence_and_exposes_manager_triage(tmp_path) -> None:
