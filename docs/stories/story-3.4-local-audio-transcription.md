@@ -142,6 +142,7 @@ Update this table before every commit. Explain both the change and its reason; d
 | --- | --- | --- |
 | `0a793bd` | Added local faster-whisper transcription, durable generated turns, stereo routing, UI terminology/type support, tests, and developer documentation. | Replaces the placeholder processing path with evidence-ready local STT and proves the behavior without model downloads in CI. |
 | Pending | Recorded the draft PR, exact commit, and self-review outcome. | Keeps the story record aligned with the reviewable GitHub delivery. |
+| Pending | Allowed the alternate local Vite port and added a CORS preflight regression test. | Ensures the manual app running on `127.0.0.1:5174` can reach the API instead of failing in the browser. |
 
 ### PR Readiness and Review
 
