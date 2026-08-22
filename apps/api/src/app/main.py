@@ -11,8 +11,10 @@ from app.database import Database
 from app.evidence import router as evidence_router
 from app.logging import configure_logging, log_event
 from app.migrator import migrate
+from app.pipeline import ProcessingPipeline
 from app.priority import router as priority_router
 from app.transcripts import router as transcripts_router
+from app.worker import DurableProcessingWorker
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -26,10 +28,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.database = database
         app.state.logger = logger
         app.state.settings = app_settings
+        app.state.processing_worker = DurableProcessingWorker(
+            database,
+            logger,
+            lambda: ProcessingPipeline(
+                database,
+                logger,
+                app_settings,
+                transcriber=getattr(app.state, "transcriber", None),
+            ),
+        )
         log_event(logger, "api_started", "Call Center Radar API started")
         if applied_migrations:
             log_event(logger, "database_migrated", "SQLite migrations applied at startup")
+        if app_settings.processing_worker_enabled:
+            app.state.processing_worker.start()
         yield
+        if app_settings.processing_worker_enabled:
+            app.state.processing_worker.stop()
         log_event(logger, "api_stopped", "Call Center Radar API stopped")
 
     app = FastAPI(

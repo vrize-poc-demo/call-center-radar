@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from app.config import Settings
 from app.logging import log_event
-from app.pipeline import PROCESSING_STATUSES, ProcessingPipeline, ProcessingResult
+from app.pipeline import PROCESSING_STATUSES, ProcessingResult
 
 router = APIRouter(prefix="/api/calls", tags=["calls"])
 
@@ -374,13 +374,17 @@ def get_call_audio(call_id: str, request: Request) -> FileResponse:
     return FileResponse(audio_path, media_type=MEDIA_TYPES.get(audio_path.suffix.lower()))
 
 
-@router.post("/{job_id}/process", response_model=ProcessingStatus)
+@router.post(
+    "/{job_id}/process",
+    response_model=ProcessingStatus,
+    status_code=status.HTTP_202_ACCEPTED,
+)
 def process_call(job_id: str, request: Request) -> ProcessingStatus:
-    transcriber = getattr(request.app.state, "transcriber", None)
-    result: ProcessingResult = ProcessingPipeline(
-        request.app.state.database,
-        request.app.state.logger,
-        request.app.state.settings,
-        transcriber=transcriber,
-    ).process(job_id)
+    try:
+        result: ProcessingResult = request.app.state.processing_worker.enqueue(job_id)
+    except KeyError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Processing job not found.",
+        ) from None
     return ProcessingStatus(**result.__dict__)
