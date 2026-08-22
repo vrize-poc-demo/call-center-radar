@@ -29,6 +29,7 @@ class ProcessingStatus(BaseModel):
     status: str
     audio_channels: int | None
     failure_reason: str | None
+    transcript_turn_count: int = 0
 
 
 class CallDetail(BaseModel):
@@ -296,7 +297,11 @@ def get_call_audio(call_id: str, request: Request) -> FileResponse:
 
 @router.post("/{job_id}/process", response_model=ProcessingStatus)
 def process_call(job_id: str, request: Request) -> ProcessingStatus:
+    transcriber = getattr(request.app.state, "transcriber", None)
     result: ProcessingResult = ProcessingPipeline(
-        request.app.state.database, request.app.state.logger
+        request.app.state.database,
+        request.app.state.logger,
+        request.app.state.settings,
+        transcriber=transcriber,
     ).process(job_id)
     return ProcessingStatus(**result.__dict__)

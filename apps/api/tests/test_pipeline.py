@@ -1,9 +1,27 @@
 import wave
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
 from app.config import Settings
 from app.main import create_app
+from app.transcription import AudioInfo, TranscribedTurn, TranscriptionError
+
+
+class FakeTranscriber:
+    model_version = "fake-transcriber:v1"
+
+    def transcribe(self, audio_path: Path, audio_info: AudioInfo) -> list[TranscribedTurn]:
+        assert audio_path.is_file()
+        speaker = "unknown" if audio_info.channels == 1 else "agent"
+        return [TranscribedTurn(speaker=speaker, start_ms=0, end_ms=100, text="Hello there")]
+
+
+class FailingTranscriber:
+    model_version = "fake-transcriber:v1"
+
+    def transcribe(self, audio_path: Path, audio_info: AudioInfo) -> list[TranscribedTurn]:
+        raise TranscriptionError("model_unavailable")
 
 
 def build_settings(tmp_path) -> Settings:
@@ -42,6 +60,7 @@ def test_pipeline_completes_valid_mono_wav_and_persists_events(tmp_path) -> None
     job_id = create_queued_job(app, tmp_path, wav_path.read_bytes())
 
     with TestClient(app) as client:
+        app.state.transcriber = FakeTranscriber()
         response = client.post(f"/api/calls/{job_id}/process")
 
     assert response.status_code == 200
@@ -50,6 +69,7 @@ def test_pipeline_completes_valid_mono_wav_and_persists_events(tmp_path) -> None
         "status": "completed",
         "audio_channels": 1,
         "failure_reason": None,
+        "transcript_turn_count": 1,
     }
     with app.state.database.connect() as connection:
         events = connection.execute(
@@ -60,6 +80,19 @@ def test_pipeline_completes_valid_mono_wav_and_persists_events(tmp_path) -> None
         ("transcribing", "analyzing"),
         ("analyzing", "completed"),
     ]
+
+    # Resolve the call through the durable job record because job and call IDs are distinct.
+    with app.state.database.connect() as connection:
+        call_id = connection.execute(
+            "SELECT calls.call_id FROM calls "
+            "JOIN processing_jobs ON processing_jobs.call_id = calls.id "
+            "WHERE processing_jobs.job_id = ?",
+            (job_id,),
+        ).fetchone()["call_id"]
+    with TestClient(app) as client:
+        transcript = client.get(f"/api/calls/{call_id}/transcript")
+    assert transcript.status_code == 200
+    assert transcript.json()["turns"][0]["speaker"] == "unknown"
 
 
 def test_pipeline_marks_invalid_audio_failed_and_persists_reason(tmp_path) -> None:
@@ -72,3 +105,19 @@ def test_pipeline_marks_invalid_audio_failed_and_persists_reason(tmp_path) -> No
     assert response.status_code == 200
     assert response.json()["status"] == "failed"
     assert response.json()["failure_reason"] == "invalid_audio"
+
+
+def test_pipeline_marks_transcription_failure_as_failed(tmp_path) -> None:
+    settings = build_settings(tmp_path)
+    app = create_app(settings)
+    wav_path = tmp_path / "source.wav"
+    create_wav(wav_path, channels=2)
+    job_id = create_queued_job(app, tmp_path, wav_path.read_bytes())
+
+    with TestClient(app) as client:
+        app.state.transcriber = FailingTranscriber()
+        response = client.post(f"/api/calls/{job_id}/process")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "failed"
+    assert response.json()["failure_reason"] == "transcription_failed"

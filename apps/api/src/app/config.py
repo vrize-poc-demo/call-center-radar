@@ -12,6 +12,10 @@ class Settings:
     log_level: str = "INFO"
     upload_dir: Path | None = None
     max_upload_bytes: int = 25 * 1024 * 1024
+    transcription_model: str = "base.en"
+    transcription_device: str = "cpu"
+    stereo_left_speaker: str = "agent"
+    stereo_right_speaker: str = "customer"
 
     @classmethod
     def from_environment(cls) -> "Settings":
@@ -26,6 +30,10 @@ class Settings:
             log_level=os.getenv("CALL_RADAR_LOG_LEVEL", "INFO").upper(),
             upload_dir=_from_project_root(Path(os.getenv("CALL_RADAR_UPLOAD_DIR", "data/uploads"))),
             max_upload_bytes=int(os.getenv("CALL_RADAR_MAX_UPLOAD_BYTES", str(25 * 1024 * 1024))),
+            transcription_model=os.getenv("CALL_RADAR_TRANSCRIPTION_MODEL", "base.en"),
+            transcription_device=os.getenv("CALL_RADAR_TRANSCRIPTION_DEVICE", "cpu"),
+            stereo_left_speaker=os.getenv("CALL_RADAR_STEREO_LEFT_SPEAKER", "agent"),
+            stereo_right_speaker=os.getenv("CALL_RADAR_STEREO_RIGHT_SPEAKER", "customer"),
         )
 
 

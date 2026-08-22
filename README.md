@@ -143,10 +143,38 @@ Stretch scope:
 ## Tech Direction
 
 - Database: SQLite for the POC
-- Transcription: local-first transcription pipeline
+- Transcription: free local `faster-whisper` `base.en` model, with stereo channel attribution
 - Analysis: hybrid deterministic evidence plus LLM reasoning
 - Validation: every displayed claim must resolve to real transcript evidence
 - Deployment: local demo first, lightweight hosting only where useful
+
+## Local Transcription Setup
+
+The POC transcribes MP3 and WAV recordings locally. No paid transcription API or external LLM is
+used in this step.
+
+Prerequisites:
+
+- Python 3.12
+- Node 20+
+- FFmpeg and FFprobe available on `PATH`
+
+From the repository root:
+
+```bash
+python3 -m venv .venv
+./.venv/bin/pip install -e 'apps/api[dev]'
+npm ci
+npm run dev
+```
+
+The first call processed downloads the free `base.en` model once. Processing a stereo recording
+uses the left channel as `agent` and right channel as `customer` by default; set
+`CALL_RADAR_STEREO_LEFT_SPEAKER` and `CALL_RADAR_STEREO_RIGHT_SPEAKER` to change that mapping.
+Mono recordings are intentionally stored as `unknown` speaker until diarization is implemented.
+
+For a live check, upload an MP3 or WAV recording, select **Transcribe call**, then open Call
+Detail. The persisted timestamped transcript can be searched, filtered, and played from any turn.
 
 ## Repository Notes
 

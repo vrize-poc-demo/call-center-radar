@@ -11,6 +11,7 @@ export type ProcessingStatus = {
   status: "completed" | "failed";
   audio_channels: number | null;
   failure_reason: string | null;
+  transcript_turn_count: number;
 };
 
 export type CallDetail = {
@@ -26,7 +27,7 @@ export type CallDetail = {
 
 export type TranscriptTurn = {
   transcript_turn_id: string;
-  speaker: "agent" | "customer";
+  speaker: "agent" | "customer" | "unknown";
   start_ms: number;
   end_ms: number;
   text: string;
