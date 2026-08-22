@@ -428,6 +428,32 @@ h1 {
   margin: 0;
   list-style: none;
 }
+.transcript-lanes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.transcript-lane {
+  min-width: 0;
+}
+.transcript-lane h3 {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+}
+.customer-lane h3 {
+  color: #096b72;
+}
+.agent-lane h3 {
+  color: #6a4b1a;
+}
+.unknown-lane {
+  grid-column: 1 / -1;
+}
+.lane-empty {
+  margin: 0;
+  color: #536273;
+  font-size: 0.9rem;
+}
 .transcript-turns button,
 .jump-button {
   width: 100%;
@@ -521,14 +547,12 @@ h1 {
 }
 .transcript-turns button {
   display: grid;
-  grid-template-columns: 84px 56px 1fr;
-  gap: 8px;
+  gap: 5px;
 }
-.transcript-turns span,
 .transcript-turns time {
   color: #536273;
-  text-transform: capitalize;
   font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
 }
 .active-turn button {
   background: #dff4f1;
@@ -586,6 +610,12 @@ h1 {
   }
   .transcript-controls {
     grid-template-columns: 1fr;
+  }
+  .transcript-lanes {
+    grid-template-columns: 1fr;
+  }
+  .unknown-lane {
+    grid-column: auto;
   }
 }
 

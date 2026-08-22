@@ -274,8 +274,11 @@ describe("CallDetailPage", () => {
     const page = within(container);
 
     await page.findByText("Welcome to support");
-    expect(page.getAllByText("agent")).toHaveLength(2);
-    expect(page.getByText("0.0s")).toBeTruthy();
+    expect(page.getByRole("region", { name: "Agent messages" })).toBeTruthy();
+    expect(
+      page.getByRole("region", { name: "Customer messages" }),
+    ).toBeTruthy();
+    expect(page.getByText("0.00s–1.00s")).toBeTruthy();
     const audio = container.querySelector("audio") as HTMLAudioElement;
     let playerTime = 4;
     Object.defineProperty(audio, "currentTime", {
@@ -321,6 +324,65 @@ describe("CallDetailPage", () => {
     else
       delete (HTMLElement.prototype as { scrollIntoView?: unknown })
         .scrollIntoView;
+  });
+
+  it("places messages in speaker lanes with their complete saved ranges", async () => {
+    mockedGetCallDetail.mockResolvedValue({
+      call_id: "call-1",
+      agent_name: "Agent",
+      customer_name: "Customer",
+      created_at: "2026-08-22",
+      processing_status: "completed",
+      audio_channels: 2,
+      failure_reason: null,
+      transcript_turn_count: 3,
+    });
+    mockedGetTranscript.mockResolvedValue([
+      {
+        transcript_turn_id: "agent-turn",
+        speaker: "agent",
+        start_ms: 22020,
+        end_ms: 44900,
+        text: "The requested item will be sent to your address.",
+      },
+      {
+        transcript_turn_id: "customer-turn",
+        speaker: "customer",
+        start_ms: 30000,
+        end_ms: 32000,
+        text: "Please confirm the address.",
+      },
+      {
+        transcript_turn_id: "unknown-turn",
+        speaker: "unknown",
+        start_ms: 33000,
+        end_ms: 34000,
+        text: "Unattributed speech.",
+      },
+    ]);
+
+    render(<CallDetailPage callId="call-1" />);
+
+    const agentLane = await screen.findByRole("region", {
+      name: "Agent messages",
+    });
+    const customerLane = screen.getByRole("region", {
+      name: "Customer messages",
+    });
+    const unknownLane = screen.getByRole("region", {
+      name: "Unattributed messages",
+    });
+
+    expect(
+      within(agentLane).getByText(
+        "The requested item will be sent to your address.",
+      ),
+    ).toBeTruthy();
+    expect(within(agentLane).getByText("22.02s–44.90s")).toBeTruthy();
+    expect(
+      within(customerLane).getByText("Please confirm the address."),
+    ).toBeTruthy();
+    expect(within(unknownLane).getByText("Unattributed speech.")).toBeTruthy();
   });
 
   it("offers the explicit unknown-speaker filter for mono transcripts", async () => {
