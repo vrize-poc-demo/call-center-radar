@@ -2,7 +2,7 @@
 
 **GitHub issue:** [#75](https://github.com/vrize-poc-demo/call-center-radar/issues/75)
 
-**Status:** In Progress
+**Status:** In Review
 
 **Owner:** Vipin
 
@@ -106,9 +106,11 @@ backend recovery action is required for a presentation-only reorder.
 ## 5. Delivery Record
 
 - Branch: `feature/story-3.8-reorder-call-detail`
-- Pull request: Pending
-- Commit(s): Pending
-- Review result: Pending full quality gate and human review.
+- Pull request: [#76](https://github.com/vrize-poc-demo/call-center-radar/pull/76)
+  (draft, targets `development`)
+- Commit(s): `151e9a9` - panel reorder, regression test, and delivery record.
+- Review result: GitHub CI and `npm run pr:verify -- 76` passed; pending human
+  review and merge.
 
 ### Change Log
 
@@ -116,10 +118,15 @@ backend recovery action is required for a presentation-only reorder.
 | --- | --- | --- |
 | Pending | Reordered existing Transcript and Processing panels, added a reading-order test, and documented this story. | Put the manager's conversation review ahead of supporting processing state without changing any behavior. |
 | Pending | Ran the complete test, lint, format, and production-build gate. | Confirm the UI-only reorder did not regress the surrounding POC behavior. |
+| Pending | Recorded PR #76, passing CI, mergeability verification, and the project review state. | Give the human maintainer an auditable review handoff. |
 
 ### PR Readiness and Review
 
-- Mergeability verification: `Pending - npm run pr:verify -- <pr-number>`
-- Code quality grade: `Pending - A to F`
-- Testing quality grade: `Pending - A to F`
-- Review findings and follow-up: Pending full quality gate and PR review.
+- Mergeability verification: Passed - `npm run pr:verify -- 76` confirmed a
+  clean merge into `development` with passing GitHub CI.
+- Code quality grade: A - moves existing layout units without touching data,
+  state, contracts, or diagnostics.
+- Testing quality grade: A - an explicit DOM reading-order assertion and the
+  complete quality gate protect the intended user experience.
+- Review findings and follow-up: No blocking findings. This intentionally
+  retains the existing responsive grid behavior rather than redesigning it.
