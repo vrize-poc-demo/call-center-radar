@@ -159,7 +159,7 @@ export function CallUploadForm() {
           {processingResult ? (
             <p className="field-hint">
               {processingResult.status === "completed"
-                ? `Validated ${processingResult.audio_channels === 1 ? "mono" : "stereo"} audio.`
+                ? `Transcribed ${processingResult.transcript_turn_count} saved turns from ${processingResult.audio_channels === 1 ? "mono" : "stereo"} audio.`
                 : `Processing failed: ${processingResult.failure_reason}.`}
             </p>
           ) : (
@@ -169,7 +169,7 @@ export function CallUploadForm() {
                 onClick={handleProcessing}
                 type="button"
               >
-                Run processing skeleton
+                Transcribe call
               </button>
               <a href={`?call=${result.call_id}`}>Open call detail</a>
             </div>

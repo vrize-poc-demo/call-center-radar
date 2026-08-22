@@ -212,6 +212,7 @@ export function CallDetailPage({ callId }: { callId: string }) {
                     <option value="all">All speakers</option>
                     <option value="agent">Agent</option>
                     <option value="customer">Customer</option>
+                    <option value="unknown">Unknown speaker</option>
                   </select>
                 </label>
               </div>

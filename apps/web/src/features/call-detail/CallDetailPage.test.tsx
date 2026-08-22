@@ -248,6 +248,39 @@ describe("CallDetailPage", () => {
         .scrollIntoView;
   });
 
+  it("offers the explicit unknown-speaker filter for mono transcripts", async () => {
+    mockedGetCallDetail.mockResolvedValue({
+      call_id: "call-1",
+      agent_name: "Agent",
+      customer_name: "Customer",
+      created_at: "2026-08-22",
+      processing_status: "completed",
+      audio_channels: 1,
+      failure_reason: null,
+      transcript_turn_count: 1,
+    });
+    mockedGetTranscript.mockResolvedValue([
+      {
+        transcript_turn_id: "turn-1",
+        speaker: "unknown",
+        start_ms: 0,
+        end_ms: 1000,
+        text: "Unattributed speech",
+      },
+    ]);
+
+    const { container } = render(<CallDetailPage callId="call-1" />);
+
+    const filter = await within(container).findByRole("combobox", {
+      name: "Show speaker",
+    });
+    expect(
+      within(filter).getByRole("option", { name: "Unknown speaker" }),
+    ).toBeTruthy();
+    fireEvent.change(filter, { target: { value: "unknown" } });
+    expect(within(container).getByText("Unattributed speech")).toBeTruthy();
+  });
+
   it("highlights and seeks the active transcript turn", async () => {
     mockedGetCallDetail.mockResolvedValue({
       call_id: "call-1",
