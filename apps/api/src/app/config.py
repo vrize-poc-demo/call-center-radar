@@ -16,6 +16,7 @@ class Settings:
     transcription_device: str = "cpu"
     stereo_left_speaker: str = "agent"
     stereo_right_speaker: str = "customer"
+    processing_worker_enabled: bool = False
 
     @classmethod
     def from_environment(cls) -> "Settings":
@@ -34,6 +35,10 @@ class Settings:
             transcription_device=os.getenv("CALL_RADAR_TRANSCRIPTION_DEVICE", "cpu"),
             stereo_left_speaker=os.getenv("CALL_RADAR_STEREO_LEFT_SPEAKER", "agent"),
             stereo_right_speaker=os.getenv("CALL_RADAR_STEREO_RIGHT_SPEAKER", "customer"),
+            processing_worker_enabled=os.getenv(
+                "CALL_RADAR_PROCESSING_WORKER_ENABLED", "true"
+            ).lower()
+            in {"1", "true", "yes"},
         )
 
 

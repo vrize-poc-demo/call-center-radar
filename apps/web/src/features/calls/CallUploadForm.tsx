@@ -54,6 +54,7 @@ export function CallUploadForm() {
     try {
       const registration = await registerCall(new FormData(form));
       setResult(registration);
+      setProcessingResult(await processCall(registration.job_id));
       form.reset();
       setAgentName("");
       setCustomerName("");
@@ -62,23 +63,6 @@ export function CallUploadForm() {
         submissionError instanceof Error
           ? submissionError.message
           : "The call could not be registered.",
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  async function handleProcessing() {
-    if (!result) return;
-    setError(null);
-    setIsSubmitting(true);
-    try {
-      setProcessingResult(await processCall(result.job_id));
-    } catch (processingError) {
-      setError(
-        processingError instanceof Error
-          ? processingError.message
-          : "The call could not be processed.",
       );
     } finally {
       setIsSubmitting(false);
@@ -160,20 +144,14 @@ export function CallUploadForm() {
             <p className="field-hint">
               {processingResult.status === "completed"
                 ? `Transcribed ${processingResult.transcript_turn_count} saved turns from ${processingResult.audio_channels === 1 ? "mono" : "stereo"} audio.`
-                : `Processing failed: ${processingResult.failure_reason}.`}
+                : processingResult.status === "failed"
+                  ? `Processing failed: ${processingResult.failure_reason}.`
+                  : "Processing has started. You can register another call or keep navigating while it runs."}
             </p>
-          ) : (
-            <div className="processing-actions">
-              <button
-                disabled={isSubmitting}
-                onClick={handleProcessing}
-                type="button"
-              >
-                Transcribe call
-              </button>
-              <a href={`?call=${result.call_id}`}>Open call detail</a>
-            </div>
-          )}
+          ) : null}
+          <div className="processing-actions">
+            <a href={`?call=${result.call_id}`}>Open call detail</a>
+          </div>
         </div>
       ) : null}
     </section>

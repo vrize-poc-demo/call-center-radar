@@ -8,7 +8,7 @@ export type CallRegistration = {
 
 export type ProcessingStatus = {
   job_id: string;
-  status: "completed" | "failed";
+  status: "queued" | "transcribing" | "analyzing" | "completed" | "failed";
   audio_channels: number | null;
   failure_reason: string | null;
   transcript_turn_count: number;
