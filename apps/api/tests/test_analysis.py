@@ -10,11 +10,15 @@ def test_parses_structured_analysis_output() -> None:
     analysis = parse_model_output(
         '{"intent":"Support","mood":"negative","resolution":"unresolved",'
         '"summary":"A summary","manager_brief":"A brief",'
-        '"recommended_action":"Follow up","claims":[],"model_version":"test-v1"}'
+        '"recommended_action":"Follow up","claims":[],"mood_shifts":['
+        '{"from_mood":"neutral","to_mood":"negative","reason":"Issue raised",'
+        '"transcript_turn_id":"turn-1","quote":"Need help","start_ms":0,'
+        '"end_ms":1000}],"model_version":"test-v1"}'
     )
 
     assert analysis.resolution == "unresolved"
     assert analysis.model_version == "test-v1"
+    assert analysis.mood_shifts[0].to_mood == "negative"
 
 
 def test_rejects_malformed_structured_analysis_output() -> None:
@@ -65,6 +69,9 @@ def test_analyzes_five_calls_with_evidence_backed_claims(tmp_path) -> None:
             assert claim["quote"] == text
             assert claim["start_ms"] == 0
             assert claim["end_ms"] == 1000
+            shift = response.json()["analysis"]["mood_shifts"][0]
+            assert shift["transcript_turn_id"] == saved["turns"][0]["transcript_turn_id"]
+            assert shift["quote"] == text
 
 
 def test_analysis_is_persisted_refreshed_and_exposed_for_dashboard_triage(tmp_path) -> None:
@@ -118,6 +125,50 @@ def test_analysis_is_persisted_refreshed_and_exposed_for_dashboard_triage(tmp_pa
     assert (
         first.json()["analysis"]["claims"][0]["transcript_turn_id"]
         == saved["turns"][0]["transcript_turn_id"]
+    )
+
+
+def test_persists_ordered_mood_shift_evidence(tmp_path) -> None:
+    settings = Settings(
+        database_path=tmp_path / "calls.db",
+        sample_data_dir=tmp_path / "samples",
+        upload_dir=tmp_path / "uploads",
+        max_upload_bytes=1024,
+    )
+    with TestClient(create_app(settings)) as client:
+        call_id = client.post(
+            "/api/calls",
+            data={"agent_name": "Agent", "customer_name": "Customer"},
+            files={"audio": ("call.wav", b"audio", "audio/wav")},
+        ).json()["call_id"]
+        saved = client.put(
+            f"/api/calls/{call_id}/transcript",
+            json={
+                "turns": [
+                    {
+                        "speaker": "customer",
+                        "start_ms": 0,
+                        "end_ms": 1000,
+                        "text": "This issue is not working.",
+                    },
+                    {
+                        "speaker": "customer",
+                        "start_ms": 1200,
+                        "end_ms": 2000,
+                        "text": "Thank you, it is working now.",
+                    },
+                ]
+            },
+        ).json()
+        analysis = client.get(f"/api/calls/{call_id}/analysis").json()["analysis"]
+
+    assert analysis["mood"] == "positive"
+    assert [(shift["from_mood"], shift["to_mood"]) for shift in analysis["mood_shifts"]] == [
+        ("neutral", "negative"),
+        ("negative", "positive"),
+    ]
+    assert (
+        analysis["mood_shifts"][1]["transcript_turn_id"] == saved["turns"][1]["transcript_turn_id"]
     )
 
 

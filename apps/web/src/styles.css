@@ -480,6 +480,11 @@ h1 {
   margin: 20px 0 10px;
   font-size: 1rem;
 }
+.mood-overall {
+  margin: 0 0 10px;
+  color: #36485a;
+  font-weight: 650;
+}
 .evidence-drawer {
   position: fixed;
   right: 24px;

@@ -50,6 +50,7 @@ beforeEach(() => {
     manager_brief: "Review the support concern.",
     recommended_action: "Follow up.",
     claims: [],
+    mood_shifts: [],
     model_version: "test-v1",
   });
 });
@@ -615,6 +616,17 @@ describe("CallDetailPage", () => {
           end_ms: 3000,
         },
       ],
+      mood_shifts: [
+        {
+          from_mood: "neutral",
+          to_mood: "negative",
+          reason: "The customer reports a support concern.",
+          transcript_turn_id: "turn-claim",
+          quote: "I need help with my account.",
+          start_ms: 2500,
+          end_ms: 3000,
+        },
+      ],
       model_version: "test-v1",
     });
     vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
@@ -634,5 +646,62 @@ describe("CallDetailPage", () => {
     expect(screen.getByRole("dialog")).toBeTruthy();
     expect(screen.getByText("Analysis claim")).toBeTruthy();
     expect(currentTimeSetter).toHaveBeenCalledWith(2.5);
+  });
+
+  it("opens a mood shift at its saved transcript and audio timestamp", async () => {
+    mockedGetCallDetail.mockResolvedValue({
+      call_id: "call-1",
+      agent_name: "Agent",
+      customer_name: "Customer",
+      created_at: "2026-08-22",
+      processing_status: "completed",
+      audio_channels: 1,
+      failure_reason: null,
+      transcript_turn_count: 1,
+    });
+    mockedGetTranscript.mockResolvedValue([
+      {
+        transcript_turn_id: "turn-shift",
+        speaker: "customer",
+        start_ms: 4000,
+        end_ms: 5000,
+        text: "Thank you, it is working now.",
+      },
+    ]);
+    mockedGetAnalysis.mockResolvedValue({
+      intent: "Support",
+      mood: "positive",
+      resolution: "resolved",
+      summary: "The problem was resolved.",
+      manager_brief: "No follow-up is needed.",
+      recommended_action: "Monitor.",
+      claims: [],
+      mood_shifts: [
+        {
+          from_mood: "negative",
+          to_mood: "positive",
+          reason: "The customer confirms the service is working.",
+          transcript_turn_id: "turn-shift",
+          quote: "Thank you, it is working now.",
+          start_ms: 4000,
+          end_ms: 5000,
+        },
+      ],
+      model_version: "test-v1",
+    });
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+    const currentTimeSetter = vi.spyOn(
+      HTMLMediaElement.prototype,
+      "currentTime",
+      "set",
+    );
+
+    render(<CallDetailPage callId="call-1" />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: /negative to positive/ }),
+    );
+
+    expect(screen.getByText("Mood shift: negative to positive")).toBeTruthy();
+    expect(currentTimeSetter).toHaveBeenCalledWith(4);
   });
 });
