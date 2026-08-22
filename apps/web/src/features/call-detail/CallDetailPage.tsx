@@ -1,12 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 
 import {
+  CallAnalysis,
   CallDetail,
+  calculatePriority,
   EvidenceCandidate,
+  EvidenceClaim,
+  getAnalysis,
   getCallAudioUrl,
   getCallDetail,
   getEvidence,
   getTranscript,
+  PriorityFactor,
+  RadarPriority,
   TranscriptTurn,
 } from "../../api/calls";
 
@@ -19,10 +25,27 @@ function formatPlaybackTime(milliseconds: number) {
 
 type SpeakerFilter = "all" | TranscriptTurn["speaker"];
 
+type EvidenceTrace = {
+  title: string;
+  detail: string;
+  transcript_turn_id: string;
+  start_ms: number;
+  end_ms: number;
+  contribution?: number;
+  evidence_id?: string;
+  broken: boolean;
+};
+
 export function CallDetailPage({ callId }: { callId: string }) {
   const [detail, setDetail] = useState<CallDetail | null>(null);
   const [turns, setTurns] = useState<TranscriptTurn[]>([]);
   const [evidence, setEvidence] = useState<EvidenceCandidate[]>([]);
+  const [priority, setPriority] = useState<RadarPriority | null>(null);
+  const [analysis, setAnalysis] = useState<CallAnalysis | null>(null);
+  const [selectedTrace, setSelectedTrace] = useState<EvidenceTrace | null>(
+    null,
+  );
+  const [showScoreExplanation, setShowScoreExplanation] = useState(false);
   const [timeMs, setTimeMs] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -52,6 +75,12 @@ export function CallDetailPage({ callId }: { callId: string }) {
     getEvidence(callId)
       .then((value) => active && setEvidence(value))
       .catch(() => console.warn("evidence_load_failed"));
+    calculatePriority(callId)
+      .then((value) => active && setPriority(value))
+      .catch(() => console.warn("radar_priority_load_failed"));
+    getAnalysis(callId)
+      .then((value) => active && setAnalysis(value))
+      .catch(() => console.warn("analysis_load_failed"));
     return () => {
       active = false;
     };
@@ -112,6 +141,46 @@ export function CallDetailPage({ callId }: { callId: string }) {
       query_length: searchTerm.length,
       speaker_filter: value,
     });
+  };
+
+  const openTrace = (
+    source: "priority_factor" | "analysis_claim",
+    trace: PriorityFactor | EvidenceClaim,
+  ) => {
+    const matchingTurn = turns.find(
+      (turn) => turn.transcript_turn_id === trace.transcript_turn_id,
+    );
+    const factor = "factor_key" in trace ? trace : null;
+    const evidenceTrace: EvidenceTrace = {
+      title: factor ? factor.label : "Analysis claim",
+      detail:
+        "claim" in trace
+          ? trace.claim
+          : (matchingTurn?.text ?? "Transcript evidence is unavailable."),
+      transcript_turn_id: trace.transcript_turn_id,
+      start_ms: trace.start_ms,
+      end_ms: trace.end_ms,
+      contribution: factor?.contribution,
+      evidence_id: factor?.evidence_id,
+      broken: !matchingTurn,
+    };
+    setSelectedTrace(evidenceTrace);
+    if (!matchingTurn) {
+      console.warn("evidence_trace_link_broken", {
+        call_id: callId,
+        source,
+        transcript_turn_id: trace.transcript_turn_id,
+        evidence_id: factor?.evidence_id,
+      });
+      return;
+    }
+    console.info("evidence_opened", {
+      call_id: callId,
+      source,
+      transcript_turn_id: trace.transcript_turn_id,
+      evidence_id: factor?.evidence_id,
+    });
+    seekTo(trace.start_ms);
   };
 
   if (error)
@@ -277,6 +346,70 @@ export function CallDetailPage({ callId }: { callId: string }) {
             </div>
           )}
         </section>
+        <aside className="detail-panel priority-panel">
+          <h2>Radar Priority</h2>
+          {priority ? (
+            <>
+              <p className="priority-score">
+                <strong>{priority.score}</strong> / 100
+              </p>
+              <p className="supporting-copy">
+                {priority.factors.length
+                  ? "This score has evidence you can inspect."
+                  : "No priority factors matched this call."}
+              </p>
+              {priority.factors.length ? (
+                <button
+                  className="jump-button"
+                  onClick={() => {
+                    setSelectedTrace(null);
+                    setShowScoreExplanation(true);
+                  }}
+                  type="button"
+                >
+                  Show me why
+                </button>
+              ) : null}
+            </>
+          ) : (
+            <div className="empty-region">
+              Radar Priority is unavailable for this call.
+            </div>
+          )}
+        </aside>
+        <section className="detail-panel analysis-panel">
+          <h2>Call analysis</h2>
+          {analysis ? (
+            <>
+              <p>{analysis.manager_brief}</p>
+              <h3>Evidence-backed claims</h3>
+              {analysis.claims.length ? (
+                <ol className="evidence-candidates">
+                  {analysis.claims.map((claim) => (
+                    <li key={`${claim.transcript_turn_id}-${claim.claim}`}>
+                      <button
+                        onClick={() => openTrace("analysis_claim", claim)}
+                        type="button"
+                      >
+                        <strong>{claim.claim}</strong>
+                        <time>{(claim.start_ms / 1000).toFixed(1)}s</time>
+                        <span>Show transcript evidence</span>
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <div className="empty-region">
+                  No evidence-backed claims were returned.
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="empty-region">
+              Analysis is unavailable for this call.
+            </div>
+          )}
+        </section>
         <aside className="detail-panel evidence-panel">
           <h2>Evidence</h2>
           {evidence.length ? (
@@ -308,6 +441,87 @@ export function CallDetailPage({ callId }: { callId: string }) {
           </button>
         </aside>
       </div>
+      {showScoreExplanation || selectedTrace ? (
+        <aside
+          aria-labelledby="evidence-drawer-title"
+          className="evidence-drawer"
+          role="dialog"
+        >
+          <div className="evidence-drawer-header">
+            <h2 id="evidence-drawer-title">
+              {selectedTrace ? "Evidence details" : "Why your score is high"}
+            </h2>
+            <button
+              onClick={() => {
+                setSelectedTrace(null);
+                setShowScoreExplanation(false);
+              }}
+              type="button"
+            >
+              Close
+            </button>
+          </div>
+          {selectedTrace ? (
+            <>
+              {showScoreExplanation ? (
+                <button
+                  className="drawer-back-button"
+                  onClick={() => setSelectedTrace(null)}
+                  type="button"
+                >
+                  Back to score factors
+                </button>
+              ) : null}
+              <p>
+                <strong>{selectedTrace.title}</strong>
+                {selectedTrace.contribution
+                  ? ` (+${selectedTrace.contribution} points)`
+                  : ""}
+              </p>
+              <p>{selectedTrace.detail}</p>
+              <p className="trace-meta">
+                Transcript turn: {selectedTrace.transcript_turn_id} at{" "}
+                {formatPlaybackTime(selectedTrace.start_ms)}
+              </p>
+              {selectedTrace.broken ? (
+                <p role="alert">
+                  This evidence link no longer points to a saved transcript
+                  turn.
+                </p>
+              ) : (
+                <button
+                  className="jump-button"
+                  onClick={() => seekTo(selectedTrace.start_ms)}
+                  type="button"
+                >
+                  Jump to matching audio
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <p>
+                Each factor contributes directly to the persisted Radar Priority
+                score.
+              </p>
+              <ol className="evidence-candidates">
+                {priority?.factors.map((factor) => (
+                  <li key={factor.evidence_id}>
+                    <button
+                      onClick={() => openTrace("priority_factor", factor)}
+                      type="button"
+                    >
+                      <strong>{factor.label}</strong>
+                      <time>+{factor.contribution} points</time>
+                      <span>Open transcript and audio evidence</span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            </>
+          )}
+        </aside>
+      ) : null}
     </main>
   );
 }

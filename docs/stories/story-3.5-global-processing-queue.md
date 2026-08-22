@@ -59,7 +59,7 @@ flowchart LR
 | CORS | `apps/api/src/app/main.py` | Permit standard local Vite ports through `5175` for browser API access. |
 | UI | `apps/web/src/features/processing/GlobalProcessingQueue.tsx` | Poll, render readable status, and link actionable calls to Call Detail. |
 | App composition | `apps/web/src/App.tsx` | Render the shared queue above upload and detail routes. |
-| Persistence | migration `007_processing_queue_dismissal.sql` | Store the timestamp that hides a terminal job from the manager queue. |
+| Persistence | migration `008_processing_queue_dismissal.sql` | Store the timestamp that hides a terminal job from the manager queue after the analysis migration. |
 | Tests | `apps/api/tests/test_calls.py`, `apps/api/tests/test_main.py`, `apps/api/tests/test_workflow.py`, `apps/web/src/features/processing/GlobalProcessingQueue.test.tsx` | Verify persisted API data, CORS, status states, polling, and safe dismissal. |
 
 ### Contracts and Data
@@ -81,7 +81,7 @@ flowchart LR
 }
 ```
 
-The list reads existing durable `calls` and `processing_jobs` rows. Migration `007` adds the
+The list reads existing durable `calls` and `processing_jobs` rows. Migration `008` adds the
 nullable `queue_dismissed_at` retention marker used only to hide terminal items. The browser polls
 every three seconds. `customer_name` is deliberately limited to the existing call display name;
 agent name, raw audio, transcripts, evidence, and analysis output are not returned.
@@ -116,7 +116,7 @@ Detail URL, and audit data remains available in SQLite.
 
 | Check | Result | Notes |
 | --- | --- | --- |
-| Unit tests | Passed | 14 frontend tests and 35 API tests passed. The new queue component has 100% statement, function, and line coverage. |
+| Unit tests | Passed | 19 frontend tests and 37 API tests passed after merging the current development branch. The queue component has 100% statement, function, and line coverage. |
 | Integration tests | Passed | Queue API test creates durable jobs, verifies completed and failed data, and verifies excluded content. |
 | Lint and format | Passed | `npm run lint` and `npm run format:check` passed. |
 | Build | Passed | `npm run build` completed successfully. |
@@ -168,7 +168,7 @@ Update this table before every commit. Explain both the change and its reason; d
 | `b0c1130` | Recorded the draft PR and self-review outcome. | Keeps the in-repository delivery record aligned with the reviewable GitHub change. |
 | `d3ad50a` | Recorded successful GitHub quality gates and mergeability verification. | The project item can move to In Review only after the exact PR head is verified against `development`. |
 | `7ee7ba1` | Added safe completed/failed queue dismissal, SQLite retention state, CORS support, API/UI tests, and manual verification. | Managers need to clear terminal queue clutter without destroying evidence, audit history, or calls that remain relevant for review. |
-| Pending | Recorded the successful dismissal-update review and readiness outcome. | Keeps implementation, test evidence, and Project status synchronized with the final reviewable PR head. |
+| Pending | Merged the latest `development` into Story 3.5, integrated the dashboard and queue shells, and renumbered the queue migration to `008`. | Make PR #63 mergeable while retaining the full manager dashboard and a valid ordered SQLite migration sequence. |
 
 ### PR Readiness and Review
 

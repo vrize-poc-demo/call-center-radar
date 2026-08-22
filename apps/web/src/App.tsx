@@ -1,5 +1,6 @@
 import { CallUploadForm } from "./features/calls/CallUploadForm";
 import { CallDetailPage } from "./features/call-detail/CallDetailPage";
+import { TodayDashboard } from "./features/dashboard/TodayDashboard";
 import { GlobalProcessingQueue } from "./features/processing/GlobalProcessingQueue";
 
 export function App() {
@@ -11,6 +12,14 @@ export function App() {
         <CallDetailPage callId={callId} />
       </>
     );
+  if (!new URLSearchParams(window.location.search).has("register")) {
+    return (
+      <>
+        <GlobalProcessingQueue />
+        <TodayDashboard />
+      </>
+    );
+  }
 
   return (
     <>
