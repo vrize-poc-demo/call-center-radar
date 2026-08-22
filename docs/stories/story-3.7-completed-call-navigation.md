@@ -133,7 +133,7 @@ sample call content in test output or source control.
 
 - Branch: `feature/story-3.7-completed-call-navigation`
 - Pull request: Pending
-- Commit(s): Pending
+- Commit(s): `21d22a5` - completed call navigation, terminal refresh, tests, and delivery record.
 - Review result: Full local quality gate passed; pending PR mergeability check
   and human review.
 
@@ -144,8 +144,8 @@ do not use generic entries such as "updates" or "fixes".
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Added completed-only queue navigation, active Call Detail refresh, terminal failure guidance, tests, and this delivery record. | Let managers reach finished calls reliably without accidentally treating failed work as review-ready. |
-| Pending | Ran the full test, lint, format, build, and fresh-SQLite sample-registration checks. | Provide an auditable local handoff before creating the review branch commit. |
+| `21d22a5` | Added completed-only queue navigation, active Call Detail refresh, terminal failure guidance, tests, and this delivery record. | Let managers reach finished calls reliably without accidentally treating failed work as review-ready. |
+| `21d22a5` | Ran the full test, lint, format, build, and fresh-SQLite sample-registration checks. | Provide an auditable local handoff before creating the review branch commit. |
 
 ### PR Readiness and Review
 
