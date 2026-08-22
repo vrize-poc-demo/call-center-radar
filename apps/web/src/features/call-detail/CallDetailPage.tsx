@@ -290,19 +290,6 @@ export function CallDetailPage({ callId }: { callId: string }) {
             Playback position: {formatPlaybackTime(timeMs)}
           </p>
         </section>
-        <section className="detail-panel">
-          <h2>Processing</h2>
-          <p>
-            <strong>{status}</strong>
-          </p>
-          <p>
-            {detail.failure_reason
-              ? `Processing failed: ${detail.failure_reason}.`
-              : detail.audio_channels === null
-                ? "Audio validation has not completed."
-                : `${detail.audio_channels === 1 ? "Mono" : "Stereo"} audio validated.`}
-          </p>
-        </section>
         <section className="detail-panel transcript-panel">
           <h2>Transcript</h2>
           <p>{detail.transcript_turn_count} saved turns</p>
@@ -454,6 +441,19 @@ export function CallDetailPage({ callId }: { callId: string }) {
               No transcript turns are saved for this call yet.
             </div>
           )}
+        </section>
+        <section className="detail-panel">
+          <h2>Processing</h2>
+          <p>
+            <strong>{status}</strong>
+          </p>
+          <p>
+            {detail.failure_reason
+              ? `Processing failed: ${detail.failure_reason}.`
+              : detail.audio_channels === null
+                ? "Audio validation has not completed."
+                : `${detail.audio_channels === 1 ? "Mono" : "Stereo"} audio validated.`}
+          </p>
         </section>
         <aside className="detail-panel priority-panel">
           <h2>Radar Priority</h2>
