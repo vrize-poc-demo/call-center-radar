@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -55,6 +56,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.resetAllMocks();
 });
 
@@ -184,6 +186,51 @@ describe("CallDetailPage", () => {
     fireEvent.timeUpdate(audio);
 
     expect(screen.getByText("Playback position: 1:05")).toBeTruthy();
+  });
+
+  it("refreshes a processing call until its completed transcript is available", async () => {
+    vi.useFakeTimers();
+    mockedGetCallDetail
+      .mockResolvedValueOnce({
+        call_id: "call-1",
+        agent_name: "Agent",
+        customer_name: "Customer",
+        created_at: "2026-08-22",
+        processing_status: "transcribing",
+        audio_channels: null,
+        failure_reason: null,
+        transcript_turn_count: 0,
+      })
+      .mockResolvedValueOnce({
+        call_id: "call-1",
+        agent_name: "Agent",
+        customer_name: "Customer",
+        created_at: "2026-08-22",
+        processing_status: "completed",
+        audio_channels: 1,
+        failure_reason: null,
+        transcript_turn_count: 1,
+      });
+    mockedGetTranscript.mockResolvedValueOnce([]).mockResolvedValueOnce([
+      {
+        transcript_turn_id: "turn-1",
+        speaker: "agent",
+        start_ms: 0,
+        end_ms: 1000,
+        text: "Completed transcript turn",
+      },
+    ]);
+
+    render(<CallDetailPage callId="call-1" />);
+    await act(async () => {});
+    expect(screen.getAllByText("transcribing")).toHaveLength(2);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_000);
+    });
+
+    expect(screen.getByText("Completed transcript turn")).toBeTruthy();
+    expect(mockedGetCallDetail).toHaveBeenCalledTimes(2);
   });
 
   it("shows deterministic evidence and jumps to its saved timestamp", async () => {

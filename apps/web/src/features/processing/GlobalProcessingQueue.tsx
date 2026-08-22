@@ -65,6 +65,10 @@ export function GlobalProcessingQueue() {
     }
   }
 
+  function logOpenDetail(item: ProcessingQueueItem) {
+    console.info("queue_to_detail_requested", { call_id: item.call_id });
+  }
+
   return (
     <section aria-label="Call processing" className="global-processing-queue">
       <div className="queue-heading">
@@ -90,9 +94,30 @@ export function GlobalProcessingQueue() {
               <span className={`status-badge status-${item.status}`}>
                 {item.status}
               </span>
-              {item.status === "completed" || item.status === "failed" ? (
+              {item.status === "completed" ? (
                 <div className="queue-actions">
-                  <a href={`?call=${item.call_id}`}>Open call</a>
+                  <a
+                    href={`?call=${item.call_id}`}
+                    onClick={() => logOpenDetail(item)}
+                  >
+                    Open call detail
+                  </a>
+                  <button
+                    disabled={dismissingJobId === item.job_id}
+                    onClick={() => void dismissItem(item)}
+                    type="button"
+                  >
+                    {dismissingJobId === item.job_id
+                      ? "Removing…"
+                      : "Remove from queue"}
+                  </button>
+                </div>
+              ) : item.status === "failed" ? (
+                <div className="queue-actions">
+                  <span className="queue-failure-note">
+                    Processing stopped. Upload a corrected recording to try
+                    again.
+                  </span>
                   <button
                     disabled={dismissingJobId === item.job_id}
                     onClick={() => void dismissItem(item)}

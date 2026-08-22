@@ -87,6 +87,10 @@ body {
   align-items: center;
   gap: 10px;
 }
+.queue-failure-note {
+  color: #9f1c1c;
+  font-size: 0.85rem;
+}
 
 .processing-queue-items a,
 .queue-actions button {

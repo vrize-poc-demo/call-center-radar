@@ -41,7 +41,7 @@ describe("GlobalProcessingQueue", () => {
     ).toBeTruthy();
   });
 
-  it("renders status wording and open actions for completed and failed calls", async () => {
+  it("offers persisted detail navigation only for completed calls", async () => {
     mockedGetProcessingQueue.mockResolvedValue([
       {
         job_id: "job-active",
@@ -74,7 +74,24 @@ describe("GlobalProcessingQueue", () => {
     expect(await screen.findByText("Creating transcript")).toBeTruthy();
     expect(screen.getByText("Ready to review")).toBeTruthy();
     expect(screen.getByText("Needs attention")).toBeTruthy();
-    expect(screen.getAllByRole("link", { name: "Open call" })).toHaveLength(2);
+    const detailLink = screen.getByRole("link", { name: "Open call detail" });
+    detailLink.addEventListener("click", (event) => event.preventDefault());
+    expect(detailLink.getAttribute("href")).toBe("?call=call-ready");
+    const navigationLog = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => {});
+    fireEvent.click(detailLink);
+    expect(navigationLog).toHaveBeenCalledWith("queue_to_detail_requested", {
+      call_id: "call-ready",
+    });
+    expect(
+      screen.getAllByRole("link", { name: "Open call detail" }),
+    ).toHaveLength(1);
+    expect(
+      screen.getByText(
+        "Processing stopped. Upload a corrected recording to try again.",
+      ),
+    ).toBeTruthy();
     expect(
       screen.getAllByRole("button", { name: "Remove from queue" }),
     ).toHaveLength(2);

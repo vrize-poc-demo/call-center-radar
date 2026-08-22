@@ -91,6 +91,44 @@ export function CallDetailPage({ callId }: { callId: string }) {
     };
   }, [callId]);
 
+  useEffect(() => {
+    if (
+      detail?.processing_status === "completed" ||
+      detail?.processing_status === "failed"
+    ) {
+      return;
+    }
+
+    let active = true;
+    const refreshCompletedContext = () => {
+      void getTranscript(callId)
+        .then((value) => active && setTurns(value))
+        .catch(() => console.warn("transcript_load_failed"));
+      void getEvidence(callId)
+        .then((value) => active && setEvidence(value))
+        .catch(() => console.warn("evidence_load_failed"));
+    };
+    const refreshDetail = () => {
+      void getCallDetail(callId)
+        .then((value) => {
+          if (!active) return;
+          setDetail(value);
+          if (value.processing_status === "completed") {
+            refreshCompletedContext();
+            window.clearInterval(intervalId);
+          }
+          if (value.processing_status === "failed")
+            window.clearInterval(intervalId);
+        })
+        .catch(() => console.warn("call_detail_refresh_failed"));
+    };
+    const intervalId = window.setInterval(refreshDetail, 3_000);
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+    };
+  }, [callId, detail?.processing_status]);
+
   const seekTo = (milliseconds: number) => {
     if (!audio.current) return;
     audio.current.currentTime = milliseconds / 1000;
