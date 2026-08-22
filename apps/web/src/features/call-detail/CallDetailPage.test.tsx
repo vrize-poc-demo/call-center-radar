@@ -52,6 +52,7 @@ beforeEach(() => {
     claims: [],
     mood_shifts: [],
     false_resolution: null,
+    repeated_questions: [],
     model_version: "test-v1",
   });
 });
@@ -651,6 +652,7 @@ describe("CallDetailPage", () => {
         },
       ],
       false_resolution: null,
+      repeated_questions: [],
       model_version: "test-v1",
     });
     vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
@@ -712,6 +714,7 @@ describe("CallDetailPage", () => {
         },
       ],
       false_resolution: null,
+      repeated_questions: [],
       model_version: "test-v1",
     });
     vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
@@ -783,6 +786,7 @@ describe("CallDetailPage", () => {
           end_ms: 3500,
         },
       },
+      repeated_questions: [],
       model_version: "test-v1",
     });
     vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
@@ -799,5 +803,78 @@ describe("CallDetailPage", () => {
 
     expect(screen.getByText("Analysis claim")).toBeTruthy();
     expect(currentTimeSetter).toHaveBeenCalledWith(3);
+  });
+
+  it("opens the repeated request at its saved transcript and audio timestamp", async () => {
+    mockedGetCallDetail.mockResolvedValue({
+      call_id: "call-1",
+      agent_name: "Agent",
+      customer_name: "Customer",
+      created_at: "2026-08-23",
+      processing_status: "completed",
+      audio_channels: 1,
+      failure_reason: null,
+      transcript_turn_count: 2,
+    });
+    mockedGetTranscript.mockResolvedValue([
+      {
+        transcript_turn_id: "question-one",
+        speaker: "customer",
+        start_ms: 1000,
+        end_ms: 1500,
+        text: "What time is my appointment?",
+      },
+      {
+        transcript_turn_id: "question-two",
+        speaker: "customer",
+        start_ms: 4000,
+        end_ms: 4500,
+        text: "What time is my appointment?",
+      },
+    ]);
+    mockedGetAnalysis.mockResolvedValue({
+      intent: "Appointment question",
+      mood: "neutral",
+      resolution: "unclear",
+      summary: "The customer repeated an appointment-time question.",
+      manager_brief: "Check why the appointment time was not answered.",
+      recommended_action: "Confirm the appointment time.",
+      claims: [],
+      mood_shifts: [],
+      false_resolution: null,
+      repeated_questions: [
+        {
+          rule_id: "repeated_question_exact_v1",
+          speaker: "customer",
+          original: {
+            claim: "Original information request",
+            transcript_turn_id: "question-one",
+            quote: "What time is my appointment?",
+            start_ms: 1000,
+            end_ms: 1500,
+          },
+          repeated: {
+            claim: "Repeated information request",
+            transcript_turn_id: "question-two",
+            quote: "What time is my appointment?",
+            start_ms: 4000,
+            end_ms: 4500,
+          },
+        },
+      ],
+      model_version: "test-v1",
+    });
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+    const currentTimeSetter = vi.spyOn(
+      HTMLMediaElement.prototype,
+      "currentTime",
+      "set",
+    );
+
+    render(<CallDetailPage callId="call-1" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Show repeat" }));
+
+    expect(screen.getByText("Analysis claim")).toBeTruthy();
+    expect(currentTimeSetter).toHaveBeenCalledWith(4);
   });
 });

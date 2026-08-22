@@ -463,6 +463,56 @@ def test_persists_false_resolution_evidence_and_exposes_manager_triage(tmp_path)
     assert triage[0]["analysis"]["false_resolution"] is True
 
 
+def test_persists_repeated_question_events_with_saved_evidence(tmp_path) -> None:
+    settings = Settings(
+        database_path=tmp_path / "calls.db",
+        sample_data_dir=tmp_path / "samples",
+        upload_dir=tmp_path / "uploads",
+        max_upload_bytes=1024,
+    )
+    with TestClient(create_test_app(settings)) as client:
+        call_id = client.post(
+            "/api/calls",
+            data={"agent_name": "Agent", "customer_name": "Customer"},
+            files={"audio": ("call.wav", b"audio", "audio/wav")},
+        ).json()["call_id"]
+        saved = client.put(
+            f"/api/calls/{call_id}/transcript",
+            json={
+                "turns": [
+                    {
+                        "speaker": "customer",
+                        "start_ms": 1000,
+                        "end_ms": 1500,
+                        "text": "What time is my appointment?",
+                    },
+                    {
+                        "speaker": "agent",
+                        "start_ms": 2000,
+                        "end_ms": 2500,
+                        "text": "Let me check that for you.",
+                    },
+                    {
+                        "speaker": "customer",
+                        "start_ms": 3000,
+                        "end_ms": 3500,
+                        "text": "What time is my appointment?",
+                    },
+                ]
+            },
+        ).json()
+        analysis = client.get(f"/api/calls/{call_id}/analysis").json()["analysis"]
+        cached = client.get(f"/api/calls/{call_id}/analysis").json()["analysis"]
+
+    assert len(analysis["repeated_questions"]) == 1
+    event = analysis["repeated_questions"][0]
+    assert event["rule_id"] == "repeated_question_exact_v1"
+    assert event["speaker"] == "customer"
+    assert event["original"]["transcript_turn_id"] == saved["turns"][0]["transcript_turn_id"]
+    assert event["repeated"]["transcript_turn_id"] == saved["turns"][2]["transcript_turn_id"]
+    assert cached["repeated_questions"] == analysis["repeated_questions"]
+
+
 def test_replacing_a_transcript_invalidates_its_persisted_analysis(tmp_path) -> None:
     settings = Settings(
         database_path=tmp_path / "calls.db",

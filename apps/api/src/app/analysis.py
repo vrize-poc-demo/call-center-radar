@@ -7,6 +7,8 @@ from pydantic import BaseModel, Field, ValidationError
 from app.analysis_provider import AnalysisProviderError
 from app.false_resolution import RULE_ID, detect_false_resolution
 from app.logging import log_event
+from app.repeated_questions import RULE_ID as REPEATED_QUESTION_RULE_ID
+from app.repeated_questions import detect_repeated_questions
 from app.summary import SummaryValidationError, count_summary_words, normalize_summary
 from app.transcripts import TranscriptTurn
 from app.validation import (
@@ -38,6 +40,14 @@ class CallAnalysis(AnalysisProposal):
     analysis_version: int = Field(default=0, ge=0)
     analyzed_at: str | None = None
     false_resolution: FalseResolutionSignal | None = None
+    repeated_questions: list["RepeatedQuestionEvent"] = Field(default_factory=list, max_length=6)
+
+
+class RepeatedQuestionEvent(BaseModel):
+    rule_id: str = Field(min_length=1, max_length=120)
+    speaker: str = Field(pattern="^(agent|customer)$")
+    original: EvidenceClaim
+    repeated: EvidenceClaim
 
 
 class AnalysisResponse(BaseModel):
@@ -136,11 +146,52 @@ def load_persisted_analysis(connection, call_id: str) -> CallAnalysis | None:
                 end_ms=false_resolution_row["contradiction_end_ms"],
             ),
         )
+    repeated_question_rows = connection.execute(
+        """
+        SELECT event.rule_id, event.speaker,
+               original.transcript_turn_id AS original_transcript_turn_id,
+               original.text AS original_quote, original.start_ms AS original_start_ms,
+               original.end_ms AS original_end_ms,
+               repeated.transcript_turn_id AS repeated_transcript_turn_id,
+               repeated.text AS repeated_quote, repeated.start_ms AS repeated_start_ms,
+               repeated.end_ms AS repeated_end_ms
+        FROM call_analysis_repeated_question_events AS event
+        JOIN transcript_turns AS original
+          ON original.transcript_turn_id = event.original_transcript_turn_id
+        JOIN transcript_turns AS repeated
+          ON repeated.transcript_turn_id = event.repeated_transcript_turn_id
+        WHERE event.analysis_id = ?
+        ORDER BY repeated.start_ms, event.id
+        """,
+        (row["id"],),
+    ).fetchall()
+    repeated_questions = [
+        RepeatedQuestionEvent(
+            rule_id=event["rule_id"],
+            speaker=event["speaker"],
+            original=EvidenceClaim(
+                claim="Original information request",
+                transcript_turn_id=event["original_transcript_turn_id"],
+                quote=event["original_quote"],
+                start_ms=event["original_start_ms"],
+                end_ms=event["original_end_ms"],
+            ),
+            repeated=EvidenceClaim(
+                claim="Repeated information request",
+                transcript_turn_id=event["repeated_transcript_turn_id"],
+                quote=event["repeated_quote"],
+                start_ms=event["repeated_start_ms"],
+                end_ms=event["repeated_end_ms"],
+            ),
+        )
+        for event in repeated_question_rows
+    ]
     return CallAnalysis(
         **{key: row[key] for key in row.keys() if key != "id"},
         claims=[EvidenceClaim(**dict(claim)) for claim in claims],
         mood_shifts=[MoodShift(**dict(shift)) for shift in mood_shifts],
         false_resolution=false_resolution,
+        repeated_questions=repeated_questions,
     )
 
 
@@ -235,6 +286,26 @@ def persist_analysis(connection, call_db_id: int, analysis: CallAnalysis) -> Cal
                 analysis.false_resolution.contradiction.transcript_turn_id,
             ),
         )
+    connection.execute(
+        "DELETE FROM call_analysis_repeated_question_events WHERE analysis_id = ?",
+        (analysis_row["id"],),
+    )
+    for event in analysis.repeated_questions:
+        connection.execute(
+            """
+            INSERT INTO call_analysis_repeated_question_events (
+                analysis_id, rule_id, speaker, original_transcript_turn_id,
+                repeated_transcript_turn_id
+            ) VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                analysis_row["id"],
+                event.rule_id,
+                event.speaker,
+                event.original.transcript_turn_id,
+                event.repeated.transcript_turn_id,
+            ),
+        )
     # Resolve the public identifier from the database row before rebuilding response quotes.
     row = connection.execute("SELECT call_id FROM calls WHERE id = ?", (call_db_id,)).fetchone()
     assert row is not None
@@ -319,6 +390,38 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
                         "reason": detection.suppression_reason,
                     },
                 )
+            analysis.repeated_questions = [
+                RepeatedQuestionEvent(
+                    rule_id=REPEATED_QUESTION_RULE_ID,
+                    speaker=event.speaker,
+                    original=EvidenceClaim(
+                        claim="Original information request",
+                        transcript_turn_id=event.original_turn.transcript_turn_id,
+                        quote=event.original_turn.text,
+                        start_ms=event.original_turn.start_ms,
+                        end_ms=event.original_turn.end_ms,
+                    ),
+                    repeated=EvidenceClaim(
+                        claim="Repeated information request",
+                        transcript_turn_id=event.repeated_turn.transcript_turn_id,
+                        quote=event.repeated_turn.text,
+                        start_ms=event.repeated_turn.start_ms,
+                        end_ms=event.repeated_turn.end_ms,
+                    ),
+                )
+                for event in detect_repeated_questions(turns)
+            ]
+            if analysis.repeated_questions:
+                log_event(
+                    request.app.state.logger,
+                    "repeated_questions_detected",
+                    "Repeated information requests detected",
+                    context={
+                        "call_id": call_id,
+                        "event_count": len(analysis.repeated_questions),
+                        "rule_id": REPEATED_QUESTION_RULE_ID,
+                    },
+                )
             analysis = persist_analysis(connection, call["id"], analysis)
         except AnalysisProviderError as error:
             log_event(
@@ -370,6 +473,7 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
             "summary_word_count": count_summary_words(analysis.summary),
             "mood_shift_count": len(analysis.mood_shifts),
             "false_resolution_detected": analysis.false_resolution is not None,
+            "repeated_question_count": len(analysis.repeated_questions),
             "latency_ms": round((time.perf_counter() - started_at) * 1000),
         },
     )

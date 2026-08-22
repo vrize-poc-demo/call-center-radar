@@ -93,6 +93,13 @@ export type FalseResolutionSignal = {
   contradiction: EvidenceClaim;
 };
 
+export type RepeatedQuestionEvent = {
+  rule_id: string;
+  speaker: "agent" | "customer";
+  original: EvidenceClaim;
+  repeated: EvidenceClaim;
+};
+
 export type CallAnalysis = {
   intent: string;
   mood: string;
@@ -103,6 +110,7 @@ export type CallAnalysis = {
   claims: EvidenceClaim[];
   mood_shifts: MoodShift[];
   false_resolution: FalseResolutionSignal | null;
+  repeated_questions: RepeatedQuestionEvent[];
   model_version: string;
 };
 

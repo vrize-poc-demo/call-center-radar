@@ -511,6 +511,38 @@ h1 {
   background: #ffffff;
   color: #5d4700;
 }
+.repeated-question-events {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.repeated-question-events li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 10px;
+  padding: 10px;
+  border: 1px solid #c7d7d7;
+  border-radius: 6px;
+  background: #f5fbfa;
+}
+.repeated-question-events span {
+  color: #536273;
+  font-size: 0.85rem;
+}
+.repeated-question-events div {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.repeated-question-events button {
+  border: 1px solid #096b72;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #075d63;
+}
 .evidence-drawer {
   position: fixed;
   right: 24px;
