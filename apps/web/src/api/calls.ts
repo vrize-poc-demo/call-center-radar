@@ -43,6 +43,42 @@ export type EvidenceCandidate = {
   quote: string;
 };
 
+export type PriorityFactor = {
+  factor_key: string;
+  label: string;
+  contribution: number;
+  evidence_id: string;
+  transcript_turn_id: string;
+  start_ms: number;
+  end_ms: number;
+};
+
+export type RadarPriority = {
+  call_id: string;
+  score: number;
+  scoring_version: string;
+  factors: PriorityFactor[];
+};
+
+export type EvidenceClaim = {
+  claim: string;
+  transcript_turn_id: string;
+  quote: string;
+  start_ms: number;
+  end_ms: number;
+};
+
+export type CallAnalysis = {
+  intent: string;
+  mood: string;
+  resolution: string;
+  summary: string;
+  manager_brief: string;
+  recommended_action: string;
+  claims: EvidenceClaim[];
+  model_version: string;
+};
+
 export async function registerCall(
   formData: FormData,
 ): Promise<CallRegistration> {
@@ -102,4 +138,21 @@ export async function getEvidence(
   if (!response.ok) throw new Error("Evidence could not be loaded.");
   return ((await response.json()) as { candidates: EvidenceCandidate[] })
     .candidates;
+}
+
+export async function calculatePriority(
+  callId: string,
+): Promise<RadarPriority> {
+  const response = await fetch(`${apiBaseUrl}/api/calls/${callId}/priority`, {
+    method: "POST",
+  });
+  if (!response.ok)
+    throw new Error("The Radar Priority score could not be calculated.");
+  return (await response.json()) as RadarPriority;
+}
+
+export async function getAnalysis(callId: string): Promise<CallAnalysis> {
+  const response = await fetch(`${apiBaseUrl}/api/calls/${callId}/analysis`);
+  if (!response.ok) throw new Error("The analysis could not be loaded.");
+  return ((await response.json()) as { analysis: CallAnalysis }).analysis;
 }
