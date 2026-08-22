@@ -14,9 +14,9 @@ from app.validation import (
     EvidenceClaim,
     FalseResolutionSignal,
     MoodShift,
-    validate_claims,
+    derive_claim_evidence,
+    filter_valid_mood_shifts,
     validate_false_resolution,
-    validate_mood_shifts,
 )
 
 router = APIRouter(prefix="/api/calls", tags=["analysis"])
@@ -258,8 +258,21 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
         try:
             generated = request.app.state.analysis_provider.generate(turns)
             analysis = parse_model_output(generated.raw_output, generated.model_version)
-            analysis.claims = validate_claims(analysis.claims, turns)
-            analysis.mood_shifts = validate_mood_shifts(analysis.mood_shifts, turns)
+            analysis.claims = derive_claim_evidence(analysis.claims, turns)
+            analysis.mood_shifts, rejected_mood_shift_reasons = filter_valid_mood_shifts(
+                analysis.mood_shifts, turns
+            )
+            if rejected_mood_shift_reasons:
+                log_event(
+                    request.app.state.logger,
+                    "optional_mood_shifts_discarded",
+                    "Unsupported optional mood shifts were discarded",
+                    context={
+                        "call_id": call_id,
+                        "rejected_count": len(rejected_mood_shift_reasons),
+                        "reasons": sorted(set(rejected_mood_shift_reasons)),
+                    },
+                )
             detection = detect_false_resolution(turns)
             if detection.detected:
                 assert detection.resolution_turn is not None

@@ -5,6 +5,8 @@ from app.validation import (
     ClaimValidationError,
     EvidenceClaim,
     MoodShift,
+    derive_claim_evidence,
+    filter_valid_mood_shifts,
     validate_claims,
     validate_mood_shifts,
 )
@@ -46,6 +48,42 @@ def test_rejects_unsupported_claims(field, value, reason) -> None:
     payload[field] = value
     with pytest.raises(ClaimValidationError, match=reason):
         validate_claims([EvidenceClaim(**payload)], [turn])
+
+
+def test_derives_claim_quote_and_timing_from_known_turn_id() -> None:
+    turn = TranscriptTurn(
+        transcript_turn_id="turn_1", speaker="customer", start_ms=10, end_ms=20, text="Need help"
+    )
+    claim = EvidenceClaim(
+        claim="Support concern",
+        transcript_turn_id="turn_1",
+        quote="Shortened quote",
+        start_ms=1,
+        end_ms=2,
+    )
+
+    assert derive_claim_evidence([claim], [turn]) == [
+        EvidenceClaim(
+            claim="Support concern",
+            transcript_turn_id="turn_1",
+            quote="Need help",
+            start_ms=10,
+            end_ms=20,
+        )
+    ]
+
+
+def test_rejects_claim_with_unknown_turn_id_even_when_deriving_evidence() -> None:
+    claim = EvidenceClaim(
+        claim="Support concern",
+        transcript_turn_id="unknown",
+        quote="Anything",
+        start_ms=0,
+        end_ms=1,
+    )
+
+    with pytest.raises(ClaimValidationError, match="unknown_transcript_turn"):
+        derive_claim_evidence([claim], [])
 
 
 def test_validates_ordered_mood_shifts_against_saved_turns() -> None:
@@ -129,3 +167,27 @@ def test_rejects_unsupported_mood_shifts(payload, reason) -> None:
 
     with pytest.raises(ClaimValidationError, match=reason):
         validate_mood_shifts([MoodShift(**payload)], [turn])
+
+
+def test_filters_invalid_optional_mood_shifts_without_relaxing_validation() -> None:
+    turn = TranscriptTurn(
+        transcript_turn_id="turn_1",
+        speaker="customer",
+        start_ms=10,
+        end_ms=20,
+        text="Need help",
+    )
+    invalid_shift = MoodShift(
+        from_mood="neutral",
+        to_mood="negative",
+        reason="Unsupported quote.",
+        transcript_turn_id="unknown-turn",
+        quote="invented",
+        start_ms=10,
+        end_ms=20,
+    )
+
+    accepted, reasons = filter_valid_mood_shifts([invalid_shift], [turn])
+
+    assert accepted == []
+    assert reasons == ["unknown_transcript_turn"]
