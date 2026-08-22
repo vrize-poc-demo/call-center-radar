@@ -4,6 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.analysis import router as analysis_router
+from app.analysis_provider import OllamaAnalysisProvider
 from app.calls import router as calls_router
 from app.config import Settings
 from app.dashboard import router as dashboard_router
@@ -28,6 +29,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.database = database
         app.state.logger = logger
         app.state.settings = app_settings
+        if not hasattr(app.state, "analysis_provider"):
+            app.state.analysis_provider = OllamaAnalysisProvider(app_settings)
         app.state.processing_worker = DurableProcessingWorker(
             database,
             logger,

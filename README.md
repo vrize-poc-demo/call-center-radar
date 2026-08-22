@@ -144,7 +144,7 @@ Stretch scope:
 
 - Database: SQLite for the POC
 - Transcription: free local `faster-whisper` `base.en` model, with stereo channel attribution
-- Analysis: hybrid deterministic evidence plus LLM reasoning
+- Analysis: free local Ollama LLM reasoning plus deterministic evidence validation
 - Validation: every displayed claim must resolve to real transcript evidence
 - Deployment: local demo first, lightweight hosting only where useful
 
@@ -175,6 +175,28 @@ Mono recordings are intentionally stored as `unknown` speaker until diarization 
 
 For a live check, upload an MP3 or WAV recording, select **Transcribe call**, then open Call
 Detail. The persisted timestamped transcript can be searched, filtered, and played from any turn.
+
+## Local AI Analysis Setup
+
+Call analysis runs on this Mac through Ollama. It is free for the POC and does
+not send transcript text to a paid cloud provider. Install Ollama once, then
+download the default analysis model:
+
+```bash
+brew install ollama
+ollama serve
+ollama pull qwen2.5:7b
+```
+
+Keep `ollama serve` running before starting the API. The API sends structured,
+timestamped transcript turns to `http://127.0.0.1:11434`, asks the local model
+for strict JSON, then rejects any claim or mood shift whose turn ID, quote, or
+timestamps do not exactly match saved SQLite transcript data. It never falls
+back to keyword heuristics. If Ollama is unavailable, analysis returns a
+retriable `503` and existing saved analysis remains unchanged.
+
+Optional settings: `CALL_RADAR_OLLAMA_BASE_URL`, `CALL_RADAR_OLLAMA_MODEL`, and
+`CALL_RADAR_ANALYSIS_TIMEOUT_SECONDS`. The default model is `qwen2.5:7b`.
 
 ## Repository Notes
 

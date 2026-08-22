@@ -4,6 +4,7 @@ import time
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field, ValidationError
 
+from app.analysis_provider import AnalysisProviderError
 from app.logging import log_event
 from app.transcripts import TranscriptTurn
 from app.validation import (
@@ -16,18 +17,19 @@ from app.validation import (
 
 router = APIRouter(prefix="/api/calls", tags=["analysis"])
 
-MODEL_VERSION = "local-demo-structured-v1"
 
-
-class CallAnalysis(BaseModel):
+class AnalysisProposal(BaseModel):
     intent: str = Field(min_length=1, max_length=160)
     mood: str = Field(pattern="^(positive|neutral|negative|mixed)$")
     resolution: str = Field(pattern="^(resolved|unresolved|unclear)$")
     summary: str = Field(min_length=1, max_length=600)
     manager_brief: str = Field(min_length=1, max_length=400)
     recommended_action: str = Field(min_length=1, max_length=300)
-    claims: list[EvidenceClaim]
+    claims: list[EvidenceClaim] = Field(min_length=1, max_length=6)
     mood_shifts: list[MoodShift] = Field(default_factory=list, max_length=6)
+
+
+class CallAnalysis(AnalysisProposal):
     model_version: str
     analysis_version: int = Field(default=0, ge=0)
     analyzed_at: str | None = None
@@ -38,18 +40,10 @@ class AnalysisResponse(BaseModel):
     analysis: CallAnalysis
 
 
-def build_prompt(turns: list[TranscriptTurn]) -> str:
-    transcript = "\n".join(f"{turn.speaker}: {turn.text}" for turn in turns)
-    return (
-        "Return JSON only with intent, mood, resolution, summary, manager_brief, "
-        "recommended_action, and mood_shifts. Each mood shift must cite one saved transcript "
-        "turn exactly. Do not create evidence or timestamps.\n\nTranscript:\n" + transcript
-    )
-
-
-def parse_model_output(raw_output: str) -> CallAnalysis:
+def parse_model_output(raw_output: str, model_version: str) -> CallAnalysis:
     payload = json.loads(raw_output)
-    return CallAnalysis.model_validate(payload)
+    proposal = AnalysisProposal.model_validate(payload)
+    return CallAnalysis(**proposal.model_dump(), model_version=model_version)
 
 
 def load_persisted_analysis(connection, call_id: str) -> CallAnalysis | None:
@@ -183,79 +177,6 @@ def persist_analysis(connection, call_db_id: int, analysis: CallAnalysis) -> Cal
     return persisted
 
 
-def local_demo_model(turns: list[TranscriptTurn]) -> str:
-    text = " ".join(turn.text for turn in turns).casefold()
-    has_problem = any(term in text for term in ("issue", "error", "help", "problem", "not working"))
-    has_unresolved = any(
-        term in text for term in ("not resolved", "still not working", "cannot", "can't", "unable")
-    )
-    resolution = "unresolved" if has_unresolved else "unclear" if has_problem else "resolved"
-    mood_shifts = []
-    current_mood = "neutral"
-    for turn in turns:
-        turn_text = turn.text.casefold()
-        next_mood = current_mood
-        if any(
-            term in turn_text
-            for term in (
-                "issue",
-                "error",
-                "help",
-                "problem",
-                "not working",
-                "unable",
-                "cannot",
-                "can't",
-            )
-        ):
-            next_mood = "negative"
-        elif any(
-            term in turn_text
-            for term in ("thank", "resolved", "working now", "great", "appreciate")
-        ):
-            next_mood = "positive"
-        if next_mood != current_mood:
-            mood_shifts.append(
-                {
-                    "from_mood": current_mood,
-                    "to_mood": next_mood,
-                    "reason": "The saved transcript contains a supported mood-change signal.",
-                    "transcript_turn_id": turn.transcript_turn_id,
-                    "quote": turn.text,
-                    "start_ms": turn.start_ms,
-                    "end_ms": turn.end_ms,
-                }
-            )
-            current_mood = next_mood
-    payload = {
-        "intent": "Request support" if has_problem else "General service enquiry",
-        "mood": current_mood,
-        "resolution": resolution,
-        "summary": "The caller raised a support request that requires review."
-        if has_problem
-        else "The call contains a general service conversation.",
-        "manager_brief": "Review the support concern and confirm the next owner."
-        if has_problem
-        else "No immediate escalation is indicated by the local demo model.",
-        "recommended_action": "Confirm ownership and follow up with the customer."
-        if has_problem
-        else "Monitor the call outcome in normal workflow.",
-        "claims": [
-            {
-                "claim": "Customer support concern",
-                "transcript_turn_id": turn.transcript_turn_id,
-                "quote": turn.text,
-                "start_ms": turn.start_ms,
-                "end_ms": turn.end_ms,
-            }
-            for turn in turns[:1]
-        ],
-        "mood_shifts": mood_shifts,
-        "model_version": MODEL_VERSION,
-    }
-    return json.dumps(payload)
-
-
 def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysis:
     started_at = time.perf_counter()
     with request.app.state.database.connect() as connection:
@@ -269,10 +190,22 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
         ).fetchall()
         turns = [TranscriptTurn(**dict(row)) for row in rows]
         try:
-            analysis = parse_model_output(local_demo_model(turns))
+            generated = request.app.state.analysis_provider.generate(turns)
+            analysis = parse_model_output(generated.raw_output, generated.model_version)
             analysis.claims = validate_claims(analysis.claims, turns)
             analysis.mood_shifts = validate_mood_shifts(analysis.mood_shifts, turns)
             analysis = persist_analysis(connection, call["id"], analysis)
+        except AnalysisProviderError as error:
+            log_event(
+                request.app.state.logger,
+                "analysis_provider_failed",
+                "Local structured analysis provider failed",
+                context={"call_id": call_id, "reason": str(error)},
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Local analysis model is unavailable. Start Ollama and try again.",
+            ) from None
         except (json.JSONDecodeError, ValidationError, ClaimValidationError) as error:
             failure_reason = (
                 str(error) if isinstance(error, ClaimValidationError) else "invalid_model_output"
@@ -283,7 +216,7 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
                 "Structured analysis schema failed",
                 context={
                     "call_id": call_id,
-                    "model_version": MODEL_VERSION,
+                    "model_version": request.app.state.settings.ollama_model,
                     "reason": failure_reason,
                     "rejected_mood_shift_count": int(isinstance(error, ClaimValidationError)),
                 },
