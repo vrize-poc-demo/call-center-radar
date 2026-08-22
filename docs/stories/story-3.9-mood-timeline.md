@@ -128,11 +128,12 @@ SQLite cascade deletion.
 ## 5. Delivery Record
 
 - Branch: `feature/story-3.9-mood-timeline`
-- Pull request: [#80](https://github.com/vrize-poc-demo/call-center-radar/pull/80)
+- Pull request: [#81](https://github.com/vrize-poc-demo/call-center-radar/pull/81)
   (draft, targets `development`)
-- Commit(s): `a84388e` - mood shift persistence, validation, UI, tests, and delivery record.
-- Review result: GitHub CI and `npm run pr:verify -- 80` passed; pending human
-  review and merge.
+- Commit(s): `59d4d43` - local Ollama provider, evidence requirement, tests,
+  README setup, and delivery record update.
+- Review result: local full quality gate and live Ollama integration passed;
+  GitHub CI and mergeability verification for PR #81 are pending.
 
 ### Change Log
 
@@ -143,6 +144,7 @@ SQLite cascade deletion.
 | Pending | Recorded PR #80, passing CI, mergeability verification, and the project review state. | Preserve a complete human-review handoff. |
 | Pending | Replaced the keyword-based local detector with a free Ollama structured-analysis provider, configuration, failure handling, and provider/API tests. | Let the POC make semantic call judgments locally without treating keyword matches as intelligence. |
 | Pending | Required at least one immutable transcript-backed claim and verified the complete live API path using local `qwen2.5:7b`. | Prevent an analysis from presenting manager conclusions without an evidence anchor. |
+| Pending | Created follow-up PR #81 because the prior mood-timeline PR had already merged before this local-model replacement. | Keep the local-LLM change independently reviewable and avoid direct changes to `development`. |
 
 ### PR Readiness and Review
 
