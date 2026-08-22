@@ -117,20 +117,25 @@ not shown as a warning.
 ## 5. Delivery Record
 
 - Branch: `feature/story-6.1-false-resolution`
-- Pull request: Pending
-- Commit(s): Pending
-- Review result: Pending
+- Pull request: [#84](https://github.com/vrize-poc-demo/call-center-radar/pull/84)
+  (targets `development`; human merge only)
+- Commit(s): `24966bb` - detection, validation, SQLite persistence, manager UI,
+  tests, and developer record.
+- Review result: Local full gate and live local-Ollama integration passed; PR
+  #84 is cleanly mergeable and GitHub Quality Gates passed.
 
 ### Change Log
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Added speaker-aware false-resolution detection, validated persistence, manager evidence drill-down, and tests. | Make a high-risk outcome visible only when managers can inspect both sides of a concrete contradiction. |
-| Pending | Ran the full test, lint, format, build, and live local-Ollama integration checks. | Verify the new signal works through the same runtime path used for the demo. |
+| `24966bb` | Added speaker-aware false-resolution detection, validated persistence, manager evidence drill-down, and tests. | Make a high-risk outcome visible only when managers can inspect both sides of a concrete contradiction. |
+| `24966bb` | Ran the full test, lint, format, build, and live local-Ollama integration checks. | Verify the new signal works through the same runtime path used for the demo. |
+| Pending | Opened PR #84 and completed local mergeability plus GitHub Quality Gates checks. | Hand the work to a human reviewer only after the branch is demonstrably safe to merge into development. |
 
 ### PR Readiness and Review
 
-- Mergeability verification: `Pending - npm run pr:verify -- <pr-number>`
+- Mergeability verification: `Passed - npm run pr:verify -- 84` and GitHub
+  Quality Gates passed before this documentation update.
 - Code quality grade: `A - narrow deterministic detection, immutable evidence validation, and small vertical UI changes.`
 - Testing quality grade: `A - positive, suppression, speaker guard, validation, persistence, dashboard, UI, and live local-model paths are covered.`
 - Review findings and follow-up: No blocking findings. Phrase expansion requires labelled examples and precision evaluation before adding coverage.
