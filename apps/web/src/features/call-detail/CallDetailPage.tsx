@@ -14,6 +14,7 @@ import {
   getTranscript,
   PriorityFactor,
   RadarPriority,
+  RepeatedQuestionEvent,
   MoodShift,
   TranscriptTurn,
 } from "../../api/calls";
@@ -265,6 +266,13 @@ export function CallDetailPage({ callId }: { callId: string }) {
     source: "resolution" | "contradiction",
   ) => {
     openTrace("analysis_claim", signal[source]);
+  };
+
+  const openRepeatedQuestionEvidence = (
+    event: RepeatedQuestionEvent,
+    source: "original" | "repeated",
+  ) => {
+    openTrace("analysis_claim", event[source]);
   };
 
   if (error)
@@ -565,6 +573,41 @@ export function CallDetailPage({ callId }: { callId: string }) {
                   </div>
                 </section>
               ) : null}
+              <h3>Repeated information requests</h3>
+              {analysis.repeated_questions.length ? (
+                <ol className="repeated-question-events">
+                  {analysis.repeated_questions.map((event) => (
+                    <li key={event.repeated.transcript_turn_id}>
+                      <strong>{event.speaker} repeated a question</strong>
+                      <span>
+                        {(event.repeated.start_ms / 1000).toFixed(1)}s
+                      </span>
+                      <div>
+                        <button
+                          onClick={() =>
+                            openRepeatedQuestionEvidence(event, "original")
+                          }
+                          type="button"
+                        >
+                          Show original
+                        </button>
+                        <button
+                          onClick={() =>
+                            openRepeatedQuestionEvidence(event, "repeated")
+                          }
+                          type="button"
+                        >
+                          Show repeat
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="supporting-copy">
+                  No repeated information requests were detected.
+                </p>
+              )}
               <h3>Mood timeline</h3>
               <p className="mood-overall">Overall mood: {analysis.mood}</p>
               {analysis.mood_shifts.length ? (
