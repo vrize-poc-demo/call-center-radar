@@ -146,6 +146,12 @@ describe("CallDetailPage", () => {
       screen.getByRole("heading", { name: "Call recording" }),
     ).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Transcript" })).toBeTruthy();
+    const panelHeadings = screen
+      .getAllByRole("heading", { level: 2 })
+      .map((heading) => heading.textContent);
+    expect(panelHeadings.indexOf("Transcript")).toBeLessThan(
+      panelHeadings.indexOf("Processing"),
+    );
     expect(screen.getByRole("heading", { name: "Evidence" })).toBeTruthy();
     expect(screen.getByText("Welcome")).toBeTruthy();
   });
