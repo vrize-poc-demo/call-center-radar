@@ -2,7 +2,7 @@
 
 **GitHub issue:** [#77](https://github.com/vrize-poc-demo/call-center-radar/issues/77)
 
-**Status:** In Progress
+**Status:** In Review
 
 **Owner:** Vipin
 
@@ -132,8 +132,8 @@ SQLite cascade deletion.
   (draft, targets `development`)
 - Commit(s): `59d4d43` - local Ollama provider, evidence requirement, tests,
   README setup, and delivery record update.
-- Review result: local full quality gate and live Ollama integration passed;
-  GitHub CI and mergeability verification for PR #81 are pending.
+- Review result: local full quality gate, live Ollama integration, GitHub CI,
+  and `npm run pr:verify -- 81` passed; pending human review and merge.
 
 ### Change Log
 
@@ -145,6 +145,7 @@ SQLite cascade deletion.
 | Pending | Replaced the keyword-based local detector with a free Ollama structured-analysis provider, configuration, failure handling, and provider/API tests. | Let the POC make semantic call judgments locally without treating keyword matches as intelligence. |
 | Pending | Required at least one immutable transcript-backed claim and verified the complete live API path using local `qwen2.5:7b`. | Prevent an analysis from presenting manager conclusions without an evidence anchor. |
 | Pending | Created follow-up PR #81 because the prior mood-timeline PR had already merged before this local-model replacement. | Keep the local-LLM change independently reviewable and avoid direct changes to `development`. |
+| Pending | Confirmed PR #81 is cleanly mergeable with passing GitHub Quality Gates and moved Story #77 to In Review. | Complete the required review handoff while preserving human-only merge control. |
 
 ### PR Readiness and Review
 
