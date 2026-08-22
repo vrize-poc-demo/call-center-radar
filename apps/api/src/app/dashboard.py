@@ -1,5 +1,9 @@
-from fastapi import APIRouter, Request
+import sqlite3
+
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
+
+from app.logging import log_event
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
@@ -40,9 +44,10 @@ def risk_level(score: int | None) -> str:
 @router.get("/triage", response_model=TriageReadModel)
 def get_triage_read_model(request: Request) -> TriageReadModel:
     """Return persisted, non-transcript dashboard inputs without invoking analysis."""
-    with request.app.state.database.connect() as connection:
-        rows = connection.execute(
-            """
+    try:
+        with request.app.state.database.connect() as connection:
+            rows = connection.execute(
+                """
             SELECT calls.call_id, calls.created_at, radar_priority_scores.score AS radar_priority,
                    call_analyses.intent, call_analyses.mood, call_analyses.resolution,
                    call_analyses.manager_brief, call_analyses.recommended_action,
@@ -52,9 +57,26 @@ def get_triage_read_model(request: Request) -> TriageReadModel:
             JOIN calls ON calls.id = call_analyses.call_id
             LEFT JOIN radar_priority_scores ON radar_priority_scores.call_id = calls.id
             ORDER BY call_analyses.analyzed_at DESC, calls.id DESC
-            """
-        ).fetchall()
-    return TriageReadModel(calls=[_to_triage_call(row) for row in rows])
+                """
+            ).fetchall()
+    except sqlite3.Error:
+        log_event(
+            request.app.state.logger,
+            "dashboard_triage_load_failed",
+            "Dashboard triage data could not be loaded",
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Dashboard data is temporarily unavailable.",
+        ) from None
+    result = TriageReadModel(calls=[_to_triage_call(row) for row in rows])
+    log_event(
+        request.app.state.logger,
+        "dashboard_triage_loaded",
+        "Dashboard triage data loaded",
+        context={"call_count": len(result.calls)},
+    )
+    return result
 
 
 def _to_triage_call(row) -> TriageCall:

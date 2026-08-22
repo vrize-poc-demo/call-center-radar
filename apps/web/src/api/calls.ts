@@ -79,6 +79,25 @@ export type CallAnalysis = {
   model_version: string;
 };
 
+export type TriageAnalysis = {
+  intent: string;
+  mood: "positive" | "neutral" | "negative" | "mixed";
+  resolution: "resolved" | "unresolved" | "unclear";
+  manager_brief: string;
+  recommended_action: string;
+  model_version: string;
+  analysis_version: number;
+  analyzed_at: string;
+};
+
+export type TriageCall = {
+  call_id: string;
+  created_at: string;
+  radar_priority: number | null;
+  risk_level: "high" | "medium" | "low" | "unscored";
+  analysis: TriageAnalysis;
+};
+
 export async function registerCall(
   formData: FormData,
 ): Promise<CallRegistration> {
@@ -155,4 +174,10 @@ export async function getAnalysis(callId: string): Promise<CallAnalysis> {
   const response = await fetch(`${apiBaseUrl}/api/calls/${callId}/analysis`);
   if (!response.ok) throw new Error("The analysis could not be loaded.");
   return ((await response.json()) as { analysis: CallAnalysis }).analysis;
+}
+
+export async function getDashboardTriage(): Promise<TriageCall[]> {
+  const response = await fetch(`${apiBaseUrl}/api/dashboard/triage`);
+  if (!response.ok) throw new Error("Today's dashboard could not be loaded.");
+  return ((await response.json()) as { calls: TriageCall[] }).calls;
 }
