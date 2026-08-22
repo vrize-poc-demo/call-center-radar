@@ -2,7 +2,7 @@
 
 **GitHub issue:** #58
 
-**Status:** In Progress
+**Status:** In Review
 
 **Owner:** vipinv-dev
 
@@ -155,7 +155,7 @@ unchanged. The test item was not deleted from SQLite.
 
 - Branch: `feature/story-3.5-global-processing-queue`
 - Pull request: #63 (draft, targets `development`)
-- Commit(s): `3973a52` global processing queue implementation
+- Commit(s): `3973a52` global processing queue; `7ee7ba1` safe terminal-item removal
 - Review result: Code quality A; testing quality A; no blocking self-review findings.
 
 ### Change Log
@@ -167,11 +167,12 @@ Update this table before every commit. Explain both the change and its reason; d
 | `3973a52` | Added a SQLite-backed global processing queue API, shared polling UI, readable state mapping, Call Detail actions, CORS coverage, automated tests, and this delivery record. | Managers need to follow call processing across pages without a browser refresh, while keeping queue data evidence-safe and tightly scoped ahead of durable worker scheduling in Story 3.6. |
 | `b0c1130` | Recorded the draft PR and self-review outcome. | Keeps the in-repository delivery record aligned with the reviewable GitHub change. |
 | `d3ad50a` | Recorded successful GitHub quality gates and mergeability verification. | The project item can move to In Review only after the exact PR head is verified against `development`. |
-| Pending | Added safe completed/failed queue dismissal, SQLite retention state, CORS support, API/UI tests, and manual verification. | Managers need to clear terminal queue clutter without destroying evidence, audit history, or calls that remain relevant for review. |
+| `7ee7ba1` | Added safe completed/failed queue dismissal, SQLite retention state, CORS support, API/UI tests, and manual verification. | Managers need to clear terminal queue clutter without destroying evidence, audit history, or calls that remain relevant for review. |
+| Pending | Recorded the successful dismissal-update review and readiness outcome. | Keeps implementation, test evidence, and Project status synchronized with the final reviewable PR head. |
 
 ### PR Readiness and Review
 
-- Mergeability verification: Pending - re-run `npm run pr:verify -- 63` after the queue-dismissal commit passes CI.
-- Code quality grade: Pending - update after queue-dismissal self-review.
-- Testing quality grade: Pending - update after queue-dismissal self-review.
-- Review findings and follow-up: Pending updated self-review.
+- Mergeability verification: Passed - `npm run pr:verify -- 63`; targets `development`, is cleanly mergeable, and has passing checks.
+- Code quality grade: `A`
+- Testing quality grade: `A`
+- Review findings and follow-up: No blocking findings. Dismissal is correctly scoped to terminal jobs and preserves all call records. Background worker scheduling, retries, and browser notifications remain deferred to Story 3.6 and later work.
