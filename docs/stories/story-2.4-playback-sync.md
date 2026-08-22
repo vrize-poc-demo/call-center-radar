@@ -93,19 +93,21 @@ that timestamp.
 ## 5. Delivery Record
 
 - Branch: `fix/story-2.4-playback-sync`
-- Pull request: Pending
-- Commit(s): Pending
-- Review result: Pending
+- Pull request: #67 (draft, targets `development`)
+- Commit(s): `f431244` playback-sync implementation
+- Review result: Code quality A; testing quality A; no blocking self-review findings.
 
 ### Change Log
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Added deterministic active-turn selection, a separate pure playback module, regression tests for overlapping stereo ranges, and browser verification. | The previous first-match rule could highlight a prior long segment even when a newer overlapping segment was the speech currently being played. |
+| `f431244` | Added deterministic active-turn selection, a separate pure playback module, regression tests for overlapping stereo ranges, and browser verification. | The previous first-match rule could highlight a prior long segment even when a newer overlapping segment was the speech currently being played. |
+| Pending | Recorded the draft PR and self-review outcome. | Keeps the in-repository delivery record aligned with the reviewable GitHub change. |
 
 ### PR Readiness and Review
 
-- Mergeability verification: Pending
-- Code quality grade: Pending
-- Testing quality grade: Pending
-- Review findings and follow-up: Pending
+- Mergeability verification: Pending - `npm run pr:verify -- 67` after GitHub CI completes.
+- Code quality grade: `A`
+- Testing quality grade: `A`
+- Review findings and follow-up: No blocking findings. The change is deliberately limited to UI
+  selection; improving raw segment boundaries remains a transcription-pipeline concern.
