@@ -5,14 +5,17 @@ from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field, ValidationError
 
 from app.analysis_provider import AnalysisProviderError
+from app.false_resolution import RULE_ID, detect_false_resolution
 from app.logging import log_event
 from app.summary import SummaryValidationError, count_summary_words, normalize_summary
 from app.transcripts import TranscriptTurn
 from app.validation import (
     ClaimValidationError,
     EvidenceClaim,
+    FalseResolutionSignal,
     MoodShift,
     validate_claims,
+    validate_false_resolution,
     validate_mood_shifts,
 )
 
@@ -34,6 +37,7 @@ class CallAnalysis(AnalysisProposal):
     model_version: str
     analysis_version: int = Field(default=0, ge=0)
     analyzed_at: str | None = None
+    false_resolution: FalseResolutionSignal | None = None
 
 
 class AnalysisResponse(BaseModel):
@@ -93,10 +97,50 @@ def load_persisted_analysis(connection, call_id: str) -> CallAnalysis | None:
         """,
         (row["id"],),
     ).fetchall()
+    false_resolution_row = connection.execute(
+        """
+        SELECT signal.rule_id,
+               resolution.transcript_turn_id AS resolution_transcript_turn_id,
+               resolution.text AS resolution_quote,
+               resolution.start_ms AS resolution_start_ms,
+               resolution.end_ms AS resolution_end_ms,
+               contradiction.transcript_turn_id AS contradiction_transcript_turn_id,
+               contradiction.text AS contradiction_quote,
+               contradiction.start_ms AS contradiction_start_ms,
+               contradiction.end_ms AS contradiction_end_ms
+        FROM call_analysis_false_resolution_signals AS signal
+        JOIN transcript_turns AS resolution
+          ON resolution.transcript_turn_id = signal.resolution_transcript_turn_id
+        JOIN transcript_turns AS contradiction
+          ON contradiction.transcript_turn_id = signal.contradiction_transcript_turn_id
+        WHERE signal.analysis_id = ?
+        """,
+        (row["id"],),
+    ).fetchone()
+    false_resolution = None
+    if false_resolution_row is not None:
+        false_resolution = FalseResolutionSignal(
+            rule_id=false_resolution_row["rule_id"],
+            resolution=EvidenceClaim(
+                claim="Agent stated the issue was resolved",
+                transcript_turn_id=false_resolution_row["resolution_transcript_turn_id"],
+                quote=false_resolution_row["resolution_quote"],
+                start_ms=false_resolution_row["resolution_start_ms"],
+                end_ms=false_resolution_row["resolution_end_ms"],
+            ),
+            contradiction=EvidenceClaim(
+                claim="Customer later contradicted the resolution",
+                transcript_turn_id=false_resolution_row["contradiction_transcript_turn_id"],
+                quote=false_resolution_row["contradiction_quote"],
+                start_ms=false_resolution_row["contradiction_start_ms"],
+                end_ms=false_resolution_row["contradiction_end_ms"],
+            ),
+        )
     return CallAnalysis(
         **{key: row[key] for key in row.keys() if key != "id"},
         claims=[EvidenceClaim(**dict(claim)) for claim in claims],
         mood_shifts=[MoodShift(**dict(shift)) for shift in mood_shifts],
+        false_resolution=false_resolution,
     )
 
 
@@ -172,6 +216,25 @@ def persist_analysis(connection, call_db_id: int, analysis: CallAnalysis) -> Cal
                 shift.end_ms,
             ),
         )
+    connection.execute(
+        "DELETE FROM call_analysis_false_resolution_signals WHERE analysis_id = ?",
+        (analysis_row["id"],),
+    )
+    if analysis.false_resolution is not None:
+        connection.execute(
+            """
+            INSERT INTO call_analysis_false_resolution_signals (
+                analysis_id, rule_id, resolution_transcript_turn_id,
+                contradiction_transcript_turn_id
+            ) VALUES (?, ?, ?, ?)
+            """,
+            (
+                analysis_row["id"],
+                analysis.false_resolution.rule_id,
+                analysis.false_resolution.resolution.transcript_turn_id,
+                analysis.false_resolution.contradiction.transcript_turn_id,
+            ),
+        )
     # Resolve the public identifier from the database row before rebuilding response quotes.
     row = connection.execute("SELECT call_id FROM calls WHERE id = ?", (call_db_id,)).fetchone()
     assert row is not None
@@ -197,6 +260,52 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
             analysis = parse_model_output(generated.raw_output, generated.model_version)
             analysis.claims = validate_claims(analysis.claims, turns)
             analysis.mood_shifts = validate_mood_shifts(analysis.mood_shifts, turns)
+            detection = detect_false_resolution(turns)
+            if detection.detected:
+                assert detection.resolution_turn is not None
+                assert detection.contradiction_turn is not None
+                analysis.false_resolution = validate_false_resolution(
+                    FalseResolutionSignal(
+                        rule_id=RULE_ID,
+                        resolution=EvidenceClaim(
+                            claim="Agent stated the issue was resolved",
+                            transcript_turn_id=detection.resolution_turn.transcript_turn_id,
+                            quote=detection.resolution_turn.text,
+                            start_ms=detection.resolution_turn.start_ms,
+                            end_ms=detection.resolution_turn.end_ms,
+                        ),
+                        contradiction=EvidenceClaim(
+                            claim="Customer later contradicted the resolution",
+                            transcript_turn_id=detection.contradiction_turn.transcript_turn_id,
+                            quote=detection.contradiction_turn.text,
+                            start_ms=detection.contradiction_turn.start_ms,
+                            end_ms=detection.contradiction_turn.end_ms,
+                        ),
+                    ),
+                    turns,
+                )
+                log_event(
+                    request.app.state.logger,
+                    "false_resolution_detected",
+                    "False-resolution rule found a later customer contradiction",
+                    context={
+                        "call_id": call_id,
+                        "rule_id": RULE_ID,
+                        "resolution_turn_id": detection.resolution_turn.transcript_turn_id,
+                        "contradiction_turn_id": detection.contradiction_turn.transcript_turn_id,
+                    },
+                )
+            elif detection.suppression_reason is not None:
+                log_event(
+                    request.app.state.logger,
+                    "false_resolution_suppressed",
+                    "False-resolution candidate was not strong enough to expose",
+                    context={
+                        "call_id": call_id,
+                        "rule_id": RULE_ID,
+                        "reason": detection.suppression_reason,
+                    },
+                )
             analysis = persist_analysis(connection, call["id"], analysis)
         except AnalysisProviderError as error:
             log_event(
@@ -247,6 +356,7 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
             "analysis_version": analysis.analysis_version,
             "summary_word_count": count_summary_words(analysis.summary),
             "mood_shift_count": len(analysis.mood_shifts),
+            "false_resolution_detected": analysis.false_resolution is not None,
             "latency_ms": round((time.perf_counter() - started_at) * 1000),
         },
     )

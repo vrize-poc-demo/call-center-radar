@@ -18,6 +18,7 @@ def test_migrations_are_versioned_and_idempotent(tmp_path) -> None:
         "007_persisted_call_analysis.sql",
         "008_processing_queue_dismissal.sql",
         "009_analysis_mood_shifts.sql",
+        "010_false_resolution_signals.sql",
     ]
     assert migrate(database) == []
 

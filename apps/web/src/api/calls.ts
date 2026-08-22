@@ -87,6 +87,12 @@ export type MoodShift = {
   end_ms: number;
 };
 
+export type FalseResolutionSignal = {
+  rule_id: string;
+  resolution: EvidenceClaim;
+  contradiction: EvidenceClaim;
+};
+
 export type CallAnalysis = {
   intent: string;
   mood: string;
@@ -96,6 +102,7 @@ export type CallAnalysis = {
   recommended_action: string;
   claims: EvidenceClaim[];
   mood_shifts: MoodShift[];
+  false_resolution: FalseResolutionSignal | null;
   model_version: string;
 };
 
@@ -109,6 +116,7 @@ export type TriageAnalysis = {
   model_version: string;
   analysis_version: number;
   analyzed_at: string;
+  false_resolution: boolean;
 };
 
 export type TriageCall = {

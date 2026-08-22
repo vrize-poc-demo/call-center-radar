@@ -37,6 +37,7 @@ describe("TodayDashboard", () => {
           model_version: "test-v1",
           analysis_version: 1,
           analyzed_at: "2026-08-22 09:00:00",
+          false_resolution: false,
         },
       })),
     );
@@ -83,6 +84,7 @@ describe("TodayDashboard", () => {
           model_version: "v1",
           analysis_version: 1,
           analyzed_at: "now",
+          false_resolution: false,
         },
       },
       {
@@ -100,6 +102,7 @@ describe("TodayDashboard", () => {
           model_version: "v1",
           analysis_version: 1,
           analyzed_at: "now",
+          false_resolution: false,
         },
       },
     ]);
@@ -128,5 +131,33 @@ describe("TodayDashboard", () => {
         "Dashboard unavailable.",
       ),
     );
+  });
+
+  it("puts a resolution contradiction in the manager attention queue", async () => {
+    mockedGetDashboardTriage.mockResolvedValue([
+      {
+        call_id: "conflict",
+        created_at: "now",
+        radar_priority: 10,
+        risk_level: "low",
+        analysis: {
+          intent: "Support",
+          mood: "neutral",
+          resolution: "resolved",
+          summary: "A customer contradicted the stated resolution.",
+          manager_brief: "Review the resolution conflict.",
+          recommended_action: "Call the customer.",
+          model_version: "v1",
+          analysis_version: 1,
+          analyzed_at: "now",
+          false_resolution: true,
+        },
+      },
+    ]);
+
+    render(<TodayDashboard />);
+
+    expect((await screen.findAllByText("Resolution conflict")).length).toBe(2);
+    expect(screen.getAllByText("1").length).toBeGreaterThan(0);
   });
 });

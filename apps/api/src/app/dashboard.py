@@ -18,6 +18,7 @@ class TriageAnalysis(BaseModel):
     model_version: str
     analysis_version: int = Field(ge=1)
     analyzed_at: str
+    false_resolution: bool
 
 
 class TriageCall(BaseModel):
@@ -54,10 +55,13 @@ def get_triage_read_model(request: Request) -> TriageReadModel:
                    call_analyses.summary,
                    call_analyses.manager_brief, call_analyses.recommended_action,
                    call_analyses.model_version, call_analyses.analysis_version,
-                   call_analyses.analyzed_at
+                   call_analyses.analyzed_at,
+                   false_resolution.analysis_id IS NOT NULL AS false_resolution
             FROM call_analyses
             JOIN calls ON calls.id = call_analyses.call_id
             LEFT JOIN radar_priority_scores ON radar_priority_scores.call_id = calls.id
+            LEFT JOIN call_analysis_false_resolution_signals AS false_resolution
+              ON false_resolution.analysis_id = call_analyses.id
             ORDER BY call_analyses.analyzed_at DESC, calls.id DESC
                 """
             ).fetchall()
@@ -98,5 +102,6 @@ def _to_triage_call(row) -> TriageCall:
             model_version=data["model_version"],
             analysis_version=data["analysis_version"],
             analyzed_at=data["analyzed_at"],
+            false_resolution=bool(data["false_resolution"]),
         ),
     )

@@ -485,6 +485,32 @@ h1 {
   color: #36485a;
   font-weight: 650;
 }
+.false-resolution {
+  margin-top: 20px;
+  padding: 12px;
+  border: 1px solid #b76e00;
+  border-radius: 6px;
+  background: #fff9eb;
+}
+.false-resolution h3 {
+  margin-top: 0;
+}
+.false-resolution p {
+  margin: 0;
+  color: #5d4700;
+}
+.false-resolution-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.false-resolution-actions button {
+  border: 1px solid #b76e00;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #5d4700;
+}
 .evidence-drawer {
   position: fixed;
   right: 24px;

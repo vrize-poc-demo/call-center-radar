@@ -27,6 +27,12 @@ class MoodShift(BaseModel):
     end_ms: int = Field(ge=0)
 
 
+class FalseResolutionSignal(BaseModel):
+    rule_id: str = Field(min_length=1, max_length=120)
+    resolution: EvidenceClaim
+    contradiction: EvidenceClaim
+
+
 def _validate_turn_reference(
     transcript_turn_id: str,
     quote: str,
@@ -79,3 +85,32 @@ def validate_mood_shifts(shifts: list[MoodShift], turns: list[TranscriptTurn]) -
         previous_start_ms = shift.start_ms
         validated.append(shift)
     return validated
+
+
+def validate_false_resolution(
+    signal: FalseResolutionSignal, turns: list[TranscriptTurn]
+) -> FalseResolutionSignal:
+    turns_by_id = {turn.transcript_turn_id: turn for turn in turns}
+    _validate_turn_reference(
+        signal.resolution.transcript_turn_id,
+        signal.resolution.quote,
+        signal.resolution.start_ms,
+        signal.resolution.end_ms,
+        turns_by_id,
+    )
+    _validate_turn_reference(
+        signal.contradiction.transcript_turn_id,
+        signal.contradiction.quote,
+        signal.contradiction.start_ms,
+        signal.contradiction.end_ms,
+        turns_by_id,
+    )
+    resolution_turn = turns_by_id[signal.resolution.transcript_turn_id]
+    contradiction_turn = turns_by_id[signal.contradiction.transcript_turn_id]
+    if resolution_turn.speaker != "agent":
+        raise ClaimValidationError("false_resolution_requires_agent_statement")
+    if contradiction_turn.speaker != "customer":
+        raise ClaimValidationError("false_resolution_requires_customer_contradiction")
+    if contradiction_turn.start_ms <= resolution_turn.start_ms:
+        raise ClaimValidationError("false_resolution_requires_later_contradiction")
+    return signal
