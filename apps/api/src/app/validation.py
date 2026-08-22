@@ -66,6 +66,28 @@ def validate_claims(
     return validated
 
 
+def derive_claim_evidence(
+    claims: list[EvidenceClaim], turns: list[TranscriptTurn]
+) -> list[EvidenceClaim]:
+    """Attach canonical quote and timing to required claims from saved IDs."""
+    turns_by_id = {turn.transcript_turn_id: turn for turn in turns}
+    derived = []
+    for claim in claims:
+        turn = turns_by_id.get(claim.transcript_turn_id)
+        if turn is None:
+            raise ClaimValidationError("unknown_transcript_turn")
+        derived.append(
+            claim.model_copy(
+                update={
+                    "quote": turn.text,
+                    "start_ms": turn.start_ms,
+                    "end_ms": turn.end_ms,
+                }
+            )
+        )
+    return derived
+
+
 def validate_mood_shifts(shifts: list[MoodShift], turns: list[TranscriptTurn]) -> list[MoodShift]:
     turns_by_id = {turn.transcript_turn_id: turn for turn in turns}
     validated = []
@@ -85,6 +107,40 @@ def validate_mood_shifts(shifts: list[MoodShift], turns: list[TranscriptTurn]) -
         previous_start_ms = shift.start_ms
         validated.append(shift)
     return validated
+
+
+def filter_valid_mood_shifts(
+    shifts: list[MoodShift], turns: list[TranscriptTurn]
+) -> tuple[list[MoodShift], list[str]]:
+    """Keep optional mood shifts that meet the immutable-evidence contract.
+
+    Mood shifts add context but are not required for a call analysis. A malformed
+    optional shift must not hide independently valid required claims from a manager.
+    """
+    valid_shifts = []
+    rejection_reasons = []
+    for shift in shifts:
+        try:
+            turn = next(
+                (turn for turn in turns if turn.transcript_turn_id == shift.transcript_turn_id),
+                None,
+            )
+            if turn is None:
+                raise ClaimValidationError("unknown_transcript_turn")
+            derived_shift = shift.model_copy(
+                update={
+                    "quote": turn.text,
+                    "start_ms": turn.start_ms,
+                    "end_ms": turn.end_ms,
+                }
+            )
+            valid_shifts.extend(validate_mood_shifts([derived_shift], turns))
+        except ClaimValidationError as error:
+            rejection_reasons.append(str(error))
+    try:
+        return validate_mood_shifts(valid_shifts, turns), rejection_reasons
+    except ClaimValidationError as error:
+        return [], [*rejection_reasons, str(error)]
 
 
 def validate_false_resolution(
