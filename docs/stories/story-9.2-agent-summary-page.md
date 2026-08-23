@@ -42,12 +42,12 @@ flowchart LR
 
 ### Components and Ownership
 
-| Area | Files or module | Responsibility |
-| --- | --- | --- |
-| UI | `apps/web/src/features/agents/AgentSummaryPage.tsx` | Render the supportive agent summary page, aggregate KPIs, cards, empty/error states, and recent call links. |
-| API | `apps/api/src/app/dashboard.py` | Expose `/api/dashboard/agents` from persisted analysis, priority, false-resolution, and treatment-signal records. |
-| Persistence | Existing tables only | No schema change; the story reads `calls`, `call_analyses`, `radar_priority_scores`, `call_analysis_false_resolution_signals`, and `call_analysis_treatment_signals`. |
-| Tests | `test_agent_summary.py`, `AgentSummaryPage.test.tsx`, `TodayDashboard.test.tsx` | Cover aggregation, supportive calculation, page rendering, navigation, empty states, and failure state. |
+| Area        | Files or module                                                                 | Responsibility                                                                                                                                                        |
+| ----------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UI          | `apps/web/src/features/agents/AgentSummaryPage.tsx`                             | Render the supportive agent summary page, aggregate KPIs, cards, empty/error states, and recent call links.                                                           |
+| API         | `apps/api/src/app/dashboard.py`                                                 | Expose `/api/dashboard/agents` from persisted analysis, priority, false-resolution, and treatment-signal records.                                                     |
+| Persistence | Existing tables only                                                            | No schema change; the story reads `calls`, `call_analyses`, `radar_priority_scores`, `call_analysis_false_resolution_signals`, and `call_analysis_treatment_signals`. |
+| Tests       | `test_agent_summary.py`, `AgentSummaryPage.test.tsx`, `TodayDashboard.test.tsx` | Cover aggregation, supportive calculation, page rendering, navigation, empty states, and failure state.                                                               |
 
 ### Contracts and Data
 
@@ -80,14 +80,14 @@ If the API cannot read dashboard data, it returns `503` with a short manager-saf
 
 ### Automated Tests
 
-| Check | Result | Notes |
-| --- | --- | --- |
-| Unit tests | Passed | `python -m pytest apps/api/tests/test_agent_summary.py apps/api/tests/test_issue_grouping.py -q` -> 6 passed, 1 FastAPI/TestClient deprecation warning. |
-| Integration tests | Passed | Agent summary endpoint aggregates persisted call analysis, priority, and treatment signals through FastAPI `TestClient`. |
-| UI tests | Passed | `npm.cmd run test --workspace=@call-center-radar/web -- --run AgentSummaryPage TodayDashboard` -> 8 passed. |
-| Lint and format | Passed | `python -m ruff check apps/api`, `python -m ruff format --check apps/api`, targeted Prettier check for touched web files, and web ESLint passed. |
-| Build | Passed | `npm.cmd run build --workspace=@call-center-radar/web` completed the production build. |
-| Accuracy evaluation | Not applicable | This story aggregates existing persisted evidence rather than adding a new detector. |
+| Check               | Result         | Notes                                                                                                                                                                                                                                          |
+| ------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit tests          | Passed         | `python -m pytest apps/api/tests/test_agent_summary.py apps/api/tests/test_issue_grouping.py -q` -> 6 passed, 1 FastAPI/TestClient deprecation warning.                                                                                        |
+| Integration tests   | Passed         | Agent summary endpoint aggregates persisted call analysis, priority, and treatment signals through FastAPI `TestClient`.                                                                                                                       |
+| UI tests            | Passed         | `npm.cmd run test --workspace=@call-center-radar/web -- --run AgentSummaryPage TodayDashboard` -> 8 passed; `npm.cmd run test --workspace=@call-center-radar/web -- --run GlobalProcessingQueue TodayDashboard AgentSummaryPage` -> 13 passed. |
+| Lint and format     | Passed         | `python -m ruff check apps/api`, `python -m ruff format --check apps/api`, targeted Prettier check for touched web files, and web ESLint passed.                                                                                               |
+| Build               | Passed         | `npm.cmd run build --workspace=@call-center-radar/web` completed the production build.                                                                                                                                                         |
+| Accuracy evaluation | Not applicable | This story aggregates existing persisted evidence rather than adding a new detector.                                                                                                                                                           |
 
 ### Manual Verification and Demo Path
 
@@ -114,11 +114,12 @@ If the API cannot read dashboard data, it returns `503` with a short manager-saf
 
 Update this table before every commit. Explain both the change and its reason; do not use generic entries such as "updates" or "fixes".
 
-| Commit | What changed | Why |
-| --- | --- | --- |
-| `1869e6c` | Add agent summary aggregation endpoint and Agent support dashboard page. | Meet Story 9.2 with supportive, evidence-grounded manager visibility. |
-| `8e84f6d` | Record the finalized implementation commit in the story delivery record. | Keep the story record accurate before PR creation. |
-| Pending documentation commit | Record PR #94 in the story delivery record. | Keep the story record accurate after PR creation. |
+| Commit               | What changed                                                                                | Why                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `1869e6c`            | Add agent summary aggregation endpoint and Agent support dashboard page.                    | Meet Story 9.2 with supportive, evidence-grounded manager visibility.        |
+| `8e84f6d`            | Record the finalized implementation commit in the story delivery record.                    | Keep the story record accurate before PR creation.                           |
+| `75f99b3`            | Record PR #94 in the story delivery record.                                                 | Keep the story record accurate after PR creation.                            |
+| Pending local commit | Cap the global processing queue height and make recent calls scroll inside the queue panel. | Keep call-detail and dashboard content visible when many recent calls exist. |
 
 ### PR Readiness and Review
 
