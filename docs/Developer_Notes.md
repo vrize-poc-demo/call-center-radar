@@ -39,6 +39,8 @@ npm run dev
 ```
 
 The manager UI runs at `http://localhost:5173`. The API runs at `http://localhost:8000/api`.
+`npm run dev` is the single runner for both services and is cross-platform on macOS, Linux, and
+Windows when `./.venv` is present.
 
 Run the pull-request quality gate before requesting review:
 
