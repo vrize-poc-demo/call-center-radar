@@ -34,6 +34,10 @@ function formatTranscriptRange(turn: TranscriptTurn) {
   return `${(turn.start_ms / 1000).toFixed(2)}s–${(turn.end_ms / 1000).toFixed(2)}s`;
 }
 
+function formatTranscriptGroupRange(startMs: number, endMs: number) {
+  return `${(startMs / 1000).toFixed(2)}s–${(endMs / 1000).toFixed(2)}s`;
+}
+
 type SpeakerFilter = "all" | TranscriptTurn["speaker"];
 
 type EvidenceTrace = {
@@ -408,7 +412,12 @@ export function CallDetailPage({ callId }: { callId: string }) {
                         key={group.id}
                       >
                         <div className="transcript-group-meta">
-                          <span>Sequence {index + 1}</span>
+                          <span>
+                            Sequence {index + 1}
+                            {group.has_overlap
+                              ? ` · Shared time ${formatTranscriptGroupRange(group.start_ms, group.end_ms)}`
+                              : null}
+                          </span>
                           {group.has_overlap ? (
                             <span>
                               Timing overlaps; exact sentence order is

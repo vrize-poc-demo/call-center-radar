@@ -37,6 +37,7 @@ describe("buildTranscriptSequence", () => {
   it("groups a long segment with speech whose timing overlaps it", () => {
     const groups = buildTranscriptSequence([
       turn("checkbook-sentence", "agent", 22020, 44900),
+      turn("address-question", "customer", 25000, 27000),
       turn("address", "customer", 30000, 32000),
       turn("next-turn", "agent", 45000, 47000),
     ]);
@@ -45,6 +46,7 @@ describe("buildTranscriptSequence", () => {
     expect(groups[0].has_overlap).toBe(true);
     expect(groups[0].turns.map((item) => item.transcript_turn_id)).toEqual([
       "checkbook-sentence",
+      "address-question",
       "address",
     ]);
     expect(groups[0].start_ms).toBe(22020);

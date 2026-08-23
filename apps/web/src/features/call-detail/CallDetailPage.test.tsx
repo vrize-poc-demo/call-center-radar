@@ -420,7 +420,7 @@ describe("CallDetailPage", () => {
       processing_status: "completed",
       audio_channels: 2,
       failure_reason: null,
-      transcript_turn_count: 3,
+      transcript_turn_count: 4,
     });
     mockedGetTranscript.mockResolvedValue([
       {
@@ -436,6 +436,13 @@ describe("CallDetailPage", () => {
         start_ms: 30000,
         end_ms: 32000,
         text: "Please confirm the address.",
+      },
+      {
+        transcript_turn_id: "customer-address",
+        speaker: "customer",
+        start_ms: 35000,
+        end_ms: 37000,
+        text: "Fourth Ranch, Oregon, 72504.",
       },
       {
         transcript_turn_id: "unknown-turn",
@@ -465,7 +472,13 @@ describe("CallDetailPage", () => {
     ).toBeTruthy();
     expect(within(overlapGroup).getByText("22.02s–44.90s")).toBeTruthy();
     expect(
+      within(overlapGroup).getByText("Sequence 1 · Shared time 22.02s–44.90s"),
+    ).toBeTruthy();
+    expect(
       within(overlapGroup).getByText("Please confirm the address."),
+    ).toBeTruthy();
+    expect(
+      within(overlapGroup).getByText("Fourth Ranch, Oregon, 72504."),
     ).toBeTruthy();
     expect(within(overlapGroup).getByText("Unattributed speech.")).toBeTruthy();
     expect(
