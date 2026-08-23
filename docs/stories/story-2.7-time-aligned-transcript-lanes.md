@@ -115,9 +115,9 @@ visible with no horizontal overflow.
 ## 5. Delivery Record
 
 - Branch: `feature/story-2.7-time-aligned-transcript-lanes`
-- Pull request: Pending
-- Commit(s): Pending
-- Review result: Pending
+- Pull request: [#96](https://github.com/vrize-poc-demo/call-center-radar/pull/96)
+- Commit(s): `4a56799`
+- Review result: A/A self-review recorded; GitHub CI and human review pending.
 
 ### Change Log
 
@@ -125,11 +125,12 @@ Update this table before every commit. Explain both the change and its reason; d
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Added shared overlap-window wording, multiple-customer regression coverage, narrow-screen metadata stacking, and this delivery record. | Make cross-speaker timing directly comparable without inventing sentence order or causing mobile overflow. |
+| `4a56799` | Added shared overlap-window wording, multiple-customer regression coverage, narrow-screen metadata stacking, and this delivery record. | Make cross-speaker timing directly comparable without inventing sentence order or causing mobile overflow. |
+| Pending | Recorded PR #96 and its A/A review status in the story delivery history. | Keep the repository documentation complete and traceable before review. |
 
 ### PR Readiness and Review
 
-- Mergeability verification: `Pending - npm run pr:verify -- <pr-number>`
-- Code quality grade: `Pending - A to F`
-- Testing quality grade: `Pending - A to F`
-- Review findings and follow-up: Pending focused and full verification.
+- Mergeability verification: `Pending - npm run pr:verify -- 96`
+- Code quality grade: A - minimal presentation-only change using existing immutable boundaries.
+- Testing quality grade: A - exact multi-message regression plus focused, full, and responsive live checks.
+- Review findings and follow-up: No blocking self-review findings; proportional timeline visualization remains out of scope.
