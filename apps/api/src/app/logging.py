@@ -1,6 +1,9 @@
 import json
 import logging
+from contextvars import ContextVar, Token
 from typing import Any
+
+_request_id: ContextVar[str | None] = ContextVar("request_id", default=None)
 
 
 class JsonFormatter(logging.Formatter):
@@ -33,4 +36,16 @@ def configure_logging(level: str) -> logging.Logger:
 def log_event(
     logger: logging.Logger, event: str, message: str, *, context: dict[str, Any] | None = None
 ) -> None:
-    logger.info(message, extra={"event": event, "context": context or {}})
+    event_context = dict(context or {})
+    request_id = _request_id.get()
+    if request_id is not None:
+        event_context.setdefault("request_id", request_id)
+    logger.info(message, extra={"event": event, "context": event_context})
+
+
+def bind_request_id(request_id: str) -> Token:
+    return _request_id.set(request_id)
+
+
+def reset_request_id(token: Token) -> None:
+    _request_id.reset(token)

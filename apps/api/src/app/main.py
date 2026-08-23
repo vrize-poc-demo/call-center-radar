@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,10 +12,11 @@ from app.customer_history import router as customer_history_router
 from app.dashboard import router as dashboard_router
 from app.database import Database
 from app.evidence import router as evidence_router
-from app.logging import configure_logging, log_event
+from app.logging import bind_request_id, configure_logging, log_event, reset_request_id
 from app.migrator import migrate
 from app.pipeline import ProcessingPipeline
 from app.priority import router as priority_router
+from app.traceability import router as traceability_router
 from app.transcripts import router as transcripts_router
 from app.worker import DurableProcessingWorker
 
@@ -73,6 +75,41 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["*"],
     )
 
+    @app.middleware("http")
+    async def correlate_request(request: Request, call_next):
+        request_id = f"req_{uuid4().hex}"
+        request.state.request_id = request_id
+        token = bind_request_id(request_id)
+        try:
+            try:
+                response = await call_next(request)
+            except Exception:
+                log_event(
+                    logger,
+                    "request_failed",
+                    "API request failed before a response was created",
+                    context={
+                        "method": request.method,
+                        "path": request.url.path,
+                        "failure_reason": "unhandled_server_error",
+                    },
+                )
+                raise
+            response.headers["X-Request-ID"] = request_id
+            log_event(
+                logger,
+                "request_completed",
+                "API request completed",
+                context={
+                    "method": request.method,
+                    "path": request.url.path,
+                    "status_code": response.status_code,
+                },
+            )
+            return response
+        finally:
+            reset_request_id(token)
+
     @app.get("/api")
     def api_root() -> dict[str, str]:
         return {"service": "call-center-radar-api", "status": "ready"}
@@ -89,6 +126,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(analysis_router)
     app.include_router(dashboard_router)
     app.include_router(priority_router)
+    app.include_router(traceability_router)
 
     return app
 
