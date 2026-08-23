@@ -934,6 +934,10 @@ h1 {
   .transcript-lane-headings {
     display: none;
   }
+  .transcript-group-meta {
+    flex-direction: column;
+    gap: 4px;
+  }
   .mobile-speaker-label {
     display: block;
     margin-bottom: 3px;
