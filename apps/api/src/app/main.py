@@ -7,6 +7,7 @@ from app.analysis import router as analysis_router
 from app.analysis_provider import OllamaAnalysisProvider
 from app.calls import router as calls_router
 from app.config import Settings
+from app.customer_history import router as customer_history_router
 from app.dashboard import router as dashboard_router
 from app.database import Database
 from app.evidence import router as evidence_router
@@ -82,6 +83,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"status": "ok", "database": "reachable"}
 
     app.include_router(calls_router)
+    app.include_router(customer_history_router)
     app.include_router(transcripts_router)
     app.include_router(evidence_router)
     app.include_router(analysis_router)
