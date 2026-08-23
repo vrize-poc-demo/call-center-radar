@@ -29,6 +29,7 @@ def test_returns_supportive_agent_summary_from_persisted_analysis(tmp_path) -> N
                 resolution="unresolved",
                 priority=90,
                 treatment_signals=2,
+                transcript_end_ms=180_000,
             )
             _insert_agent_call(
                 connection,
@@ -38,6 +39,8 @@ def test_returns_supportive_agent_summary_from_persisted_analysis(tmp_path) -> N
                 resolution="resolved",
                 priority=20,
                 treatment_signals=0,
+                started_at_ms=10_000,
+                ended_at_ms=130_000,
             )
             _insert_agent_call(
                 connection,
@@ -56,6 +59,11 @@ def test_returns_supportive_agent_summary_from_persisted_analysis(tmp_path) -> N
     assert vipin["agent_name"] == "Vipin"
     assert vipin["calls_handled"] == 2
     assert vipin["difficult_calls"] == 1
+    assert vipin["average_handle_time_ms"] == 150_000
+    assert vipin["calls_with_handle_time"] == 2
+    assert vipin["resolved_count"] == 1
+    assert vipin["resolved_rate"] == 50
+    assert vipin["average_priority"] == 55
     assert vipin["treatment_signal_count"] == 2
     assert vipin["unresolved_count"] == 1
     assert vipin["high_risk_count"] == 1
@@ -65,6 +73,11 @@ def test_returns_supportive_agent_summary_from_persisted_analysis(tmp_path) -> N
     )
     assert vipin["recent_call_ids"] == ["vipin-stable", "vipin-hard"]
     assert agents[1]["agent_name"] == "Susmitha"
+    assert agents[1]["average_handle_time_ms"] is None
+    assert agents[1]["calls_with_handle_time"] == 0
+    assert agents[1]["resolved_count"] == 1
+    assert agents[1]["resolved_rate"] == 100
+    assert agents[1]["average_priority"] == 10
     assert agents[1]["coaching_note"] == "No coaching concern stands out from analyzed evidence."
 
 
@@ -84,10 +97,17 @@ def _insert_agent_call(
     resolution: str,
     priority: int,
     treatment_signals: int,
+    transcript_end_ms: int | None = None,
+    started_at_ms: int | None = None,
+    ended_at_ms: int | None = None,
 ) -> None:
     call_db_id = connection.execute(
-        "INSERT INTO calls (call_id, source_metadata_path, agent_name) VALUES (?, ?, ?)",
-        (call_id, "test-metadata.json", agent_name),
+        """
+        INSERT INTO calls (
+            call_id, source_metadata_path, agent_name, started_at_ms, ended_at_ms
+        ) VALUES (?, ?, ?, ?, ?)
+        """,
+        (call_id, "test-metadata.json", agent_name, started_at_ms, ended_at_ms),
     ).lastrowid
     analysis_id = connection.execute(
         """
@@ -102,6 +122,15 @@ def _insert_agent_call(
         "INSERT INTO radar_priority_scores (call_id, score, scoring_version) VALUES (?, ?, ?)",
         (call_db_id, priority, "test-v1"),
     )
+    if transcript_end_ms is not None:
+        connection.execute(
+            """
+            INSERT INTO transcript_turns (
+                transcript_turn_id, call_id, speaker, start_ms, end_ms, text
+            ) VALUES (?, ?, 'customer', 0, ?, 'hello')
+            """,
+            (f"{call_id}-turn-duration", call_db_id, transcript_end_ms),
+        )
     for index in range(treatment_signals):
         connection.execute(
             """
