@@ -156,6 +156,20 @@ export type TriageCall = {
   risk_level: "high" | "medium" | "low" | "unscored";
   analysis: TriageAnalysis;
 };
+
+export type AgentSummary = {
+  agent_name: string;
+  calls_handled: number;
+  difficult_calls: number;
+  estimated_satisfaction: number;
+  treatment_signal_count: number;
+  unresolved_count: number;
+  false_resolution_count: number;
+  high_risk_count: number;
+  coaching_note: string;
+  recent_call_ids: string[];
+};
+
 export type CustomerHistoryCall = {
   call_id: string;
   created_at: string;
@@ -295,4 +309,10 @@ export async function getIssueRadar(): Promise<IssueCategory[]> {
   if (!response.ok) throw new Error("Issue Radar could not be loaded.");
   return ((await response.json()) as { categories: IssueCategory[] })
     .categories;
+}
+
+export async function getAgentSummaries(): Promise<AgentSummary[]> {
+  const response = await fetch(`${apiBaseUrl}/api/dashboard/agents`);
+  if (!response.ok) throw new Error("Agent summaries could not be loaded.");
+  return ((await response.json()) as { agents: AgentSummary[] }).agents;
 }
