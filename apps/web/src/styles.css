@@ -17,9 +17,9 @@ body {
   z-index: 1;
   top: 0;
   max-width: 1100px;
-  max-height: min(360px, 42vh);
+  max-height: min(260px, 32vh);
   margin: 0 auto;
-  padding: 14px 24px;
+  padding: 10px 24px 12px;
   overflow: hidden;
   border-bottom: 1px solid #d8e2e7;
   background: #ffffff;
@@ -49,11 +49,11 @@ body {
 
 .processing-queue-items {
   display: grid;
-  gap: 8px;
-  max-height: min(260px, 30vh);
+  gap: 6px;
+  max-height: min(175px, 22vh);
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 12px 0 0;
+  padding: 8px 2px 2px 0;
   margin: 0;
   list-style: none;
   scrollbar-gutter: stable;
@@ -64,7 +64,8 @@ body {
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px;
-  padding: 9px 10px;
+  min-height: 58px;
+  padding: 7px 10px;
   border: 1px solid #d8e2e7;
   border-radius: 6px;
   background: #f7f9fb;
