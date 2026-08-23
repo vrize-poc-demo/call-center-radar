@@ -24,6 +24,7 @@ The record must state:
 | 0.1 | [Monorepo and app bootstrap](stories/story-0.1-monorepo-and-app-bootstrap.md) | Merged |
 | 0.2 | [Core developer workflow](stories/story-0.2-core-developer-workflow.md) | Merged |
 | 0.3 | [CI baseline](stories/story-0.3-ci-baseline.md) | In review |
+| 1.1 | [Upload and register call](stories/story-1.1-upload-register-call.md) | In progress |
 
 ## Common Setup
 

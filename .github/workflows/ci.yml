@@ -43,8 +43,14 @@ jobs:
       - name: Check formatting
         run: npm run format:check
 
-      - name: Test with coverage
-        run: npm run test:coverage
+      - name: Trust-sensitive API unit tests
+        run: npm run test:trust
+
+      - name: Web unit tests with coverage
+        run: npm run test:coverage --workspace=@call-center-radar/web
+
+      - name: API unit tests with coverage
+        run: PYTHONPATH=apps/api/src ./.venv/bin/python -m pytest apps/api --cov=app --cov-report=term-missing --cov-report=xml:coverage/api-coverage.xml
 
       - name: Build web application
         run: npm run build

@@ -8,7 +8,23 @@ from app.seed import seed_sample_metadata
 def test_migrations_are_versioned_and_idempotent(tmp_path) -> None:
     database = Database(tmp_path / "call_radar.db")
 
-    assert migrate(database) == ["001_initial.sql"]
+    assert migrate(database) == [
+        "001_initial.sql",
+        "002_upload_jobs.sql",
+        "003_processing_pipeline.sql",
+        "004_transcript_turns.sql",
+        "005_radar_priority.sql",
+        "006_unknown_transcript_speaker.sql",
+        "007_persisted_call_analysis.sql",
+        "008_processing_queue_dismissal.sql",
+        "009_analysis_mood_shifts.sql",
+        "010_false_resolution_signals.sql",
+        "011_repeated_question_events.sql",
+        "012_silence_windows.sql",
+        "013_customer_history.sql",
+        "014_agent_treatment_signals.sql",
+        "015_traceability.sql",
+    ]
     assert migrate(database) == []
 
     with database.connect() as connection:
