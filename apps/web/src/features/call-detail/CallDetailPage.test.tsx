@@ -359,10 +359,10 @@ describe("CallDetailPage", () => {
     const page = within(container);
 
     await page.findByText("Welcome to support");
-    expect(page.getByRole("region", { name: "Agent messages" })).toBeTruthy();
     expect(
-      page.getByRole("region", { name: "Customer messages" }),
+      page.getByRole("list", { name: "Chronological transcript" }),
     ).toBeTruthy();
+    expect(page.getAllByRole("listitem")).toHaveLength(3);
     expect(page.getByText("0.00s–1.00s")).toBeTruthy();
     const audio = container.querySelector("audio") as HTMLAudioElement;
     let playerTime = 4;
@@ -411,7 +411,7 @@ describe("CallDetailPage", () => {
         .scrollIntoView;
   });
 
-  it("places messages in speaker lanes with their complete saved ranges", async () => {
+  it("groups overlapping speaker turns without implying exact sentence order", async () => {
     mockedGetCallDetail.mockResolvedValue({
       call_id: "call-1",
       agent_name: "Agent",
@@ -447,27 +447,39 @@ describe("CallDetailPage", () => {
     ]);
 
     render(<CallDetailPage callId="call-1" />);
+    const currentTimeSetter = vi.spyOn(
+      HTMLMediaElement.prototype,
+      "currentTime",
+      "set",
+    );
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
 
-    const agentLane = await screen.findByRole("region", {
-      name: "Agent messages",
-    });
-    const customerLane = screen.getByRole("region", {
-      name: "Customer messages",
-    });
-    const unknownLane = screen.getByRole("region", {
-      name: "Unattributed messages",
+    const overlapGroup = await screen.findByRole("listitem", {
+      name: "Overlapping transcript group 1",
     });
 
     expect(
-      within(agentLane).getByText(
+      within(overlapGroup).getByText(
         "The requested item will be sent to your address.",
       ),
     ).toBeTruthy();
-    expect(within(agentLane).getByText("22.02s–44.90s")).toBeTruthy();
+    expect(within(overlapGroup).getByText("22.02s–44.90s")).toBeTruthy();
     expect(
-      within(customerLane).getByText("Please confirm the address."),
+      within(overlapGroup).getByText("Please confirm the address."),
     ).toBeTruthy();
-    expect(within(unknownLane).getByText("Unattributed speech.")).toBeTruthy();
+    expect(within(overlapGroup).getByText("Unattributed speech.")).toBeTruthy();
+    expect(
+      within(overlapGroup).getByText(
+        "Timing overlaps; exact sentence order is unavailable.",
+      ),
+    ).toBeTruthy();
+
+    fireEvent.click(
+      within(overlapGroup).getByText(
+        "The requested item will be sent to your address.",
+      ),
+    );
+    expect(currentTimeSetter).toHaveBeenCalledWith(22.02);
   });
 
   it("offers the explicit unknown-speaker filter for mono transcripts", async () => {
@@ -535,9 +547,9 @@ describe("CallDetailPage", () => {
     fireEvent.click(screen.getByText("Synced turn"));
 
     await waitFor(() =>
-      expect(screen.getByText("Synced turn").closest("li")?.className).toBe(
-        "active-turn",
-      ),
+      expect(
+        screen.getByText("Synced turn").closest(".active-turn"),
+      ).toBeTruthy(),
     );
     expect(currentTimeSetter).toHaveBeenCalledWith(0.5);
 

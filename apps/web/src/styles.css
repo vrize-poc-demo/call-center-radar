@@ -523,40 +523,73 @@ h1 {
   color: #096b72;
   font-weight: 650;
 }
-.transcript-turns {
+.transcript-groups {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   padding: 0;
   margin: 0;
   list-style: none;
 }
-.transcript-lanes {
+.transcript-groups > li {
+  padding: 8px;
+  border: 1px solid #d7dde5;
+  border-radius: 6px;
+  background: #f8fafb;
+}
+.transcript-groups > li.overlap-group {
+  border-color: #9aaab8;
+  border-left: 4px solid #096b72;
+}
+.transcript-lane-headings,
+.transcript-group-lanes {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
-.transcript-lane {
-  min-width: 0;
-}
-.transcript-lane h3 {
-  margin: 0 0 8px;
+.transcript-lane-headings {
+  padding: 0 8px;
+  margin-bottom: 8px;
   font-size: 0.9rem;
 }
-.customer-lane h3 {
+.transcript-lane-headings strong:first-child {
   color: #096b72;
 }
-.agent-lane h3 {
+.transcript-lane-headings strong:last-child {
   color: #6a4b1a;
+}
+.transcript-group-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  color: #536273;
+  font-size: 0.78rem;
+}
+.transcript-group-meta span:first-child {
+  flex: 0 0 auto;
+  font-weight: 700;
+}
+.transcript-lane {
+  min-width: 0;
 }
 .unknown-lane {
   grid-column: 1 / -1;
 }
-.lane-empty {
-  margin: 0;
+.unknown-speaker-label {
+  display: block;
+  margin-bottom: 4px;
   color: #536273;
-  font-size: 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 700;
 }
-.transcript-turns button,
+.mobile-speaker-label {
+  display: none;
+}
+.transcript-lane > div + div,
+.unknown-lane + .unknown-lane {
+  margin-top: 8px;
+}
+.transcript-lane button,
 .jump-button {
   width: 100%;
   padding: 10px;
@@ -763,11 +796,11 @@ h1 {
   color: #536273;
   font-size: 0.85rem;
 }
-.transcript-turns button {
+.transcript-lane button {
   display: grid;
   gap: 5px;
 }
-.transcript-turns time {
+.transcript-lane time {
   color: #536273;
   font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
@@ -832,8 +865,18 @@ h1 {
   .transcript-controls {
     grid-template-columns: 1fr;
   }
-  .transcript-lanes {
+  .transcript-lane-headings,
+  .transcript-group-lanes {
     grid-template-columns: 1fr;
+  }
+  .transcript-lane-headings {
+    display: none;
+  }
+  .mobile-speaker-label {
+    display: block;
+    margin-bottom: 3px;
+    color: #536273;
+    font-size: 0.78rem;
   }
   .unknown-lane {
     grid-column: auto;
