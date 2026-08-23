@@ -1,10 +1,12 @@
 import { CallUploadForm } from "./features/calls/CallUploadForm";
 import { CallDetailPage } from "./features/call-detail/CallDetailPage";
 import { TodayDashboard } from "./features/dashboard/TodayDashboard";
+import { IssueRadar } from "./features/issue-radar/IssueRadar";
 import { GlobalProcessingQueue } from "./features/processing/GlobalProcessingQueue";
 
 export function App() {
   const callId = new URLSearchParams(window.location.search).get("call");
+  const view = new URLSearchParams(window.location.search).get("view");
   if (callId)
     return (
       <>
@@ -16,7 +18,7 @@ export function App() {
     return (
       <>
         <GlobalProcessingQueue />
-        <TodayDashboard />
+        {view === "issues" ? <IssueRadar /> : <TodayDashboard />}
       </>
     );
   }
