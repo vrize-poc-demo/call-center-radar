@@ -96,16 +96,17 @@ If agent metrics cannot be read, the API returns `503` and the UI shows the exis
 
 - Branch: `feature/story-9.3-agent-operational-metrics`
 - Pull request: TBD
-- Commit(s): TBD
+- Commit(s): `8e053f9`
 - Review result: TBD
 
 ### Change Log
 
 Update this table before every commit. Explain both the change and its reason; do not use generic entries such as "updates" or "fixes".
 
-| Commit               | What changed                                                        | Why                                                                  |
-| -------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Pending local commit | Add Story 9.3 operational metrics API/UI/tests and delivery record. | Let managers see safe operational context in the Agent support view. |
+| Commit               | What changed                                                        | Why                                                                            |
+| -------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `8e053f9`            | Add Story 9.3 operational metrics API/UI/tests and delivery record. | Let managers see safe operational context in the Agent support view.           |
+| Pending local commit | Record the implementation commit in the Story 9.3 delivery note.    | Keep the story audit trail aligned with the branch history before PR creation. |
 
 ### PR Readiness and Review
 
