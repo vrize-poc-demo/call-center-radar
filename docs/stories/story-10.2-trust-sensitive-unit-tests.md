@@ -114,9 +114,9 @@ measured modules reached 93.97% aggregate coverage, and the command enforced the
 ## 5. Delivery Record
 
 - Branch: `feature/story-10.2-trust-sensitive-unit-tests`
-- Pull request: Pending
-- Commit(s): Pending
-- Review result: Pending
+- Pull request: [#100](https://github.com/vrize-poc-demo/call-center-radar/pull/100)
+- Commit(s): `a71b41f`
+- Review result: A/A self-review recorded; GitHub CI and human review pending.
 
 ### Change Log
 
@@ -124,11 +124,12 @@ Update this table before every commit. Explain both the change and its reason; d
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Added trust-sensitive boundary tests, a focused coverage command and CI step, and this story record. | Make trust regressions fail quickly and clearly without pursuing low-value blanket coverage. |
+| `a71b41f` | Added trust-sensitive boundary tests, a focused coverage command and CI step, and this story record. | Make trust regressions fail quickly and clearly without pursuing low-value blanket coverage. |
+| Pending | Recorded PR #100, verification evidence, and the A/A self-review result. | Keep the test-hardening delivery independently reviewable before project status changes. |
 
 ### PR Readiness and Review
 
 - Mergeability verification: `Pending - npm run pr:verify -- <pr-number>`
-- Code quality grade: Pending - A to F
-- Testing quality grade: Pending - A to F
-- Review findings and follow-up: Pending
+- Code quality grade: A - test-only scope, one reusable command, and no runtime contract changes.
+- Testing quality grade: A - deterministic boundaries, focused coverage floor, full regression, and privacy checks.
+- Review findings and follow-up: No blocking findings. Privacy schema assertions were strengthened during self-review to reject prohibited fragments in future field names.
