@@ -114,15 +114,16 @@ If the API cannot read dashboard data, it returns `503` with a short manager-saf
 
 Update this table before every commit. Explain both the change and its reason; do not use generic entries such as "updates" or "fixes".
 
-| Commit                       | What changed                                                                                | Why                                                                            |
-| ---------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `1869e6c`                    | Add agent summary aggregation endpoint and Agent support dashboard page.                    | Meet Story 9.2 with supportive, evidence-grounded manager visibility.          |
-| `8e84f6d`                    | Record the finalized implementation commit in the story delivery record.                    | Keep the story record accurate before PR creation.                             |
-| `75f99b3`                    | Record PR #94 in the story delivery record.                                                 | Keep the story record accurate after PR creation.                              |
-| `1b8a243`                    | Cap the global processing queue height and make recent calls scroll inside the queue panel. | Keep call-detail and dashboard content visible when many recent calls exist.   |
-| `5af50f0`                    | Record the queue polish commit in the story delivery log.                                   | Keep the story record accurate after the follow-up UI fix.                     |
-| `4c22ae8`                    | Tighten the global processing queue height and row density further.                         | Make the call detail content visible even when seven recent calls are present. |
-| Pending documentation commit | Record the tighter queue layout commit in the story delivery log.                           | Keep the story record accurate after the follow-up UI fix.                     |
+| Commit               | What changed                                                                                | Why                                                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `1869e6c`            | Add agent summary aggregation endpoint and Agent support dashboard page.                    | Meet Story 9.2 with supportive, evidence-grounded manager visibility.                                |
+| `8e84f6d`            | Record the finalized implementation commit in the story delivery record.                    | Keep the story record accurate before PR creation.                                                   |
+| `75f99b3`            | Record PR #94 in the story delivery record.                                                 | Keep the story record accurate after PR creation.                                                    |
+| `1b8a243`            | Cap the global processing queue height and make recent calls scroll inside the queue panel. | Keep call-detail and dashboard content visible when many recent calls exist.                         |
+| `5af50f0`            | Record the queue polish commit in the story delivery log.                                   | Keep the story record accurate after the follow-up UI fix.                                           |
+| `4c22ae8`            | Tighten the global processing queue height and row density further.                         | Make the call detail content visible even when seven recent calls are present.                       |
+| `ce38fe7`            | Record the tighter queue layout commit in the story delivery log.                           | Keep the story record accurate after the follow-up UI fix.                                           |
+| Pending local commit | Move the global processing queue into a left sidebar workspace layout.                      | Avoid the upper/lower page split and keep dashboard or call-detail content visible beside the queue. |
 
 ### PR Readiness and Review
 

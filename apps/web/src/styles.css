@@ -12,16 +12,28 @@ body {
   margin: 0;
 }
 
+.app-workspace {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  min-height: 100vh;
+  background: #f7f9fb;
+}
+
+.app-workspace-content {
+  min-width: 0;
+  overflow-x: hidden;
+}
+
 .global-processing-queue {
   position: sticky;
   z-index: 1;
   top: 0;
-  max-width: 1100px;
-  max-height: min(260px, 32vh);
-  margin: 0 auto;
-  padding: 10px 24px 12px;
+  align-self: start;
+  height: 100vh;
+  max-height: 100vh;
+  padding: 24px 18px;
   overflow: hidden;
-  border-bottom: 1px solid #d8e2e7;
+  border-right: 1px solid #d8e2e7;
   background: #ffffff;
 }
 
@@ -49,11 +61,11 @@ body {
 
 .processing-queue-items {
   display: grid;
-  gap: 6px;
-  max-height: min(175px, 22vh);
+  gap: 8px;
+  max-height: calc(100vh - 120px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 8px 2px 2px 0;
+  padding: 12px 4px 2px 0;
   margin: 0;
   list-style: none;
   scrollbar-gutter: stable;
@@ -61,13 +73,11 @@ body {
 
 .processing-queue-items li {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 12px;
-  min-height: 58px;
-  padding: 7px 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 12px;
+  padding: 12px;
   border: 1px solid #d8e2e7;
-  border-radius: 6px;
+  border-radius: 10px;
   background: #f7f9fb;
 }
 
@@ -90,9 +100,9 @@ body {
 }
 
 .queue-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 6px;
 }
 .queue-failure-note {
   color: #9f1c1c;
@@ -870,15 +880,26 @@ h1 {
   color: #9f1c1c;
 }
 @media (max-width: 720px) {
-  .global-processing-queue {
-    padding: 12px 16px;
+  .app-workspace {
+    display: block;
   }
+
+  .global-processing-queue {
+    height: auto;
+    max-height: min(260px, 35vh);
+    padding: 12px 16px;
+    border-right: 0;
+    border-bottom: 1px solid #d8e2e7;
+  }
+
+  .processing-queue-items {
+    max-height: min(175px, 22vh);
+  }
+
   .processing-queue-items li {
     grid-template-columns: minmax(0, 1fr) auto;
   }
-  .queue-actions {
-    grid-column: 1 / -1;
-  }
+
   .dashboard-header,
   .attention-queue a {
     flex-direction: column;
