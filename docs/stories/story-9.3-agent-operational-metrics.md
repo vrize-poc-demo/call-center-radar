@@ -95,22 +95,23 @@ If agent metrics cannot be read, the API returns `503` and the UI shows the exis
 ## 5. Delivery Record
 
 - Branch: `feature/story-9.3-agent-operational-metrics`
-- Pull request: TBD
-- Commit(s): `8e053f9`
+- Pull request: [#98](https://github.com/vrize-poc-demo/call-center-radar/pull/98)
+- Commit(s): `8e053f9`, `c6e920c`
 - Review result: TBD
 
 ### Change Log
 
 Update this table before every commit. Explain both the change and its reason; do not use generic entries such as "updates" or "fixes".
 
-| Commit               | What changed                                                        | Why                                                                            |
-| -------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `8e053f9`            | Add Story 9.3 operational metrics API/UI/tests and delivery record. | Let managers see safe operational context in the Agent support view.           |
-| Pending local commit | Record the implementation commit in the Story 9.3 delivery note.    | Keep the story audit trail aligned with the branch history before PR creation. |
+| Commit               | What changed                                                         | Why                                                                            |
+| -------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `8e053f9`            | Add Story 9.3 operational metrics API/UI/tests and delivery record.  | Let managers see safe operational context in the Agent support view.           |
+| `c6e920c`            | Record the implementation commit in the Story 9.3 delivery note.     | Keep the story audit trail aligned with the branch history before PR creation. |
+| Pending local commit | Record the Story 9.3 PR link and local `pr:verify` shell limitation. | Keep delivery status transparent for reviewers.                                |
 
 ### PR Readiness and Review
 
-- Mergeability verification: `Pending - npm run pr:verify -- <pr-number>`
-- Code quality grade: `Pending - A to F`
-- Testing quality grade: `Pending - A to F`
-- Review findings and follow-up: TBD
+- Mergeability verification: `npm run pr:verify -- 98` attempted locally, but the script requires `bash`, which is not installed in this Windows shell.
+- Code quality grade: `A-`
+- Testing quality grade: `A-`
+- Review findings and follow-up: No blocking findings from local review. Follow up only if GitHub Actions reports a platform-specific issue.
