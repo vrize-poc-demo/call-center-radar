@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from app.config import Settings
+from app.customer_history import customer_match_key
 from app.logging import log_event
 from app.pipeline import PROCESSING_STATUSES, ProcessingResult
 
@@ -114,7 +115,8 @@ class CallRegistrationService:
                     """
                     INSERT INTO calls (
                         call_id, audio_path, source_metadata_path, agent_name, customer_name
-                    ) VALUES (?, ?, ?, ?, ?)
+                        , customer_match_key
+                    ) VALUES (?, ?, ?, ?, ?, ?)
                     """,
                     (
                         call_id,
@@ -122,6 +124,7 @@ class CallRegistrationService:
                         str(metadata_path) if metadata_path is not None else f"manual://{call_id}",
                         agent_name,
                         customer_name,
+                        customer_match_key(customer_name),
                     ),
                 )
                 connection.execute(

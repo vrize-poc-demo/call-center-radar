@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from app.customer_history import customer_match_key
 from app.database import Database
 
 
@@ -32,8 +33,9 @@ def seed_sample_metadata(
                 """
                 INSERT INTO calls (
                     call_id, audio_path, source_metadata_path, agent_name, customer_name,
-                    agent_speaker_id, customer_speaker_id, started_at_ms, ended_at_ms
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    agent_speaker_id, customer_speaker_id, started_at_ms, ended_at_ms,
+                    customer_match_key
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(call_id) DO UPDATE SET
                     audio_path = excluded.audio_path,
                     source_metadata_path = excluded.source_metadata_path,
@@ -42,7 +44,8 @@ def seed_sample_metadata(
                     agent_speaker_id = excluded.agent_speaker_id,
                     customer_speaker_id = excluded.customer_speaker_id,
                     started_at_ms = excluded.started_at_ms,
-                    ended_at_ms = excluded.ended_at_ms
+                    ended_at_ms = excluded.ended_at_ms,
+                    customer_match_key = excluded.customer_match_key
                 """,
                 (
                     call_id,
@@ -54,6 +57,9 @@ def seed_sample_metadata(
                     caller.get("speaker_id"),
                     payload.get("start_time_ms"),
                     payload.get("end_time_ms"),
+                    customer_match_key(caller.get("metadata", {}).get("first and last name", ""))
+                    if caller.get("metadata", {}).get("first and last name")
+                    else None,
                 ),
             )
         seeded += 1
