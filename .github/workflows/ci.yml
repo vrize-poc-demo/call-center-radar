@@ -43,6 +43,9 @@ jobs:
       - name: Check formatting
         run: npm run format:check
 
+      - name: Trust-sensitive API unit tests
+        run: npm run test:trust
+
       - name: Web unit tests with coverage
         run: npm run test:coverage --workspace=@call-center-radar/web
 

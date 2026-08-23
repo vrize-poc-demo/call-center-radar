@@ -2,10 +2,12 @@ import threading
 import wave
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.config import Settings
 from app.main import create_app
+from app.pipeline import ProcessingPipeline
 from app.transcription import AudioInfo, AudioInspectionError, TranscribedTurn, TranscriptionError
 
 
@@ -252,3 +254,44 @@ def test_sqlite_remains_readable_while_transcription_runs(tmp_path, monkeypatch)
         transcriber.release.set()
         thread.join(timeout=2)
         assert not thread.is_alive()
+
+
+def test_invalid_job_transition_is_rejected_without_partial_state_or_event(tmp_path) -> None:
+    settings = build_settings(tmp_path)
+    app = create_app(settings)
+    job_id = create_queued_job(app, tmp_path, b"audio")
+    pipeline = ProcessingPipeline(
+        app.state.database,
+        app.state.logger,
+        settings,
+        transcriber=FakeTranscriber(),
+    )
+
+    with app.state.database.connect() as connection:
+        job = connection.execute(
+            "SELECT id, job_id, call_id, trace_id, status FROM processing_jobs WHERE job_id = ?",
+            (job_id,),
+        ).fetchone()
+        with pytest.raises(ValueError, match="invalid_state_transition"):
+            pipeline._transition(connection, job, "completed")
+
+    with app.state.database.connect() as connection:
+        saved_status = connection.execute(
+            "SELECT status FROM processing_jobs WHERE job_id = ?", (job_id,)
+        ).fetchone()["status"]
+        transition_count = connection.execute(
+            "SELECT COUNT(*) FROM processing_job_events"
+        ).fetchone()[0]
+
+    assert saved_status == "queued"
+    assert transition_count == 0
+
+
+def test_processing_unknown_job_returns_stable_not_found_contract(tmp_path) -> None:
+    app = create_app(build_settings(tmp_path))
+
+    with TestClient(app) as client:
+        response = client.post("/api/calls/job_unknown/process")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Processing job not found."}
