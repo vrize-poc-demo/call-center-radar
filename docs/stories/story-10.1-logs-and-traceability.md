@@ -128,9 +128,9 @@ response's `X-Request-ID`; the later trace read received a distinct request ID.
 ## 5. Delivery Record
 
 - Branch: `feature/story-10.1-logs-traceability`
-- Pull request: Pending
-- Commit(s): Pending
-- Review result: Pending
+- Pull request: [#99](https://github.com/vrize-poc-demo/call-center-radar/pull/99)
+- Commit(s): `6668a84`
+- Review result: A/A self-review recorded; GitHub CI and human review pending.
 
 ### Change Log
 
@@ -138,11 +138,12 @@ Update this table before every commit. Explain both the change and its reason; d
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Added request correlation, durable trace persistence/API, pipeline and analysis markers, tests, and this story record. | Make the P0 trust path inspectable end to end without persisting sensitive call content. |
+| `6668a84` | Added request correlation, durable trace persistence/API, pipeline and analysis markers, tests, and this story record. | Make the P0 trust path inspectable end to end without persisting sensitive call content. |
+| Pending | Recorded PR #99, delivery evidence, and the A/A self-review result. | Keep the repository history complete and independently reviewable before project status changes. |
 
 ### PR Readiness and Review
 
 - Mergeability verification: `Pending - npm run pr:verify -- <pr-number>`
-- Code quality grade: Pending - A to F
-- Testing quality grade: Pending - A to F
-- Review findings and follow-up: Pending
+- Code quality grade: A - cohesive typed trace contract, transactional persistence, and bounded integration points.
+- Testing quality grade: A - success, processing failure, validation rejection, privacy, migration, and legacy-job regressions covered.
+- Review findings and follow-up: No blocking findings. A legacy null-trace upgrade edge case was found during self-review, fixed, and regression-tested.
