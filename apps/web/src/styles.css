@@ -197,6 +197,29 @@ body {
   gap: 16px;
   margin-top: 36px;
 }
+.journey-timeline {
+  display: grid;
+  gap: 16px;
+  padding: 0;
+  margin-top: 36px;
+  list-style: none;
+}
+.journey-timeline li {
+  padding-left: 20px;
+  border-left: 3px solid #096b72;
+}
+.journey-timeline article {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid #d8e2e7;
+  border-radius: 8px;
+  background: #fff;
+}
+.journey-timeline time {
+  color: #52616d;
+  font-size: 0.9rem;
+}
 .issue-card {
   display: grid;
   gap: 16px;

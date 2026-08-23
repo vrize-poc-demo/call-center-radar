@@ -149,6 +149,24 @@ export type TriageCall = {
   risk_level: "high" | "medium" | "low" | "unscored";
   analysis: TriageAnalysis;
 };
+export type CustomerHistoryCall = {
+  call_id: string;
+  created_at: string;
+  processing_status: string | null;
+  analysis_status: string;
+  mood: string | null;
+  resolution: string | null;
+  issue: { key: string; label: string; repeated: boolean } | null;
+};
+export async function getCustomerHistory(
+  callId: string,
+): Promise<CustomerHistoryCall[]> {
+  const response = await fetch(
+    `${apiBaseUrl}/api/calls/${callId}/customer-history`,
+  );
+  if (!response.ok) throw new Error("Customer history could not be loaded.");
+  return ((await response.json()) as { calls: CustomerHistoryCall[] }).calls;
+}
 
 export type IssueTrend =
   "emerging" | "declining" | "stable" | "not_enough_data";
