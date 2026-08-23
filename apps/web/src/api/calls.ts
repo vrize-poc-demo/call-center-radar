@@ -150,6 +150,20 @@ export type TriageCall = {
   analysis: TriageAnalysis;
 };
 
+export type IssueTrend =
+  "emerging" | "declining" | "stable" | "not_enough_data";
+
+export type IssueCategory = {
+  key: string;
+  label: string;
+  call_count: number;
+  current_window_count: number;
+  previous_window_count: number;
+  trend: IssueTrend;
+  representative_call_id: string;
+  related_call_ids: string[];
+};
+
 export async function registerCall(
   formData: FormData,
 ): Promise<CallRegistration> {
@@ -249,4 +263,11 @@ export async function getDashboardTriage(): Promise<TriageCall[]> {
   const response = await fetch(`${apiBaseUrl}/api/dashboard/triage`);
   if (!response.ok) throw new Error("Today's dashboard could not be loaded.");
   return ((await response.json()) as { calls: TriageCall[] }).calls;
+}
+
+export async function getIssueRadar(): Promise<IssueCategory[]> {
+  const response = await fetch(`${apiBaseUrl}/api/dashboard/issues`);
+  if (!response.ok) throw new Error("Issue Radar could not be loaded.");
+  return ((await response.json()) as { categories: IssueCategory[] })
+    .categories;
 }
