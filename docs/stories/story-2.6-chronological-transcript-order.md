@@ -2,7 +2,7 @@
 
 **GitHub issue:** [#70](https://github.com/vrize-poc-demo/call-center-radar/issues/70)
 
-**Status:** In Progress
+**Status:** In Review
 
 **Owner:** Vipin
 
@@ -119,8 +119,8 @@ the mobile view displayed explicit speaker labels.
 
 - Branch: `feature/story-2.6-chronological-transcript-order`
 - Pull request: [#95](https://github.com/vrize-poc-demo/call-center-radar/pull/95)
-- Commit(s): `4137498`
-- Review result: A/A self-review recorded; GitHub CI and human review pending.
+- Commit(s): `4137498`, `9dd64bd`
+- Review result: A/A self-review; GitHub quality gate and repository PR verification passed.
 
 ### Change Log
 
@@ -129,11 +129,12 @@ Update this table before every commit. Explain both the change and its reason; d
 | Commit | What changed | Why |
 | --- | --- | --- |
 | `4137498` | Added deterministic overlap-aware transcript groups, ambiguity messaging, responsive Call Detail rendering, tests, and this record. | Prevent the UI from implying an exact sentence order that the saved STT timing cannot support. |
-| Pending | Recorded PR #95 and its A/A review status in the story delivery history. | Keep the repository documentation complete and traceable before review. |
+| `9dd64bd` | Recorded PR #95 and its A/A review status in the story delivery history. | Keep the repository documentation complete and traceable before review. |
+| This commit | Recorded passing GitHub CI, clean mergeability, and repository PR verification. | Hand the story to human review with complete delivery evidence. |
 
 ### PR Readiness and Review
 
-- Mergeability verification: `Pending - npm run pr:verify -- 95`
+- Mergeability verification: `npm run pr:verify -- 95` passed; GitHub reports `CLEAN` and `MERGEABLE`.
 - Code quality grade: A - deterministic pure logic with immutable source data preserved.
 - Testing quality grade: A - exact regression, focused unit/integration, full regression, and responsive live verification.
-- Review findings and follow-up: No blocking self-review findings; issue #71 retains stronger shared-time lane scaling.
+- Review findings and follow-up: GitHub quality gates passed with no blocking self-review findings; issue #71 retains stronger shared-time lane scaling. Human merge remains required.
