@@ -11,39 +11,45 @@ export function App() {
   const view = new URLSearchParams(window.location.search).get("view");
   if (callId)
     return (
-      <>
+      <div className="app-workspace">
         <GlobalProcessingQueue />
-        <CallDetailPage callId={callId} />
-      </>
+        <div className="app-workspace-content">
+          <CallDetailPage callId={callId} />
+        </div>
+      </div>
     );
   if (!new URLSearchParams(window.location.search).has("register")) {
     return (
-      <>
+      <div className="app-workspace">
         <GlobalProcessingQueue />
-        {view === "issues" ? (
-          <IssueRadar />
-        ) : view === "agents" ? (
-          <AgentSummaryPage />
-        ) : view === "journey" ? (
-          <CustomerJourney />
-        ) : (
-          <TodayDashboard />
-        )}
-      </>
+        <div className="app-workspace-content">
+          {view === "issues" ? (
+            <IssueRadar />
+          ) : view === "agents" ? (
+            <AgentSummaryPage />
+          ) : view === "journey" ? (
+            <CustomerJourney />
+          ) : (
+            <TodayDashboard />
+          )}
+        </div>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="app-workspace">
       <GlobalProcessingQueue />
-      <main className="app-shell">
-        <p className="eyebrow">Call Center Radar</p>
-        <h1>Evidence-first call intelligence</h1>
-        <p>
-          Give managers an evidence-backed queue of calls that need attention.
-        </p>
-        <CallUploadForm />
-      </main>
-    </>
+      <div className="app-workspace-content">
+        <main className="app-shell">
+          <p className="eyebrow">Call Center Radar</p>
+          <h1>Evidence-first call intelligence</h1>
+          <p>
+            Give managers an evidence-backed queue of calls that need attention.
+          </p>
+          <CallUploadForm />
+        </main>
+      </div>
+    </div>
   );
 }
