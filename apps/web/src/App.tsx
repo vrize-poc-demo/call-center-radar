@@ -2,6 +2,7 @@ import { CallUploadForm } from "./features/calls/CallUploadForm";
 import { CallDetailPage } from "./features/call-detail/CallDetailPage";
 import { TodayDashboard } from "./features/dashboard/TodayDashboard";
 import { IssueRadar } from "./features/issue-radar/IssueRadar";
+import { CustomerJourney } from "./features/customer-journey/CustomerJourney";
 import { GlobalProcessingQueue } from "./features/processing/GlobalProcessingQueue";
 
 export function App() {
@@ -18,7 +19,13 @@ export function App() {
     return (
       <>
         <GlobalProcessingQueue />
-        {view === "issues" ? <IssueRadar /> : <TodayDashboard />}
+        {view === "issues" ? (
+          <IssueRadar />
+        ) : view === "journey" ? (
+          <CustomerJourney />
+        ) : (
+          <TodayDashboard />
+        )}
       </>
     );
   }
