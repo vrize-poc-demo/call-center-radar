@@ -122,6 +122,7 @@ Detailed planning lives in:
 - `docs/Implementation_Backlog_Plan.md`
 - `docs/wiki/Home.md`
 - `docs/wiki/Architecture-and-Delivery-Plan.md`
+- `docs/Git_Flow.md`
 
 ## Suggested Initial Scope
 
@@ -150,8 +151,7 @@ Stretch scope:
 
 ## Local Transcription Setup
 
-The POC transcribes MP3 and WAV recordings locally. No paid transcription API or external LLM is
-used in this step.
+The POC transcribes MP3 and WAV recordings locally. No paid transcription API or external LLM is used in this step.
 
 Prerequisites:
 
@@ -168,19 +168,13 @@ npm ci
 npm run dev
 ```
 
-The first call processed downloads the free `base.en` model once. Processing a stereo recording
-uses the left channel as `agent` and right channel as `customer` by default; set
-`CALL_RADAR_STEREO_LEFT_SPEAKER` and `CALL_RADAR_STEREO_RIGHT_SPEAKER` to change that mapping.
-Mono recordings are intentionally stored as `unknown` speaker until diarization is implemented.
+The first call processed downloads the free `base.en` model once. Processing a stereo recording uses the left channel as `agent` and right channel as `customer` by default; set `CALL_RADAR_STEREO_LEFT_SPEAKER` and `CALL_RADAR_STEREO_RIGHT_SPEAKER` to change that mapping. Mono recordings are intentionally stored as `unknown` speaker until diarization is implemented.
 
-For a live check, upload an MP3 or WAV recording, select **Transcribe call**, then open Call
-Detail. The persisted timestamped transcript can be searched, filtered, and played from any turn.
+For a live check, upload an MP3 or WAV recording, select **Transcribe call**, then open Call Detail. The persisted timestamped transcript can be searched, filtered, and played from any turn.
 
 ## Local AI Analysis Setup
 
-Call analysis runs on this Mac through Ollama. It is free for the POC and does
-not send transcript text to a paid cloud provider. Install Ollama once, then
-download the default analysis model:
+Call analysis runs on this Mac through Ollama. It is free for the POC and does not send transcript text to a paid cloud provider. Install Ollama once, then download the default analysis model:
 
 ```bash
 brew install ollama
@@ -188,15 +182,100 @@ ollama serve
 ollama pull qwen2.5:7b
 ```
 
-Keep `ollama serve` running before starting the API. The API sends structured,
-timestamped transcript turns to `http://127.0.0.1:11434`, asks the local model
-for strict JSON, then rejects any claim or mood shift whose turn ID, quote, or
-timestamps do not exactly match saved SQLite transcript data. It never falls
-back to keyword heuristics. If Ollama is unavailable, analysis returns a
-retriable `503` and existing saved analysis remains unchanged.
+Keep `ollama serve` running before starting the API. The API sends structured, timestamped transcript turns to `http://127.0.0.1:11434`, asks the local model for strict JSON, then rejects any claim or mood shift whose turn ID, quote, or timestamps do not exactly match saved SQLite transcript data. It never falls back to keyword heuristics. If Ollama is unavailable, analysis returns a retriable `503` and existing saved analysis remains unchanged.
 
-Optional settings: `CALL_RADAR_OLLAMA_BASE_URL`, `CALL_RADAR_OLLAMA_MODEL`, and
-`CALL_RADAR_ANALYSIS_TIMEOUT_SECONDS`. The default model is `qwen2.5:7b`.
+Optional settings: `CALL_RADAR_OLLAMA_BASE_URL`, `CALL_RADAR_OLLAMA_MODEL`, and `CALL_RADAR_ANALYSIS_TIMEOUT_SECONDS`. The default model is `qwen2.5:7b`.
+
+## Run Locally
+
+Start both the web app and the API together:
+
+```bash
+npm run dev
+```
+
+That starts:
+
+- the web app on Vite
+- the API server on `http://127.0.0.1:8000`
+
+If you want to run them separately:
+
+```bash
+npm run dev:web
+```
+
+```bash
+npm run dev:api
+```
+
+## Build
+
+To build the web app:
+
+```bash
+npm run build
+```
+
+## Test
+
+Run the full test suite:
+
+```bash
+npm run test
+```
+
+Run lint checks:
+
+```bash
+npm run lint
+```
+
+Run formatting checks:
+
+```bash
+npm run format:check
+```
+
+## Database Setup
+
+The POC uses SQLite.
+
+If you need to prepare or seed the local database, use:
+
+```bash
+npm run db:migrate
+```
+
+```bash
+npm run db:seed
+```
+
+## Demo Flow
+
+The intended demo flow is:
+
+1. Open the app in the browser
+2. Upload a call recording
+3. Watch the processing job complete
+4. Open the Call Detail page
+5. Review the transcript, evidence, and manager recommendations
+6. Jump between evidence and audio timestamps
+
+## Project Focus
+
+This repo is built around three POC goals:
+
+- Trust: every important AI judgment must point back to saved transcript evidence
+- Speed: new recordings can be processed during the demo
+- Action: managers get a clear brief, a score, and a recommended next step
+
+## Helpful Docs
+
+- [Engineering Governance](docs/Engineering_Governance.md)
+- [Git Flow](docs/Git_Flow.md)
+- [Implementation Backlog Plan](docs/Implementation_Backlog_Plan.md)
+- [Wiki Home](docs/wiki/Home.md)
 
 ## Repository Notes
 

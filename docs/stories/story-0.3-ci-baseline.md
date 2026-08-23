@@ -7,7 +7,7 @@
 **Owner:** Vipin
 
 **Epic:** Foundation and developer workflow
-**Last updated:** 2026-08-21
+**Last updated:** 2026-08-23
 
 ## 1. Outcome
 
@@ -121,6 +121,7 @@ The bootstrap web UI currently has one smoke test, so its coverage measurement i
 | --- | --- | --- |
 | `1469dc8` | Added GitHub Actions, coverage reporting, and local pre-commit checks. | Establish a repeatable CI baseline before product stories start. |
 | `4ce3215` | Added separate documentation records and the required story template. | Make each story independently auditable and easy to hand over. |
+| Pending | Refreshed the top-level README with prerequisites, install steps, run commands, test commands, and demo flow. | Give new contributors a fast, plain-language setup guide that matches the actual scripts in the repo. |
 | Pending | Added repository governance, PR template, and readiness verifier. | Make the agreed Git flow, human merge boundary, and pre-review checks repeatable for all contributors. |
 
 ### PR Readiness and Review
