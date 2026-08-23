@@ -106,7 +106,7 @@ If the API cannot read dashboard data, it returns `503` with a short manager-saf
 ## 5. Delivery Record
 
 - Branch: `feature/story-9.2-agent-summary-page`
-- Pull request: TBD
+- Pull request: #94
 - Commit(s): `1869e6c` Implement story 9.2 agent summary page
 - Review result: Self-review complete; no blocking findings before PR.
 
@@ -117,7 +117,8 @@ Update this table before every commit. Explain both the change and its reason; d
 | Commit | What changed | Why |
 | --- | --- | --- |
 | `1869e6c` | Add agent summary aggregation endpoint and Agent support dashboard page. | Meet Story 9.2 with supportive, evidence-grounded manager visibility. |
-| Pending documentation commit | Record the finalized implementation commit in the story delivery record. | Keep the story record accurate before PR creation. |
+| `8e84f6d` | Record the finalized implementation commit in the story delivery record. | Keep the story record accurate before PR creation. |
+| Pending documentation commit | Record PR #94 in the story delivery record. | Keep the story record accurate after PR creation. |
 
 ### PR Readiness and Review
 
