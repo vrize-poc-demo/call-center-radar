@@ -26,6 +26,39 @@ def test_extract_evidence_links_exact_saved_turns() -> None:
     )
 
 
+def test_evidence_matching_is_case_insensitive_deterministic_and_non_mutating() -> None:
+    turn = TranscriptTurn(
+        transcript_turn_id="turn_stable",
+        speaker="customer",
+        start_ms=15,
+        end_ms=45,
+        text="I STILL CANNOT complete this request.",
+    )
+
+    first = extract_evidence([turn])
+    second = extract_evidence([turn])
+
+    assert [candidate.evidence_id for candidate in first] == [
+        candidate.evidence_id for candidate in second
+    ]
+    assert [candidate.rule_id for candidate in first] == ["unresolved_phrase"]
+    assert first[0].quote == turn.text
+    assert (first[0].start_ms, first[0].end_ms) == (15, 45)
+
+
+def test_evidence_matching_returns_empty_for_unrelated_or_empty_turn_sets() -> None:
+    unrelated = TranscriptTurn(
+        transcript_turn_id="turn_clear",
+        speaker="customer",
+        start_ms=0,
+        end_ms=50,
+        text="Thank you for confirming the delivery date.",
+    )
+
+    assert extract_evidence([]) == []
+    assert extract_evidence([unrelated]) == []
+
+
 def test_evidence_endpoint_reads_saved_transcript_turns(tmp_path) -> None:
     settings = Settings(
         database_path=tmp_path / "calls.db",

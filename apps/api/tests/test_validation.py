@@ -191,3 +191,87 @@ def test_filters_invalid_optional_mood_shifts_without_relaxing_validation() -> N
 
     assert accepted == []
     assert reasons == ["unknown_transcript_turn"]
+
+
+def test_rejects_mood_shifts_that_are_not_in_saved_time_order() -> None:
+    late = TranscriptTurn(
+        transcript_turn_id="turn_late",
+        speaker="customer",
+        start_ms=100,
+        end_ms=120,
+        text="This is now working.",
+    )
+    early = TranscriptTurn(
+        transcript_turn_id="turn_early",
+        speaker="customer",
+        start_ms=20,
+        end_ms=40,
+        text="This is not working.",
+    )
+    shifts = [
+        MoodShift(
+            from_mood="negative",
+            to_mood="positive",
+            reason="Late recovery",
+            transcript_turn_id=late.transcript_turn_id,
+            quote=late.text,
+            start_ms=late.start_ms,
+            end_ms=late.end_ms,
+        ),
+        MoodShift(
+            from_mood="neutral",
+            to_mood="negative",
+            reason="Earlier concern",
+            transcript_turn_id=early.transcript_turn_id,
+            quote=early.text,
+            start_ms=early.start_ms,
+            end_ms=early.end_ms,
+        ),
+    ]
+
+    with pytest.raises(ClaimValidationError, match="mood_shifts_not_ordered"):
+        validate_mood_shifts(shifts, [early, late])
+
+
+def test_filter_discards_entire_ambiguous_mood_timeline_when_order_is_invalid() -> None:
+    turns = [
+        TranscriptTurn(
+            transcript_turn_id="turn_1",
+            speaker="customer",
+            start_ms=10,
+            end_ms=20,
+            text="First",
+        ),
+        TranscriptTurn(
+            transcript_turn_id="turn_2",
+            speaker="customer",
+            start_ms=30,
+            end_ms=40,
+            text="Second",
+        ),
+    ]
+    shifts = [
+        MoodShift(
+            from_mood="negative",
+            to_mood="positive",
+            reason="Second event proposed first",
+            transcript_turn_id="turn_2",
+            quote="model copy is canonicalized",
+            start_ms=0,
+            end_ms=1,
+        ),
+        MoodShift(
+            from_mood="neutral",
+            to_mood="negative",
+            reason="First event proposed second",
+            transcript_turn_id="turn_1",
+            quote="model copy is canonicalized",
+            start_ms=0,
+            end_ms=1,
+        ),
+    ]
+
+    accepted, reasons = filter_valid_mood_shifts(shifts, turns)
+
+    assert accepted == []
+    assert reasons == ["mood_shifts_not_ordered"]
