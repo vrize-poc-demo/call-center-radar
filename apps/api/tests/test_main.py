@@ -45,3 +45,20 @@ def test_api_accepts_supported_local_vite_ports(tmp_path) -> None:
 
                 assert response.status_code == 200
                 assert response.headers["access-control-allow-origin"] == origin
+
+
+def test_each_api_response_has_a_server_generated_request_id(tmp_path) -> None:
+    app = create_app(
+        Settings(
+            database_path=tmp_path / "call_radar.db",
+            sample_data_dir=tmp_path / "samples",
+        )
+    )
+
+    with TestClient(app) as client:
+        first = client.get("/api")
+        second = client.get("/api/health")
+
+    assert first.headers["x-request-id"].startswith("req_")
+    assert second.headers["x-request-id"].startswith("req_")
+    assert first.headers["x-request-id"] != second.headers["x-request-id"]

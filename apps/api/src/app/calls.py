@@ -11,6 +11,7 @@ from app.config import Settings
 from app.customer_history import customer_match_key
 from app.logging import log_event
 from app.pipeline import PROCESSING_STATUSES, ProcessingResult
+from app.traceability import record_trace_event
 
 router = APIRouter(prefix="/api/calls", tags=["calls"])
 
@@ -22,6 +23,7 @@ MEDIA_TYPES = {".mp3": "audio/mpeg", ".wav": "audio/wav"}
 class CallRegistration(BaseModel):
     call_id: str
     job_id: str
+    trace_id: str
     status: str
 
 
@@ -61,6 +63,7 @@ class CallDetail(BaseModel):
 class UploadedCall:
     call_id: str
     job_id: str
+    trace_id: str
     audio_path: Path
 
 
@@ -77,6 +80,7 @@ class CallRegistrationService:
         metadata_payload: bytes | None,
         agent_name: str,
         customer_name: str,
+        request_id: str | None = None,
     ) -> UploadedCall:
         extension = Path(audio.filename or "").suffix.lower()
         if extension not in SUPPORTED_AUDIO_EXTENSIONS:
@@ -99,6 +103,7 @@ class CallRegistrationService:
 
         call_id = uuid4().hex
         job_id = f"job_{uuid4().hex}"
+        trace_id = f"trace_{uuid4().hex}"
         upload_dir = self.settings.upload_dir
         if upload_dir is None:
             raise RuntimeError("Upload directory is not configured.")
@@ -127,12 +132,21 @@ class CallRegistrationService:
                         customer_match_key(customer_name),
                     ),
                 )
-                connection.execute(
+                job_cursor = connection.execute(
                     """
-                    INSERT INTO processing_jobs (job_id, call_id, status)
-                    VALUES (?, ?, ?)
+                    INSERT INTO processing_jobs (job_id, call_id, trace_id, status)
+                    VALUES (?, ?, ?, ?)
                     """,
-                    (job_id, cursor.lastrowid, "queued"),
+                    (job_id, cursor.lastrowid, trace_id, "queued"),
+                )
+                record_trace_event(
+                    connection,
+                    trace_id=trace_id,
+                    request_id=request_id,
+                    call_db_id=cursor.lastrowid,
+                    processing_job_db_id=job_cursor.lastrowid,
+                    event_type="call_registered",
+                    event_status="succeeded",
                 )
         except Exception:
             audio_path.unlink(missing_ok=True)
@@ -140,7 +154,12 @@ class CallRegistrationService:
                 metadata_path.unlink(missing_ok=True)
             raise
 
-        return UploadedCall(call_id=call_id, job_id=job_id, audio_path=audio_path)
+        return UploadedCall(
+            call_id=call_id,
+            job_id=job_id,
+            trace_id=trace_id,
+            audio_path=audio_path,
+        )
 
 
 def read_participant_names(metadata: UploadFile, max_upload_bytes: int) -> tuple[str, str, bytes]:
@@ -311,7 +330,13 @@ async def register_call(
             agent_name, customer_name, metadata_payload = read_participant_names(
                 metadata, settings.max_upload_bytes
             )
-        uploaded_call = service.register(audio, metadata_payload, agent_name, customer_name)
+        uploaded_call = service.register(
+            audio,
+            metadata_payload,
+            agent_name,
+            customer_name,
+            request.state.request_id,
+        )
     except HTTPException as error:
         log_event(
             logger,
@@ -334,6 +359,7 @@ async def register_call(
     return CallRegistration(
         call_id=uploaded_call.call_id,
         job_id=uploaded_call.job_id,
+        trace_id=uploaded_call.trace_id,
         status="queued",
     )
 

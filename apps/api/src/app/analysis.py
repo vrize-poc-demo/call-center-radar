@@ -15,6 +15,7 @@ from app.silence_and_balance import (
     detect_silence_windows,
 )
 from app.summary import SummaryValidationError, count_summary_words, normalize_summary
+from app.traceability import ANALYSIS_RULE_VERSION, record_call_trace_event
 from app.transcripts import TranscriptTurn
 from app.validation import (
     ClaimValidationError,
@@ -470,6 +471,16 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
             (call["id"],),
         ).fetchall()
         turns = [TranscriptTurn(**dict(row)) for row in rows]
+        request_id = getattr(request.state, "request_id", None)
+        record_call_trace_event(
+            connection,
+            call_db_id=call["id"],
+            request_id=request_id,
+            event_type="analysis_started",
+            event_status="started",
+            model_version=f"ollama:{request.app.state.settings.ollama_model}",
+            rule_version=ANALYSIS_RULE_VERSION,
+        )
         try:
             generated = request.app.state.analysis_provider.generate(turns)
             analysis = parse_model_output(generated.raw_output, generated.model_version)
@@ -638,7 +649,29 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
                 },
             )
             analysis = persist_analysis(connection, call["id"], analysis)
+            record_call_trace_event(
+                connection,
+                call_db_id=call["id"],
+                request_id=request_id,
+                event_type="analysis_validated",
+                event_status="succeeded",
+                model_version=analysis.model_version,
+                rule_version=ANALYSIS_RULE_VERSION,
+                validation_result="accepted",
+            )
         except AnalysisProviderError as error:
+            record_call_trace_event(
+                connection,
+                call_db_id=call["id"],
+                request_id=request_id,
+                event_type="analysis_failed",
+                event_status="failed",
+                model_version=f"ollama:{request.app.state.settings.ollama_model}",
+                rule_version=ANALYSIS_RULE_VERSION,
+                validation_result="not_run",
+                failure_reason="analysis_provider_unavailable",
+            )
+            connection.commit()
             log_event(
                 request.app.state.logger,
                 "analysis_provider_failed",
@@ -660,6 +693,18 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
                 if isinstance(error, (ClaimValidationError, SummaryValidationError))
                 else "invalid_model_output"
             )
+            record_call_trace_event(
+                connection,
+                call_db_id=call["id"],
+                request_id=request_id,
+                event_type="analysis_validation_failed",
+                event_status="failed",
+                model_version=f"ollama:{request.app.state.settings.ollama_model}",
+                rule_version=ANALYSIS_RULE_VERSION,
+                validation_result="rejected",
+                failure_reason=failure_reason,
+            )
+            connection.commit()
             log_event(
                 request.app.state.logger,
                 "analysis_schema_failed",

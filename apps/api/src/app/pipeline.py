@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi import HTTPException, status
 
 from app.logging import log_event
+from app.traceability import record_trace_event
 from app.transcription import (
     AudioInspectionError,
     FasterWhisperTranscriptionProvider,
@@ -38,6 +39,8 @@ class ClaimedJob:
     id: int
     job_id: str
     call_id: str
+    call_db_id: int
+    trace_id: str
     audio_path: Path
 
 
@@ -70,6 +73,7 @@ class ProcessingPipeline:
                 job = connection.execute(
                     """
                     SELECT processing_jobs.id, processing_jobs.job_id, processing_jobs.status,
+                           processing_jobs.trace_id, calls.id AS call_db_id,
                            calls.call_id, calls.audio_path
                     FROM processing_jobs JOIN calls ON calls.id = processing_jobs.call_id
                     WHERE processing_jobs.status = 'queued'
@@ -82,6 +86,7 @@ class ProcessingPipeline:
                 job = connection.execute(
                     """
                     SELECT processing_jobs.id, processing_jobs.job_id, processing_jobs.status,
+                           processing_jobs.trace_id, calls.id AS call_db_id,
                            calls.call_id, calls.audio_path
                     FROM processing_jobs JOIN calls ON calls.id = processing_jobs.call_id
                     WHERE processing_jobs.job_id = ?
@@ -98,8 +103,27 @@ class ProcessingPipeline:
                         status_code=status.HTTP_409_CONFLICT,
                         detail="Processing job has already started.",
                     )
-            self._transition(connection, job, "transcribing")
-        return ClaimedJob(job["id"], job["job_id"], job["call_id"], Path(job["audio_path"]))
+            if job["trace_id"] is None:
+                job = dict(job)
+                job["trace_id"] = f"trace_legacy_{job['job_id']}"
+                connection.execute(
+                    "UPDATE processing_jobs SET trace_id = ? WHERE id = ?",
+                    (job["trace_id"], job["id"]),
+                )
+            self._transition(
+                connection,
+                job,
+                "transcribing",
+                model_version=self.transcriber.model_version,
+            )
+        return ClaimedJob(
+            job["id"],
+            job["job_id"],
+            job["call_id"],
+            job["call_db_id"],
+            job["trace_id"],
+            Path(job["audio_path"]),
+        )
 
     def _process_claimed(self, job: ClaimedJob) -> ProcessingResult:
         try:
@@ -141,10 +165,28 @@ class ProcessingPipeline:
                     "turn_count": len(saved_turns),
                 },
             )
+            self._record_trace(
+                job,
+                "transcription_completed",
+                "succeeded",
+                model_version=self.transcriber.model_version,
+            )
             with self.database.connect() as connection:
                 row = self._load_job(connection, job.id)
-                self._transition(connection, row, "analyzing", audio_channels=audio_info.channels)
-                self._transition(connection, row, "completed", audio_channels=audio_info.channels)
+                self._transition(
+                    connection,
+                    row,
+                    "analyzing",
+                    audio_channels=audio_info.channels,
+                    model_version=self.transcriber.model_version,
+                )
+                self._transition(
+                    connection,
+                    row,
+                    "completed",
+                    audio_channels=audio_info.channels,
+                    model_version=self.transcriber.model_version,
+                )
             return ProcessingResult(
                 job.job_id,
                 "completed",
@@ -164,6 +206,7 @@ class ProcessingPipeline:
                 self._load_job(connection, job.id),
                 "failed",
                 failure_reason=reason,
+                model_version=self.transcriber.model_version,
             )
         log_event(
             self.logger,
@@ -176,7 +219,8 @@ class ProcessingPipeline:
     @staticmethod
     def _load_job(connection, job_id: int):
         return connection.execute(
-            "SELECT id, job_id, status FROM processing_jobs WHERE id = ?", (job_id,)
+            "SELECT id, job_id, call_id, trace_id, status FROM processing_jobs WHERE id = ?",
+            (job_id,),
         ).fetchone()
 
     def _transition(
@@ -187,6 +231,7 @@ class ProcessingPipeline:
         *,
         audio_channels: int | None = None,
         failure_reason: str | None = None,
+        model_version: str | None = None,
     ) -> None:
         current = connection.execute(
             "SELECT status FROM processing_jobs WHERE id = ?", (job["id"],)
@@ -203,9 +248,40 @@ class ProcessingPipeline:
             "(processing_job_id, from_status, to_status, reason) VALUES (?, ?, ?, ?)",
             (job["id"], current, target, failure_reason),
         )
+        record_trace_event(
+            connection,
+            trace_id=job["trace_id"],
+            call_db_id=(job["call_db_id"] if "call_db_id" in job.keys() else job["call_id"]),
+            processing_job_db_id=job["id"],
+            event_type="processing_state_changed",
+            event_status="failed" if target == "failed" else "transitioned",
+            model_version=model_version,
+            failure_reason=failure_reason,
+        )
         log_event(
             self.logger,
             "processing_state_changed",
             "Processing job state changed",
             context={"job_id": job["job_id"], "from_status": current, "to_status": target},
         )
+
+    def _record_trace(
+        self,
+        job: ClaimedJob,
+        event_type: str,
+        event_status: str,
+        *,
+        model_version: str | None = None,
+        failure_reason: str | None = None,
+    ) -> None:
+        with self.database.connect() as connection:
+            record_trace_event(
+                connection,
+                trace_id=job.trace_id,
+                call_db_id=job.call_db_id,
+                processing_job_db_id=job.id,
+                event_type=event_type,
+                event_status=event_status,
+                model_version=model_version,
+                failure_reason=failure_reason,
+            )
