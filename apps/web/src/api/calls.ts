@@ -100,6 +100,12 @@ export type RepeatedQuestionEvent = {
   repeated: EvidenceClaim;
 };
 
+export type TreatmentSignal = {
+  rule_id: string;
+  label: string;
+  evidence: EvidenceClaim;
+};
+
 export type SilenceWindow = {
   before: EvidenceClaim;
   after: EvidenceClaim;
@@ -124,6 +130,7 @@ export type CallAnalysis = {
   mood_shifts: MoodShift[];
   false_resolution: FalseResolutionSignal | null;
   repeated_questions: RepeatedQuestionEvent[];
+  treatment_signals?: TreatmentSignal[];
   silence_windows: SilenceWindow[];
   conversation_balance: ConversationBalance;
   model_version: string;

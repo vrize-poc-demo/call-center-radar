@@ -4,6 +4,7 @@ import time
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field, ValidationError
 
+from app.agent_treatment import detect_agent_treatment_signals
 from app.analysis_provider import AnalysisProviderError
 from app.false_resolution import RULE_ID, detect_false_resolution
 from app.logging import log_event
@@ -46,6 +47,12 @@ class RepeatedQuestionEvent(BaseModel):
     repeated: EvidenceClaim
 
 
+class TreatmentSignalEvent(BaseModel):
+    rule_id: str = Field(min_length=1, max_length=120)
+    label: str = Field(min_length=1, max_length=160)
+    evidence: EvidenceClaim
+
+
 class SilenceWindowEvent(BaseModel):
     before: EvidenceClaim
     after: EvidenceClaim
@@ -65,6 +72,7 @@ class CallAnalysis(AnalysisProposal):
     analyzed_at: str | None = None
     false_resolution: FalseResolutionSignal | None = None
     repeated_questions: list[RepeatedQuestionEvent] = Field(default_factory=list, max_length=6)
+    treatment_signals: list[TreatmentSignalEvent] = Field(default_factory=list, max_length=12)
     silence_windows: list[SilenceWindowEvent] = Field(default_factory=list, max_length=12)
     conversation_balance: ConversationBalance = Field(
         default_factory=lambda: ConversationBalance(
@@ -212,6 +220,18 @@ def load_persisted_analysis(connection, call_id: str) -> CallAnalysis | None:
         )
         for event in repeated_question_rows
     ]
+    treatment_signal_rows = connection.execute(
+        """
+        SELECT signal.rule_id, signal.label, turn.transcript_turn_id,
+               turn.text AS quote, turn.start_ms, turn.end_ms
+        FROM call_analysis_treatment_signals AS signal
+        JOIN transcript_turns AS turn
+          ON turn.transcript_turn_id = signal.transcript_turn_id
+        WHERE signal.analysis_id = ?
+        ORDER BY turn.start_ms, signal.id
+        """,
+        (row["id"],),
+    ).fetchall()
     silence_rows = connection.execute(
         """
         SELECT before_turn.transcript_turn_id AS before_transcript_turn_id,
@@ -245,6 +265,20 @@ def load_persisted_analysis(connection, call_id: str) -> CallAnalysis | None:
         mood_shifts=[MoodShift(**dict(shift)) for shift in mood_shifts],
         false_resolution=false_resolution,
         repeated_questions=repeated_questions,
+        treatment_signals=[
+            TreatmentSignalEvent(
+                rule_id=signal["rule_id"],
+                label=signal["label"],
+                evidence=EvidenceClaim(
+                    claim=signal["label"],
+                    transcript_turn_id=signal["transcript_turn_id"],
+                    quote=signal["quote"],
+                    start_ms=signal["start_ms"],
+                    end_ms=signal["end_ms"],
+                ),
+            )
+            for signal in treatment_signal_rows
+        ],
         silence_windows=[
             SilenceWindowEvent(
                 before=EvidenceClaim(
@@ -381,6 +415,24 @@ def persist_analysis(connection, call_db_id: int, analysis: CallAnalysis) -> Cal
             ),
         )
     connection.execute(
+        "DELETE FROM call_analysis_treatment_signals WHERE analysis_id = ?",
+        (analysis_row["id"],),
+    )
+    for signal in analysis.treatment_signals:
+        connection.execute(
+            """
+            INSERT INTO call_analysis_treatment_signals (
+                analysis_id, rule_id, label, transcript_turn_id
+            ) VALUES (?, ?, ?, ?)
+            """,
+            (
+                analysis_row["id"],
+                signal.rule_id,
+                signal.label,
+                signal.evidence.transcript_turn_id,
+            ),
+        )
+    connection.execute(
         "DELETE FROM call_analysis_silence_windows WHERE analysis_id = ?",
         (analysis_row["id"],),
     )
@@ -514,6 +566,44 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
                         "rule_id": REPEATED_QUESTION_RULE_ID,
                     },
                 )
+            treatment_detections, unknown_speaker_turn_count = detect_agent_treatment_signals(turns)
+            analysis.treatment_signals = [
+                TreatmentSignalEvent(
+                    rule_id=detection.rule_id,
+                    label=detection.label,
+                    evidence=EvidenceClaim(
+                        claim=detection.label,
+                        transcript_turn_id=detection.turn.transcript_turn_id,
+                        quote=detection.turn.text,
+                        start_ms=detection.turn.start_ms,
+                        end_ms=detection.turn.end_ms,
+                    ),
+                )
+                for detection in treatment_detections
+            ]
+            if analysis.treatment_signals:
+                log_event(
+                    request.app.state.logger,
+                    "treatment_signals_detected",
+                    "Evidence-backed customer treatment signals detected",
+                    context={
+                        "call_id": call_id,
+                        "signal_count": len(analysis.treatment_signals),
+                        "rule_ids": sorted(
+                            {signal.rule_id for signal in analysis.treatment_signals}
+                        ),
+                    },
+                )
+            if unknown_speaker_turn_count:
+                log_event(
+                    request.app.state.logger,
+                    "treatment_signals_suppressed",
+                    "Unknown-speaker turns were excluded from treatment detection",
+                    context={
+                        "call_id": call_id,
+                        "unknown_speaker_turn_count": unknown_speaker_turn_count,
+                    },
+                )
             analysis.silence_windows = [
                 SilenceWindowEvent(
                     before=EvidenceClaim(
@@ -599,6 +689,7 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
             "mood_shift_count": len(analysis.mood_shifts),
             "false_resolution_detected": analysis.false_resolution is not None,
             "repeated_question_count": len(analysis.repeated_questions),
+            "treatment_signal_count": len(analysis.treatment_signals),
             "latency_ms": round((time.perf_counter() - started_at) * 1000),
         },
     )

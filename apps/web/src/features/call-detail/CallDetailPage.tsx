@@ -16,6 +16,7 @@ import {
   RadarPriority,
   RepeatedQuestionEvent,
   SilenceWindow,
+  TreatmentSignal,
   MoodShift,
   TranscriptTurn,
 } from "../../api/calls";
@@ -274,6 +275,10 @@ export function CallDetailPage({ callId }: { callId: string }) {
     source: "original" | "repeated",
   ) => {
     openTrace("analysis_claim", event[source]);
+  };
+
+  const openTreatmentSignalEvidence = (signal: TreatmentSignal) => {
+    openTrace("analysis_claim", signal.evidence);
   };
 
   const openSilenceEvidence = (
@@ -614,6 +619,33 @@ export function CallDetailPage({ callId }: { callId: string }) {
               ) : (
                 <p className="supporting-copy">
                   No repeated information requests were detected.
+                </p>
+              )}
+              <h3>Customer treatment signals</h3>
+              {(analysis.treatment_signals ?? []).length ? (
+                <ol className="repeated-question-events">
+                  {(analysis.treatment_signals ?? []).map((signal) => (
+                    <li
+                      key={`${signal.rule_id}-${signal.evidence.transcript_turn_id}`}
+                    >
+                      <strong>{signal.label}</strong>
+                      <span>
+                        {(signal.evidence.start_ms / 1000).toFixed(1)}s
+                      </span>
+                      <div>
+                        <button
+                          onClick={() => openTreatmentSignalEvidence(signal)}
+                          type="button"
+                        >
+                          Show transcript evidence
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="supporting-copy">
+                  No evidence-backed customer treatment signals were detected.
                 </p>
               )}
               <h3>Conversation balance</h3>

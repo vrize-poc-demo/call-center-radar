@@ -513,6 +513,63 @@ def test_persists_repeated_question_events_with_saved_evidence(tmp_path) -> None
     assert cached["repeated_questions"] == analysis["repeated_questions"]
 
 
+def test_persists_agent_treatment_signals_with_saved_customer_evidence(tmp_path) -> None:
+    settings = Settings(
+        database_path=tmp_path / "calls.db",
+        sample_data_dir=tmp_path / "samples",
+        upload_dir=tmp_path / "uploads",
+        max_upload_bytes=1024,
+    )
+    with TestClient(create_test_app(settings)) as client:
+        call_id = client.post(
+            "/api/calls",
+            data={"agent_name": "Agent", "customer_name": "Customer"},
+            files={"audio": ("call.wav", b"audio", "audio/wav")},
+        ).json()["call_id"]
+        saved = client.put(
+            f"/api/calls/{call_id}/transcript",
+            json={
+                "turns": [
+                    {
+                        "speaker": "agent",
+                        "start_ms": 500,
+                        "end_ms": 900,
+                        "text": "I can help with that.",
+                    },
+                    {
+                        "speaker": "unknown",
+                        "start_ms": 1000,
+                        "end_ms": 1400,
+                        "text": "You are useless.",
+                    },
+                    {
+                        "speaker": "customer",
+                        "start_ms": 1500,
+                        "end_ms": 2200,
+                        "text": "This is unacceptable, let me speak to your supervisor.",
+                    },
+                ]
+            },
+        ).json()
+        analysis = client.get(f"/api/calls/{call_id}/analysis").json()["analysis"]
+        cached = client.get(f"/api/calls/{call_id}/analysis").json()["analysis"]
+
+    assert analysis["treatment_signals"] == [
+        {
+            "rule_id": "customer_escalation_or_frustration_v1",
+            "label": "Explicit customer escalation or frustration",
+            "evidence": {
+                "claim": "Explicit customer escalation or frustration",
+                "transcript_turn_id": saved["turns"][2]["transcript_turn_id"],
+                "quote": "This is unacceptable, let me speak to your supervisor.",
+                "start_ms": 1500,
+                "end_ms": 2200,
+            },
+        }
+    ]
+    assert cached["treatment_signals"] == analysis["treatment_signals"]
+
+
 def test_persists_silence_windows_and_conversation_balance(tmp_path) -> None:
     settings = Settings(
         database_path=tmp_path / "calls.db",

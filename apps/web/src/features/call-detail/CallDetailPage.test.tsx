@@ -913,6 +913,75 @@ describe("CallDetailPage", () => {
     expect(currentTimeSetter).toHaveBeenCalledWith(4);
   });
 
+  it("shows customer treatment signals with saved evidence jumps", async () => {
+    mockedGetCallDetail.mockResolvedValue({
+      call_id: "call-1",
+      agent_name: "Agent",
+      customer_name: "Customer",
+      created_at: "2026-08-23",
+      processing_status: "completed",
+      audio_channels: 1,
+      failure_reason: null,
+      transcript_turn_count: 1,
+    });
+    mockedGetTranscript.mockResolvedValue([
+      {
+        transcript_turn_id: "treatment-turn",
+        speaker: "customer",
+        start_ms: 2300,
+        end_ms: 3200,
+        text: "This is unacceptable, let me speak to your supervisor.",
+      },
+    ]);
+    mockedGetAnalysis.mockResolvedValue({
+      intent: "Escalation request",
+      mood: "negative",
+      resolution: "unresolved",
+      summary: "The customer escalated a concern.",
+      manager_brief: "Review the interaction supportively.",
+      recommended_action: "Check whether the agent needs support.",
+      claims: [],
+      mood_shifts: [],
+      false_resolution: null,
+      repeated_questions: [],
+      treatment_signals: [
+        {
+          rule_id: "customer_escalation_or_frustration_v1",
+          label: "Explicit customer escalation or frustration",
+          evidence: {
+            claim: "Explicit customer escalation or frustration",
+            transcript_turn_id: "treatment-turn",
+            quote: "This is unacceptable, let me speak to your supervisor.",
+            start_ms: 2300,
+            end_ms: 3200,
+          },
+        },
+      ],
+      silence_windows: [],
+      conversation_balance: {
+        agent_talk_ms: 0,
+        customer_talk_ms: 900,
+        agent_share_pct: 0,
+        customer_share_pct: 100,
+      },
+      model_version: "test-v1",
+    });
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+    const currentTimeSetter = vi.spyOn(
+      HTMLMediaElement.prototype,
+      "currentTime",
+      "set",
+    );
+
+    render(<CallDetailPage callId="call-1" />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Show transcript evidence" }),
+    );
+
+    expect(screen.getByText("Analysis claim")).toBeTruthy();
+    expect(currentTimeSetter).toHaveBeenCalledWith(2.3);
+  });
+
   it("shows balance and opens a silence window at the next speech turn", async () => {
     mockedGetCallDetail.mockResolvedValue({
       call_id: "call-1",
