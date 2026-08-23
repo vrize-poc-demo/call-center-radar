@@ -188,7 +188,7 @@ Optional settings: `CALL_RADAR_OLLAMA_BASE_URL`, `CALL_RADAR_OLLAMA_MODEL`, and 
 
 ## Run Locally
 
-Start both the web app and the API together:
+Start both the web app and the API together with the single runner:
 
 ```bash
 npm run dev
@@ -198,6 +198,9 @@ That starts:
 
 - the web app on Vite
 - the API server on `http://127.0.0.1:8000`
+
+The runner is cross-platform and works on macOS, Linux, and Windows as long as the
+project virtual environment exists at `./.venv`.
 
 If you want to run them separately:
 

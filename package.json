@@ -7,7 +7,7 @@
     "apps/web"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev --workspace=@call-center-radar/web\" \"./.venv/bin/python -m uvicorn app.main:app --app-dir apps/api/src --reload --host 127.0.0.1 --port 8000\"",
+    "dev": "node scripts/dev-all.mjs",
     "dev:web": "npm run dev --workspace=@call-center-radar/web",
     "dev:api": "./.venv/bin/python -m uvicorn app.main:app --app-dir apps/api/src --reload --host 127.0.0.1 --port 8000",
     "db:migrate": "PYTHONPATH=apps/api/src ./.venv/bin/python -m app.cli migrate",
@@ -22,9 +22,7 @@
     "precommit:install": "./.venv/bin/pre-commit install",
     "pr:verify": "bash scripts/verify-pr-ready.sh"
   },
-  "devDependencies": {
-    "concurrently": "^9.1.2"
-  },
+  "devDependencies": {},
   "engines": {
     "node": ">=20.15.0",
     "npm": ">=10.7.0"
