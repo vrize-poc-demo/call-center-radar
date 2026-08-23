@@ -27,6 +27,11 @@ describe("AgentSummaryPage", () => {
         calls_handled: 3,
         difficult_calls: 2,
         estimated_satisfaction: 58,
+        average_handle_time_ms: 125_000,
+        calls_with_handle_time: 3,
+        resolved_count: 1,
+        resolved_rate: 33,
+        average_priority: 62,
         treatment_signal_count: 1,
         unresolved_count: 1,
         false_resolution_count: 0,
@@ -40,6 +45,11 @@ describe("AgentSummaryPage", () => {
         calls_handled: 1,
         difficult_calls: 0,
         estimated_satisfaction: 92,
+        average_handle_time_ms: null,
+        calls_with_handle_time: 0,
+        resolved_count: 1,
+        resolved_rate: 100,
+        average_priority: 10,
         treatment_signal_count: 0,
         unresolved_count: 0,
         false_resolution_count: 0,
@@ -65,6 +75,11 @@ describe("AgentSummaryPage", () => {
     expect(
       screen.getAllByText("Open recent call")[0].getAttribute("href"),
     ).toBe("/?call=call-1");
+    expect(screen.getAllByText("Avg handle time")[0]).toBeTruthy();
+    expect(screen.getAllByText("2:05")).toHaveLength(2);
+    expect(screen.getByText("1 (33%)")).toBeTruthy();
+    expect(screen.getByText("62")).toBeTruthy();
+    expect(screen.getByText("—")).toBeTruthy();
   });
 
   it("shows an empty state until analyzed calls exist", async () => {

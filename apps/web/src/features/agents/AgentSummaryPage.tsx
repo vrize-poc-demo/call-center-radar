@@ -10,6 +10,14 @@ function supportLabel(agent: AgentSummary) {
   return "Stable";
 }
 
+function formatDuration(milliseconds: number | null) {
+  if (milliseconds === null) return "—";
+  const totalSeconds = Math.round(milliseconds / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
 export function AgentSummaryPage() {
   const [agents, setAgents] = useState<AgentSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +55,22 @@ export function AgentSummaryPage() {
       (total, agent) => total + agent.difficult_calls,
       0,
     );
+    const resolvedCalls = items.reduce(
+      (total, agent) => total + agent.resolved_count,
+      0,
+    );
+    const handleTimeAgents = items.filter(
+      (agent) => agent.average_handle_time_ms !== null,
+    );
+    const averageHandleTime =
+      handleTimeAgents.length === 0
+        ? null
+        : Math.round(
+            handleTimeAgents.reduce(
+              (total, agent) => total + (agent.average_handle_time_ms ?? 0),
+              0,
+            ) / handleTimeAgents.length,
+          );
     const estimatedSatisfaction =
       items.length === 0
         ? 0
@@ -60,6 +84,8 @@ export function AgentSummaryPage() {
       agents: items.length,
       callsHandled,
       difficultCalls,
+      resolvedCalls,
+      averageHandleTime,
       estimatedSatisfaction,
     };
   }, [agents]);
@@ -120,6 +146,16 @@ export function AgentSummaryPage() {
           <small>High risk, unresolved, conflict, or treatment signal</small>
         </article>
         <article className="kpi-card">
+          <span>Avg handle time</span>
+          <strong>{formatDuration(totals.averageHandleTime)}</strong>
+          <small>From saved call or transcript timing</small>
+        </article>
+        <article className="kpi-card">
+          <span>Resolved calls</span>
+          <strong>{totals.resolvedCalls}</strong>
+          <small>Analyzed calls marked resolved</small>
+        </article>
+        <article className="kpi-card">
           <span>Estimated satisfaction</span>
           <strong>{totals.estimatedSatisfaction}</strong>
           <small>Outcome and mood based estimate</small>
@@ -150,6 +186,20 @@ export function AgentSummaryPage() {
                 <div>
                   <dt>Difficult calls</dt>
                   <dd>{agent.difficult_calls}</dd>
+                </div>
+                <div>
+                  <dt>Avg handle time</dt>
+                  <dd>{formatDuration(agent.average_handle_time_ms)}</dd>
+                </div>
+                <div>
+                  <dt>Resolved</dt>
+                  <dd>
+                    {agent.resolved_count} ({agent.resolved_rate}%)
+                  </dd>
+                </div>
+                <div>
+                  <dt>Avg priority</dt>
+                  <dd>{agent.average_priority ?? "—"}</dd>
                 </div>
                 <div>
                   <dt>Treatment signals</dt>

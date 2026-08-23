@@ -63,6 +63,11 @@ class AgentSummary(BaseModel):
     calls_handled: int = Field(ge=0)
     difficult_calls: int = Field(ge=0)
     estimated_satisfaction: int = Field(ge=0, le=100)
+    average_handle_time_ms: int | None = Field(default=None, ge=0)
+    calls_with_handle_time: int = Field(ge=0)
+    resolved_count: int = Field(ge=0)
+    resolved_rate: int = Field(ge=0, le=100)
+    average_priority: int | None = Field(default=None, ge=0, le=100)
     treatment_signal_count: int = Field(ge=0)
     unresolved_count: int = Field(ge=0)
     false_resolution_count: int = Field(ge=0)
@@ -219,7 +224,14 @@ def get_agent_summary_read_model(request: Request) -> AgentSummaryReadModel:
                        call_analyses.mood, call_analyses.resolution,
                        call_analyses.analyzed_at,
                        false_resolution.analysis_id IS NOT NULL AS false_resolution,
-                       COUNT(treatment_signals.id) AS treatment_signal_count
+                       COUNT(treatment_signals.id) AS treatment_signal_count,
+                       CASE
+                         WHEN calls.started_at_ms IS NOT NULL
+                          AND calls.ended_at_ms IS NOT NULL
+                          AND calls.ended_at_ms >= calls.started_at_ms
+                         THEN calls.ended_at_ms - calls.started_at_ms
+                         ELSE transcript_duration.handle_time_ms
+                       END AS handle_time_ms
                 FROM call_analyses
                 JOIN calls ON calls.id = call_analyses.call_id
                 LEFT JOIN radar_priority_scores ON radar_priority_scores.call_id = calls.id
@@ -227,6 +239,11 @@ def get_agent_summary_read_model(request: Request) -> AgentSummaryReadModel:
                   ON false_resolution.analysis_id = call_analyses.id
                 LEFT JOIN call_analysis_treatment_signals AS treatment_signals
                   ON treatment_signals.analysis_id = call_analyses.id
+                LEFT JOIN (
+                  SELECT call_id, MAX(end_ms) AS handle_time_ms
+                  FROM transcript_turns
+                  GROUP BY call_id
+                ) AS transcript_duration ON transcript_duration.call_id = calls.id
                 GROUP BY call_analyses.id
                 ORDER BY call_analyses.analyzed_at DESC, calls.id DESC
                 """
@@ -247,6 +264,9 @@ def get_agent_summary_read_model(request: Request) -> AgentSummaryReadModel:
             "calls": 0,
             "difficult": 0,
             "satisfaction": [],
+            "handle_times": [],
+            "resolved": 0,
+            "priority_scores": [],
             "treatment": 0,
             "unresolved": 0,
             "false_resolution": 0,
@@ -260,13 +280,18 @@ def get_agent_summary_read_model(request: Request) -> AgentSummaryReadModel:
         false_resolution = bool(row["false_resolution"])
         high_risk = row["radar_priority"] >= 60
         unresolved = row["resolution"] == "unresolved"
+        resolved = row["resolution"] == "resolved"
         difficult = high_risk or unresolved or false_resolution or treatment_count > 0
         group["calls"] += 1
         group["difficult"] += int(difficult)
         group["treatment"] += treatment_count
         group["unresolved"] += int(unresolved)
+        group["resolved"] += int(resolved)
         group["false_resolution"] += int(false_resolution)
         group["high_risk"] += int(high_risk)
+        group["priority_scores"].append(row["radar_priority"])
+        if row["handle_time_ms"] is not None:
+            group["handle_times"].append(row["handle_time_ms"])
         group["satisfaction"].append(
             estimate_call_satisfaction(
                 row["mood"],
@@ -284,6 +309,15 @@ def get_agent_summary_read_model(request: Request) -> AgentSummaryReadModel:
             calls_handled=group["calls"],
             difficult_calls=group["difficult"],
             estimated_satisfaction=round(sum(group["satisfaction"]) / len(group["satisfaction"])),
+            average_handle_time_ms=(
+                round(sum(group["handle_times"]) / len(group["handle_times"]))
+                if group["handle_times"]
+                else None
+            ),
+            calls_with_handle_time=len(group["handle_times"]),
+            resolved_count=group["resolved"],
+            resolved_rate=round(group["resolved"] / group["calls"] * 100),
+            average_priority=round(sum(group["priority_scores"]) / len(group["priority_scores"])),
             treatment_signal_count=group["treatment"],
             unresolved_count=group["unresolved"],
             false_resolution_count=group["false_resolution"],

@@ -162,6 +162,11 @@ export type AgentSummary = {
   calls_handled: number;
   difficult_calls: number;
   estimated_satisfaction: number;
+  average_handle_time_ms: number | null;
+  calls_with_handle_time: number;
+  resolved_count: number;
+  resolved_rate: number;
+  average_priority: number | null;
   treatment_signal_count: number;
   unresolved_count: number;
   false_resolution_count: number;
