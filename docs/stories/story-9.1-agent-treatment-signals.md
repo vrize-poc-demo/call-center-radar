@@ -91,7 +91,7 @@ No match is a normal empty state. Unknown-speaker turns are excluded rather than
 
 - Branch: `feature/story-9.1-agent-treatment-signals`
 - Pull request: TBD
-- Commit(s): pending local commit
+- Commit(s): `1cfb9e1` Implement story 9.1 agent treatment signals
 - Review result: Self-review complete; no blocking findings before PR.
 
 ### Change Log
@@ -100,7 +100,8 @@ Update this table before every commit. Explain both the change and its reason; d
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending local commit | Create deterministic, evidence-linked treatment-signal foundation and Call Detail presentation. | Meet the story without introducing speculative or punitive agent evaluation. |
+| `1cfb9e1` | Create deterministic, evidence-linked treatment-signal foundation and Call Detail presentation. | Meet the story without introducing speculative or punitive agent evaluation. |
+| Pending documentation commit | Record the finalized implementation commit in the story delivery record. | Keep the story record accurate before PR creation. |
 
 ### PR Readiness and Review
 
