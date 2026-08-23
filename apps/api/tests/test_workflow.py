@@ -22,6 +22,7 @@ def test_migrations_are_versioned_and_idempotent(tmp_path) -> None:
         "011_repeated_question_events.sql",
         "012_silence_windows.sql",
         "013_customer_history.sql",
+        "014_agent_treatment_signals.sql",
     ]
     assert migrate(database) == []
 
