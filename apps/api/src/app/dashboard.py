@@ -58,6 +58,23 @@ class TriageReadModel(BaseModel):
     calls: list[TriageCall]
 
 
+class AgentSummary(BaseModel):
+    agent_name: str
+    calls_handled: int = Field(ge=0)
+    difficult_calls: int = Field(ge=0)
+    estimated_satisfaction: int = Field(ge=0, le=100)
+    treatment_signal_count: int = Field(ge=0)
+    unresolved_count: int = Field(ge=0)
+    false_resolution_count: int = Field(ge=0)
+    high_risk_count: int = Field(ge=0)
+    coaching_note: str
+    recent_call_ids: list[str]
+
+
+class AgentSummaryReadModel(BaseModel):
+    agents: list[AgentSummary]
+
+
 def risk_level(score: int | None) -> str:
     if score is None:
         return "unscored"
@@ -66,6 +83,47 @@ def risk_level(score: int | None) -> str:
     if score >= 30:
         return "medium"
     return "low"
+
+
+def estimate_call_satisfaction(
+    mood: str,
+    resolution: str,
+    false_resolution: bool,
+    treatment_signal_count: int,
+) -> int:
+    """Estimate satisfaction from already persisted, explainable call outcomes."""
+    score = {"positive": 82, "neutral": 68, "mixed": 55, "negative": 42}.get(mood, 55)
+    if resolution == "resolved":
+        score += 10
+    elif resolution == "unresolved":
+        score -= 12
+    if false_resolution:
+        score -= 14
+    if treatment_signal_count:
+        score -= min(12, treatment_signal_count * 6)
+    return max(0, min(100, score))
+
+
+def coaching_note(
+    difficult_calls: int,
+    calls_handled: int,
+    treatment_signal_count: int,
+    false_resolution_count: int,
+    unresolved_count: int,
+) -> str:
+    if calls_handled == 0:
+        return "No analyzed calls yet."
+    if treatment_signal_count:
+        return (
+            "Review difficult interactions supportively and check whether the agent needs backup."
+        )
+    if false_resolution_count:
+        return "Coach around resolution confirmation before closing the conversation."
+    if unresolved_count:
+        return "Review follow-up paths for unresolved customer needs."
+    if difficult_calls:
+        return "Monitor the difficult-call mix and look for repeatable support moments."
+    return "No coaching concern stands out from analyzed evidence."
 
 
 def categorize_intent(intent: str) -> tuple[str, str]:
@@ -146,6 +204,113 @@ def get_triage_read_model(request: Request) -> TriageReadModel:
         context={"call_count": len(result.calls)},
     )
     return result
+
+
+@router.get("/agents", response_model=AgentSummaryReadModel)
+def get_agent_summary_read_model(request: Request) -> AgentSummaryReadModel:
+    """Summarize agent-level patterns without reading transcripts or scoring employees."""
+    try:
+        with request.app.state.database.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT calls.call_id, COALESCE(NULLIF(calls.agent_name, ''), 'Unknown agent')
+                       AS agent_name,
+                       COALESCE(radar_priority_scores.score, 0) AS radar_priority,
+                       call_analyses.mood, call_analyses.resolution,
+                       call_analyses.analyzed_at,
+                       false_resolution.analysis_id IS NOT NULL AS false_resolution,
+                       COUNT(treatment_signals.id) AS treatment_signal_count
+                FROM call_analyses
+                JOIN calls ON calls.id = call_analyses.call_id
+                LEFT JOIN radar_priority_scores ON radar_priority_scores.call_id = calls.id
+                LEFT JOIN call_analysis_false_resolution_signals AS false_resolution
+                  ON false_resolution.analysis_id = call_analyses.id
+                LEFT JOIN call_analysis_treatment_signals AS treatment_signals
+                  ON treatment_signals.analysis_id = call_analyses.id
+                GROUP BY call_analyses.id
+                ORDER BY call_analyses.analyzed_at DESC, calls.id DESC
+                """
+            ).fetchall()
+    except sqlite3.Error:
+        log_event(
+            request.app.state.logger,
+            "agent_summary_load_failed",
+            "Agent summary data could not be loaded",
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Agent summary data is temporarily unavailable.",
+        ) from None
+
+    grouped: dict[str, dict] = defaultdict(
+        lambda: {
+            "calls": 0,
+            "difficult": 0,
+            "satisfaction": [],
+            "treatment": 0,
+            "unresolved": 0,
+            "false_resolution": 0,
+            "high_risk": 0,
+            "recent": [],
+        }
+    )
+    for row in rows:
+        group = grouped[row["agent_name"]]
+        treatment_count = row["treatment_signal_count"]
+        false_resolution = bool(row["false_resolution"])
+        high_risk = row["radar_priority"] >= 60
+        unresolved = row["resolution"] == "unresolved"
+        difficult = high_risk or unresolved or false_resolution or treatment_count > 0
+        group["calls"] += 1
+        group["difficult"] += int(difficult)
+        group["treatment"] += treatment_count
+        group["unresolved"] += int(unresolved)
+        group["false_resolution"] += int(false_resolution)
+        group["high_risk"] += int(high_risk)
+        group["satisfaction"].append(
+            estimate_call_satisfaction(
+                row["mood"],
+                row["resolution"],
+                false_resolution,
+                treatment_count,
+            )
+        )
+        if len(group["recent"]) < 3:
+            group["recent"].append(row["call_id"])
+
+    agents = [
+        AgentSummary(
+            agent_name=agent_name,
+            calls_handled=group["calls"],
+            difficult_calls=group["difficult"],
+            estimated_satisfaction=round(sum(group["satisfaction"]) / len(group["satisfaction"])),
+            treatment_signal_count=group["treatment"],
+            unresolved_count=group["unresolved"],
+            false_resolution_count=group["false_resolution"],
+            high_risk_count=group["high_risk"],
+            coaching_note=coaching_note(
+                group["difficult"],
+                group["calls"],
+                group["treatment"],
+                group["false_resolution"],
+                group["unresolved"],
+            ),
+            recent_call_ids=group["recent"],
+        )
+        for agent_name, group in grouped.items()
+    ]
+    agents.sort(key=lambda agent: (-agent.difficult_calls, -agent.calls_handled, agent.agent_name))
+    log_event(
+        request.app.state.logger,
+        "agent_summary_loaded",
+        "Agent summary data loaded",
+        context={
+            "agent_count": len(agents),
+            "call_count": len(rows),
+            "difficult_call_count": sum(agent.difficult_calls for agent in agents),
+        },
+    )
+    return AgentSummaryReadModel(agents=agents)
 
 
 @router.get("/issues", response_model=IssueRadarReadModel)

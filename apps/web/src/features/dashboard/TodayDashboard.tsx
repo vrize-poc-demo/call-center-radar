@@ -101,6 +101,9 @@ export function TodayDashboard() {
         <a className="secondary-link" href="/?view=issues">
           Issue Radar
         </a>
+        <a className="secondary-link" href="/?view=agents">
+          Agent support
+        </a>
       </header>
 
       <section className="kpi-grid" aria-label="Today’s call summary">

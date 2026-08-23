@@ -2,6 +2,7 @@ import { CallUploadForm } from "./features/calls/CallUploadForm";
 import { CallDetailPage } from "./features/call-detail/CallDetailPage";
 import { TodayDashboard } from "./features/dashboard/TodayDashboard";
 import { IssueRadar } from "./features/issue-radar/IssueRadar";
+import { AgentSummaryPage } from "./features/agents/AgentSummaryPage";
 import { CustomerJourney } from "./features/customer-journey/CustomerJourney";
 import { GlobalProcessingQueue } from "./features/processing/GlobalProcessingQueue";
 
@@ -21,6 +22,8 @@ export function App() {
         <GlobalProcessingQueue />
         {view === "issues" ? (
           <IssueRadar />
+        ) : view === "agents" ? (
+          <AgentSummaryPage />
         ) : view === "journey" ? (
           <CustomerJourney />
         ) : (

@@ -197,6 +197,65 @@ body {
   gap: 16px;
   margin-top: 36px;
 }
+.agent-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.agent-summary-card {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #d8e2e7;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgb(23 33 43 / 6%);
+}
+.agent-card-heading,
+.agent-metrics,
+.recent-call-links {
+  display: flex;
+  gap: 12px;
+}
+.agent-card-heading {
+  align-items: start;
+  justify-content: space-between;
+}
+.agent-card-heading h2 {
+  margin: 0;
+}
+.agent-card-heading > span {
+  color: #096b72;
+  font-weight: 800;
+}
+.agent-metrics {
+  flex-wrap: wrap;
+  margin: 0;
+}
+.agent-metrics div {
+  min-width: 130px;
+  padding: 10px;
+  border: 1px solid #d8e2e7;
+  border-radius: 8px;
+  background: #f7f9fb;
+}
+.agent-metrics dt {
+  color: #52616d;
+  font-size: 0.82rem;
+}
+.agent-metrics dd {
+  margin: 4px 0 0;
+  color: #17212b;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+.recent-call-links {
+  flex-wrap: wrap;
+}
+.recent-call-links a {
+  color: #096b72;
+  font-weight: 700;
+}
 .journey-timeline {
   display: grid;
   gap: 16px;
@@ -821,6 +880,9 @@ h1 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .issue-radar-grid {
+    grid-template-columns: 1fr;
+  }
+  .agent-summary-grid {
     grid-template-columns: 1fr;
   }
   .detail-grid {
