@@ -20,6 +20,7 @@ Managers and technical reviewers can read the call as a clean two-column convers
 - Included: Rename the Call Detail transcript section to **Conversation Timeline**.
 - Included: Render text-only Agent and Customer communication lanes.
 - Included: Keep agent on the left and customer on the right.
+- Included: Split long multi-sentence turns for display readability without changing saved transcript evidence.
 - Included: Preserve chronological ordering, search/filter, active playback highlighting, click-to-seek, and evidence jump behavior.
 - Included: Update Call Detail tests for the new timeline semantics.
 - Excluded: Changing transcript generation, diarization, persistence, or audio synchronization logic.
@@ -31,7 +32,7 @@ Managers and technical reviewers can read the call as a clean two-column convers
 - [x] Agent lane appears left of Customer lane.
 - [x] Visible timing labels are removed from the conversation view to prevent overlap and clutter.
 - [x] Each saved transcript turn appears in the correct speaker lane.
-- [x] Turns remain ordered by timestamp.
+- [x] Conversation messages remain in readable dialogue order even when STT returns one long overlapping turn.
 - [x] Overlapping agent/customer speech remains timestamped without adding misleading sequence blocks or labels.
 - [x] Clicking a turn seeks the audio to that timestamp.
 - [x] The active playback turn remains highlighted.
@@ -47,11 +48,12 @@ Managers and technical reviewers can read the call as a clean two-column convers
 ```mermaid
 flowchart LR
   A[Saved transcript turns] --> B[Filter by text and speaker]
-  B --> C[Render chronological text rows]
-  C --> D[Render Agent lane]
-  C --> E[Render Customer lane]
-  D --> F[Click turn seeks audio]
-  E --> F
+  B --> C[Split long display-only turns]
+  C --> D[Render readable text rows]
+  D --> E[Render Agent lane]
+  D --> F[Render Customer lane]
+  E --> G[Click turn seeks audio]
+  F --> G
 ```
 
 ### Components and Ownership
@@ -59,6 +61,7 @@ flowchart LR
 | Area | Files or module | Responsibility |
 | --- | --- | --- |
 | UI | `apps/web/src/features/call-detail/CallDetailPage.tsx` | Renders the Conversation Timeline and preserves seek/highlight behavior. |
+| Display ordering | `apps/web/src/features/call-detail/conversationDisplay.ts` | Builds readable display messages from saved transcript turns without mutating transcript evidence. |
 | Styling | `apps/web/src/styles.css` | Owns the lane columns, speaker styling, and responsive layout. |
 | Timeline grouping | Not applicable | The Call Detail screen intentionally avoids sequence/group containers so the UI reads as a continuous conversation. |
 | API | Not applicable | Existing transcript API contract is unchanged. |
@@ -67,7 +70,7 @@ flowchart LR
 
 ### Contracts and Data
 
-No API or database contract changed. The UI still consumes saved transcript turns with `transcript_turn_id`, `speaker`, `start_ms`, `end_ms`, and `text`. Evidence links still resolve by immutable `transcript_turn_id`.
+No API or database contract changed. The UI still consumes saved transcript turns with `transcript_turn_id`, `speaker`, `start_ms`, `end_ms`, and `text`. Evidence links still resolve by immutable `transcript_turn_id`. Display-only message splitting keeps a `source_turn_id` back to the saved transcript turn.
 
 ## 3. Operational Behavior
 
@@ -85,8 +88,8 @@ Existing empty, loading, and failed transcript states remain. Unknown-speaker tu
 
 | Check | Result | Notes |
 | --- | --- | --- |
-| Unit tests | Passed | `npm run test --workspace=@call-center-radar/web -- --run CallDetailPage` passed 20 Call Detail tests. |
-| Integration tests | Passed | Component tests cover section naming, timeline list semantics, lane order, time labels, overlap display, search, active state, evidence behavior, and click-to-seek. |
+| Unit tests | Passed | `npm run test --workspace=@call-center-radar/web -- --run CallDetailPage conversationDisplay` passed 21 focused Call Detail and display-ordering tests. |
+| Integration tests | Passed | Component tests cover section naming, timeline list semantics, lane order, hidden visible timing, overlap-label removal, search, active state, evidence behavior, and click-to-seek. |
 | Lint and format | Passed | `npm run lint` completed with ESLint and Ruff passing. `npm run format:check` completed with Prettier and Ruff format checks passing. |
 | Build | Passed | `npm run build` completed the TypeScript and Vite production build. |
 | Accuracy evaluation | Not applicable | UI-only presentation change. |
@@ -124,6 +127,7 @@ Update this table before every commit. Explain both the change and its reason; d
 | Pending | Simplified the timeline into chronological turn rows and removed sequence containers and overlap text. | The grouped presentation looked confusing for managers and made one long agent turn visually swallow several customer turns. |
 | Pending | Replaced repeated per-turn time ranges with one graph-style time axis and plotted speaker messages by timestamp. | Managers need one readable call timeline from start to end, not repeated row labels that look like a table. |
 | Pending | Removed the visible time axis and kept a text-only two-column conversation. | The plotted graph caused close messages to overlap; for the demo, readable text is more important than visible timing. |
+| Pending | Added display-only sentence splitting and readable ordering for long overlapping STT turns. | The sample call had one long agent turn that visually appeared before the customer question; managers need the conversation to read naturally. |
 
 ### PR Readiness and Review
 

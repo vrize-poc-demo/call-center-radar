@@ -20,6 +20,7 @@ import {
   MoodShift,
   TranscriptTurn,
 } from "../../api/calls";
+import { buildConversationDisplayTurns } from "./conversationDisplay";
 import { selectActiveTranscriptTurn } from "./transcriptPlayback";
 
 function formatPlaybackTime(milliseconds: number) {
@@ -29,7 +30,9 @@ function formatPlaybackTime(milliseconds: number) {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
-function formatTranscriptRange(turn: TranscriptTurn) {
+function formatTranscriptRange(
+  turn: Pick<TranscriptTurn, "start_ms" | "end_ms">,
+) {
   return `${(turn.start_ms / 1000).toFixed(2)}s–${(turn.end_ms / 1000).toFixed(2)}s`;
 }
 
@@ -167,14 +170,15 @@ export function CallDetailPage({ callId }: { callId: string }) {
   }, [activeTurn]);
 
   const normalizedSearchTerm = searchTerm.trim().toLocaleLowerCase();
-  const visibleTurns = turns.filter((turn) => {
+  const displayTurns = buildConversationDisplayTurns(turns);
+  const visibleDisplayTurns = displayTurns.filter((turn) => {
     const matchesSpeaker =
       speakerFilter === "all" || turn.speaker === speakerFilter;
     const matchesSearch = turn.text
       .toLocaleLowerCase()
       .includes(normalizedSearchTerm);
     return (
-      turn.transcript_turn_id === activeTurn?.transcript_turn_id ||
+      turn.source_turn_id === activeTurn?.transcript_turn_id ||
       (matchesSpeaker && matchesSearch)
     );
   });
@@ -376,7 +380,8 @@ export function CallDetailPage({ callId }: { callId: string }) {
                 </label>
               </div>
               <p aria-live="polite" className="transcript-result-count">
-                Showing {visibleTurns.length} of {turns.length} turns
+                Showing {visibleDisplayTurns.length} messages from{" "}
+                {turns.length} saved turns
               </p>
               {activeTurn &&
               !(
@@ -390,7 +395,7 @@ export function CallDetailPage({ callId }: { callId: string }) {
                   Showing the active turn alongside your filters.
                 </p>
               ) : null}
-              {visibleTurns.length ? (
+              {visibleDisplayTurns.length ? (
                 <div className="conversation-timeline">
                   <div
                     aria-hidden="true"
@@ -404,27 +409,25 @@ export function CallDetailPage({ callId }: { callId: string }) {
                     className="conversation-turns"
                     role="list"
                   >
-                    {visibleTurns.map((turn) => {
+                    {visibleDisplayTurns.map((turn) => {
                       const speakerLabel = getSpeakerLabel(turn.speaker);
                       return (
                         <div
                           className={`conversation-turn ${turn.speaker}-turn ${
-                            turn.transcript_turn_id ===
+                            turn.source_turn_id ===
                             activeTurn?.transcript_turn_id
                               ? "active-turn"
                               : ""
                           }`}
-                          key={turn.transcript_turn_id}
+                          key={turn.id}
                           ref={(element) => {
                             if (element)
                               turnElements.current.set(
-                                turn.transcript_turn_id,
+                                turn.source_turn_id,
                                 element,
                               );
                             else
-                              turnElements.current.delete(
-                                turn.transcript_turn_id,
-                              );
+                              turnElements.current.delete(turn.source_turn_id);
                           }}
                           role="listitem"
                         >
