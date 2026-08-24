@@ -21,6 +21,7 @@ Managers and demo users can hide the always-visible call-processing / recent-cal
 - Included: Add a compact side state with the current recent-call count and `>` expand button.
 - Included: Preserve polling while the panel is collapsed.
 - Included: Add unit tests for collapse, expand, and polling/count behavior.
+- Included: Keep the Call Detail page manager-first by showing Call analysis before Processing.
 - Excluded: Changing queue API responses, processing worker behavior, or completed-call navigation rules.
 
 ### Acceptance Criteria
@@ -30,6 +31,7 @@ Managers and demo users can hide the always-visible call-processing / recent-cal
 - [x] Users can expand the panel again from a simple `>` button.
 - [x] Queue polling continues while collapsed.
 - [x] Recent calls / completed calls remain navigable after expanding.
+- [x] Call Detail renders Call analysis before Processing.
 - [x] Unit tests cover collapse, expand, and item count behavior.
 - [x] Story documentation explains the UX and implementation choices.
 
@@ -52,14 +54,16 @@ flowchart LR
 | Area | Files or module | Responsibility |
 | --- | --- | --- |
 | UI | `apps/web/src/features/processing/GlobalProcessingQueue.tsx` | Owns expanded/collapsed queue state and controls. |
+| UI | `apps/web/src/features/call-detail/CallDetailPage.tsx` | Owns the Call Detail panel order. |
 | Styling | `apps/web/src/styles.css` | Owns the side count, `>` expand button, and responsive behavior. |
 | API | Not applicable | Existing queue polling API is unchanged. |
 | Persistence | Not applicable | No database or local storage changes. |
 | Tests | `apps/web/src/features/processing/GlobalProcessingQueue.test.tsx` | Verifies collapse, expand, count, and polling behavior. |
+| Tests | `apps/web/src/features/call-detail/CallDetailPage.test.tsx` | Verifies Call analysis appears before Processing. |
 
 ### Contracts and Data
 
-No API or database contract changed. The component continues to call `getProcessingQueue()` on the existing interval. Collapsed state is local UI state only and intentionally resets on page reload.
+No API or database contract changed. The component continues to call `getProcessingQueue()` on the existing interval. Collapsed state is local UI state only and intentionally resets on page reload. Call Detail renders the same analysis and processing data in a different order.
 
 ## 3. Operational Behavior
 
@@ -77,7 +81,7 @@ Existing queue polling and dismissal failure messages are unchanged. If polling 
 
 | Check | Result | Notes |
 | --- | --- | --- |
-| Unit tests | Passed | `npm run test --workspace=@call-center-radar/web -- --run GlobalProcessingQueue` passed 7 tests. |
+| Unit tests | Passed | `npm run test --workspace=@call-center-radar/web -- --run GlobalProcessingQueue` passed 7 tests; `npm run test --workspace=@call-center-radar/web -- --run CallDetailPage` passed 20 tests. |
 | Integration tests | Passed | Component tests cover collapsed count, `>` expand behavior, and polling while collapsed. |
 | Lint and format | Passed | `npm run lint`. |
 | Build | Passed | `npm run build`. |
@@ -91,6 +95,8 @@ Existing queue polling and dismissal failure messages are unchanged. If polling 
 4. Confirm the panel becomes a compact side area with the recent-call count and `>` button.
 5. Select the `>` button.
 6. Confirm recent calls and completed-call navigation are visible again.
+7. Open a Call Detail page.
+8. Confirm Call analysis appears above Processing.
 
 ### Known Gaps and Follow-Up Boundaries
 
@@ -113,6 +119,7 @@ Update this table before every commit. Explain both the change and its reason; d
 | Feature implementation | Added a collapsible Global Processing Queue side tab, responsive styles, and queue tests. | Users need to hide the recent-calls panel without stopping background processing visibility. |
 | Documentation update | Recorded PR #110 in this story record. | Keep delivery documentation aligned with the opened pull request. |
 | UX refinement | Changed the collapsed expand control to a simple `>` button with the count shown separately. | The demo UI should be quicker to understand and visually lighter. |
+| Call Detail layout | Moved Call analysis above Processing and updated the section-order test. | Managers should see the business analysis before technical processing diagnostics. |
 
 ### PR Readiness and Review
 

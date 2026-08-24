@@ -182,6 +182,12 @@ describe("CallDetailPage", () => {
       .getAllByRole("heading", { level: 2 })
       .map((heading) => heading.textContent);
     expect(panelHeadings.indexOf("Transcript")).toBeLessThan(
+      panelHeadings.indexOf("Call analysis"),
+    );
+    expect(panelHeadings.indexOf("Call analysis")).toBeLessThan(
+      panelHeadings.indexOf("Radar Priority"),
+    );
+    expect(panelHeadings.indexOf("Radar Priority")).toBeLessThan(
       panelHeadings.indexOf("Processing"),
     );
     expect(screen.getByRole("heading", { name: "Evidence" })).toBeTruthy();

@@ -525,50 +525,6 @@ export function CallDetailPage({ callId }: { callId: string }) {
             </div>
           )}
         </section>
-        <section className="detail-panel">
-          <h2>Processing</h2>
-          <p>
-            <strong>{status}</strong>
-          </p>
-          <p>
-            {detail.failure_reason
-              ? `Processing failed: ${detail.failure_reason}.`
-              : detail.audio_channels === null
-                ? "Audio validation has not completed."
-                : `${detail.audio_channels === 1 ? "Mono" : "Stereo"} audio validated.`}
-          </p>
-        </section>
-        <aside className="detail-panel priority-panel">
-          <h2>Radar Priority</h2>
-          {priority ? (
-            <>
-              <p className="priority-score">
-                <strong>{priority.score}</strong> / 100
-              </p>
-              <p className="supporting-copy">
-                {priority.factors.length
-                  ? "This score has evidence you can inspect."
-                  : "No priority factors matched this call."}
-              </p>
-              {priority.factors.length ? (
-                <button
-                  className="jump-button"
-                  onClick={() => {
-                    setSelectedTrace(null);
-                    setShowScoreExplanation(true);
-                  }}
-                  type="button"
-                >
-                  Show me why
-                </button>
-              ) : null}
-            </>
-          ) : (
-            <div className="empty-region">
-              Radar Priority is unavailable for this call.
-            </div>
-          )}
-        </aside>
         <section className="detail-panel analysis-panel">
           <h2>Call analysis</h2>
           {analysis ? (
@@ -791,6 +747,50 @@ export function CallDetailPage({ callId }: { callId: string }) {
               Analysis is unavailable for this call.
             </div>
           )}
+        </section>
+        <aside className="detail-panel priority-panel">
+          <h2>Radar Priority</h2>
+          {priority ? (
+            <>
+              <p className="priority-score">
+                <strong>{priority.score}</strong> / 100
+              </p>
+              <p className="supporting-copy">
+                {priority.factors.length
+                  ? "This score has evidence you can inspect."
+                  : "No priority factors matched this call."}
+              </p>
+              {priority.factors.length ? (
+                <button
+                  className="jump-button"
+                  onClick={() => {
+                    setSelectedTrace(null);
+                    setShowScoreExplanation(true);
+                  }}
+                  type="button"
+                >
+                  Show me why
+                </button>
+              ) : null}
+            </>
+          ) : (
+            <div className="empty-region">
+              Radar Priority is unavailable for this call.
+            </div>
+          )}
+        </aside>
+        <section className="detail-panel">
+          <h2>Processing</h2>
+          <p>
+            <strong>{status}</strong>
+          </p>
+          <p>
+            {detail.failure_reason
+              ? `Processing failed: ${detail.failure_reason}.`
+              : detail.audio_channels === null
+                ? "Audio validation has not completed."
+                : `${detail.audio_channels === 1 ? "Mono" : "Stereo"} audio validated.`}
+          </p>
         </section>
         <aside className="detail-panel evidence-panel">
           <h2>Evidence</h2>
