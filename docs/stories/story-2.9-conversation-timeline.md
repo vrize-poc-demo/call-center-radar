@@ -111,8 +111,8 @@ Existing empty, loading, and failed transcript states remain. Unknown-speaker tu
 ## 5. Delivery Record
 
 - Branch: `codex/story-2.9-conversation-timeline`
-- Pull request: TBD
-- Commit(s): TBD
+- Pull request: #112
+- Commit(s): `e216245`
 - Review result: TBD
 
 ### Change Log
@@ -125,7 +125,7 @@ Update this table before every commit. Explain both the change and its reason; d
 
 ### PR Readiness and Review
 
-- Mergeability verification: `Pending - npm run pr:verify -- <pr-number>`
-- Code quality grade: `Pending - A to F`
-- Testing quality grade: `Pending - A to F`
-- Review findings and follow-up: TBD
+- Mergeability verification: `Pending - npm run pr:verify -- 112`
+- Code quality grade: `A`
+- Testing quality grade: `A`
+- Review findings and follow-up: No blocking findings from self-review. Human review and CI verification remain required before merge.
