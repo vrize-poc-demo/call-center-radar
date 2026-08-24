@@ -35,6 +35,12 @@ export function GlobalProcessingQueue() {
   const [items, setItems] = useState<ProcessingQueueItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dismissingJobId, setDismissingJobId] = useState<string | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const itemCount = items?.length ?? 0;
+  const itemCountLabel =
+    items === null
+      ? "Loading"
+      : `${itemCount} ${itemCount === 1 ? "call" : "calls"}`;
 
   useEffect(() => {
     void refreshQueue(setItems, setError);
@@ -69,6 +75,26 @@ export function GlobalProcessingQueue() {
     console.info("queue_to_detail_requested", { call_id: item.call_id });
   }
 
+  if (isCollapsed) {
+    return (
+      <section
+        aria-label="Call processing"
+        className="global-processing-queue global-processing-queue-collapsed"
+      >
+        <button
+          aria-expanded="false"
+          className="queue-side-tab"
+          onClick={() => setIsCollapsed(false)}
+          type="button"
+        >
+          <span>Call processing</span>
+          <strong>Recent calls</strong>
+          <small>{itemCountLabel}</small>
+        </button>
+      </section>
+    );
+  }
+
   return (
     <section aria-label="Call processing" className="global-processing-queue">
       <div className="queue-heading">
@@ -76,7 +102,16 @@ export function GlobalProcessingQueue() {
           <p className="eyebrow">Call processing</p>
           <h2>Recent calls</h2>
         </div>
-        {items ? <span>{items.length} recent</span> : null}
+        <div className="queue-heading-actions">
+          {items ? <span>{items.length} recent</span> : null}
+          <button
+            aria-expanded="true"
+            onClick={() => setIsCollapsed(true)}
+            type="button"
+          >
+            Hide panel
+          </button>
+        </div>
       </div>
       {error ? <p role="status">{error}</p> : null}
       {items === null ? <p aria-busy="true">Loading call status…</p> : null}

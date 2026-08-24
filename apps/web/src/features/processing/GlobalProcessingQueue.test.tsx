@@ -98,6 +98,100 @@ describe("GlobalProcessingQueue", () => {
     expect(screen.getByText("Ari Patel")).toBeTruthy();
   });
 
+  it("collapses to a side tab and expands without losing recent calls", async () => {
+    mockedGetProcessingQueue.mockResolvedValue([
+      {
+        job_id: "job-ready",
+        call_id: "call-ready",
+        customer_name: "Nora Jones",
+        status: "completed",
+        updated_at: "2026-08-22 08:59:00",
+        failure_reason: null,
+      },
+      {
+        job_id: "job-active",
+        call_id: "call-active",
+        customer_name: "Ari Patel",
+        status: "transcribing",
+        updated_at: "2026-08-22 09:00:00",
+        failure_reason: null,
+      },
+    ]);
+
+    render(<GlobalProcessingQueue />);
+
+    expect(await screen.findByText("Nora Jones")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Hide panel" }));
+
+    const expandTab = screen.getByRole("button", {
+      name: /Call processing Recent calls 2 calls/,
+    });
+    expect(expandTab.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText("Nora Jones")).toBeNull();
+
+    fireEvent.click(expandTab);
+
+    expect(screen.getByRole("button", { name: "Hide panel" })).toBeTruthy();
+    expect(screen.getByText("Nora Jones")).toBeTruthy();
+    expect(screen.getByText("Ari Patel")).toBeTruthy();
+  });
+
+  it("keeps polling while the recent-calls panel is collapsed", async () => {
+    vi.useFakeTimers();
+    mockedGetProcessingQueue
+      .mockResolvedValueOnce([
+        {
+          job_id: "job-active",
+          call_id: "call-active",
+          customer_name: "Ari Patel",
+          status: "transcribing",
+          updated_at: "2026-08-22 09:00:00",
+          failure_reason: null,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          job_id: "job-ready",
+          call_id: "call-ready",
+          customer_name: "Nora Jones",
+          status: "completed",
+          updated_at: "2026-08-22 09:01:00",
+          failure_reason: null,
+        },
+        {
+          job_id: "job-active",
+          call_id: "call-active",
+          customer_name: "Ari Patel",
+          status: "transcribing",
+          updated_at: "2026-08-22 09:00:00",
+          failure_reason: null,
+        },
+      ]);
+
+    render(<GlobalProcessingQueue />);
+    await act(async () => {});
+    expect(screen.getByText("Ari Patel")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Hide panel" }));
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_000);
+    });
+
+    expect(
+      screen.getByRole("button", {
+        name: /Call processing Recent calls 2 calls/,
+      }),
+    ).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Call processing Recent calls 2 calls/,
+      }),
+    );
+
+    expect(screen.getByText("Nora Jones")).toBeTruthy();
+  });
+
   it("removes a completed item after the safe queue-dismissal request succeeds", async () => {
     mockedGetProcessingQueue.mockResolvedValue([
       {
