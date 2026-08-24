@@ -20,7 +20,7 @@ Managers and technical reviewers can read the call as a time-aligned conversatio
 - Included: Rename the Call Detail transcript section to **Conversation Timeline**.
 - Included: Render a time ruler column plus Agent and Customer communication lanes.
 - Included: Keep agent on the left and customer on the right.
-- Included: Preserve overlap grouping, search/filter, active playback highlighting, click-to-seek, and evidence jump behavior.
+- Included: Preserve chronological ordering, search/filter, active playback highlighting, click-to-seek, and evidence jump behavior.
 - Included: Update Call Detail tests for the new timeline semantics.
 - Excluded: Changing transcript generation, diarization, persistence, or audio synchronization logic.
 
@@ -32,7 +32,7 @@ Managers and technical reviewers can read the call as a time-aligned conversatio
 - [x] The time column uses a visible ruler/scale treatment.
 - [x] Each saved transcript turn appears in the correct speaker lane.
 - [x] Turns remain ordered by timestamp.
-- [x] Overlapping agent/customer speech can appear in the same time region.
+- [x] Overlapping agent/customer speech remains timestamped without adding misleading sequence blocks or labels.
 - [x] Clicking a turn seeks the audio to that timestamp.
 - [x] The active playback turn remains highlighted.
 - [x] Evidence jump scrolls/highlights the correct turn.
@@ -47,8 +47,8 @@ Managers and technical reviewers can read the call as a time-aligned conversatio
 ```mermaid
 flowchart LR
   A[Saved transcript turns] --> B[Filter by text and speaker]
-  B --> C[Build timestamp groups]
-  C --> D[Render time ruler]
+  B --> C[Render chronological turn rows]
+  C --> D[Render light time guide]
   D --> E[Render Agent lane]
   D --> F[Render Customer lane]
   E --> G[Click turn seeks audio]
@@ -60,8 +60,8 @@ flowchart LR
 | Area | Files or module | Responsibility |
 | --- | --- | --- |
 | UI | `apps/web/src/features/call-detail/CallDetailPage.tsx` | Renders the Conversation Timeline and preserves seek/highlight behavior. |
-| Styling | `apps/web/src/styles.css` | Owns the time ruler, lane columns, overlap styling, and responsive layout. |
-| Timeline grouping | `apps/web/src/features/call-detail/transcriptSequence.ts` | Keeps existing deterministic grouping for overlap-safe rendering. |
+| Styling | `apps/web/src/styles.css` | Owns the light time guide, lane columns, speaker styling, and responsive layout. |
+| Timeline grouping | Not applicable | The Call Detail screen intentionally avoids sequence/group containers so the UI reads as a continuous conversation. |
 | API | Not applicable | Existing transcript API contract is unchanged. |
 | Persistence | Not applicable | Existing saved transcript turns are reused. |
 | Tests | `apps/web/src/features/call-detail/CallDetailPage.test.tsx` | Verifies section naming, lane order, time labels, search, active state, and seek behavior. |
@@ -98,14 +98,14 @@ Existing empty, loading, and failed transcript states remain. Unknown-speaker tu
 2. Open a completed Call Detail page.
 3. Confirm the section title is **Conversation Timeline**.
 4. Confirm the timeline columns are Time, Agent, and Customer.
-5. Confirm overlapping speech is visible in the same time region.
+5. Confirm there are no sequence cards or overlap labels in the conversation timeline.
 6. Click an agent or customer turn and confirm the audio jumps to that timestamp.
 7. Use search and speaker filter and confirm matching turns remain visible.
 8. Click evidence from analysis and confirm it highlights the correct timeline turn.
 
 ### Known Gaps and Follow-Up Boundaries
 
-- The time ruler is grouped by saved turn timing; it does not yet scale rows proportionally to every millisecond of duration.
+- The time guide uses saved turn ranges; it does not yet scale rows proportionally to every millisecond of duration.
 - This does not add diarization for unknown-speaker mono audio.
 
 ## 5. Delivery Record
@@ -121,7 +121,8 @@ Update this table before every commit. Explain both the change and its reason; d
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Replaced the sequence transcript presentation with an agent-first time-ruler conversation timeline. | Call audio can overlap, so a lane-based timeline is clearer and more truthful than chat bubbles. |
+| `e216245` | Replaced the sequence transcript presentation with an agent-first time-ruler conversation timeline. | Call audio can overlap, so a lane-based timeline is clearer and more truthful than chat bubbles. |
+| Pending | Simplified the timeline into chronological turn rows and removed sequence containers and overlap text. | The grouped presentation looked confusing for managers and made one long agent turn visually swallow several customer turns. |
 
 ### PR Readiness and Review
 

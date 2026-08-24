@@ -21,7 +21,6 @@ import {
   TranscriptTurn,
 } from "../../api/calls";
 import { selectActiveTranscriptTurn } from "./transcriptPlayback";
-import { buildTranscriptSequence } from "./transcriptSequence";
 
 function formatPlaybackTime(milliseconds: number) {
   const totalSeconds = Math.floor(milliseconds / 1000);
@@ -32,10 +31,6 @@ function formatPlaybackTime(milliseconds: number) {
 
 function formatTranscriptRange(turn: TranscriptTurn) {
   return `${(turn.start_ms / 1000).toFixed(2)}s–${(turn.end_ms / 1000).toFixed(2)}s`;
-}
-
-function formatTranscriptGroupRange(startMs: number, endMs: number) {
-  return `${(startMs / 1000).toFixed(2)}s–${(endMs / 1000).toFixed(2)}s`;
 }
 
 type SpeakerFilter = "all" | TranscriptTurn["speaker"];
@@ -177,8 +172,6 @@ export function CallDetailPage({ callId }: { callId: string }) {
       (matchesSpeaker && matchesSearch)
     );
   });
-  const transcriptSequence = buildTranscriptSequence(visibleTurns);
-
   const updateSearchTerm = (value: string) => {
     setSearchTerm(value);
     console.info("transcript_search_updated", {
@@ -403,113 +396,75 @@ export function CallDetailPage({ callId }: { callId: string }) {
                   </div>
                   <ol
                     aria-label="Agent and customer conversation timeline"
-                    className="transcript-groups conversation-timeline-groups"
+                    className="conversation-turns"
                   >
-                    {transcriptSequence.map((group, index) => (
+                    {visibleTurns.map((turn) => (
                       <li
-                        aria-label={
-                          group.has_overlap
-                            ? `Overlapping transcript group ${index + 1}`
-                            : `Transcript group ${index + 1}`
-                        }
-                        className={group.has_overlap ? "overlap-group" : ""}
-                        key={group.id}
+                        className={`conversation-turn ${turn.speaker}-turn ${
+                          turn.transcript_turn_id ===
+                          activeTurn?.transcript_turn_id
+                            ? "active-turn"
+                            : ""
+                        }`}
+                        key={turn.transcript_turn_id}
+                        ref={(element) => {
+                          if (element)
+                            turnElements.current.set(
+                              turn.transcript_turn_id,
+                              element,
+                            );
+                          else
+                            turnElements.current.delete(
+                              turn.transcript_turn_id,
+                            );
+                        }}
                       >
                         <div className="conversation-time-ruler">
-                          <time>
-                            {formatTranscriptGroupRange(
-                              group.start_ms,
-                              group.end_ms,
-                            )}
-                          </time>
+                          <time>{formatTranscriptRange(turn)}</time>
                           <span aria-hidden="true" className="time-rule">
                             <span />
                           </span>
-                          {group.has_overlap ? <span>Overlap</span> : null}
                         </div>
                         <div className="conversation-lanes">
-                          {(["agent", "customer"] as const).map((speaker) => (
-                            <div
-                              aria-label={`${speaker === "customer" ? "Customer" : "Agent"} messages in sequence ${index + 1}`}
-                              className={`transcript-lane ${speaker}-lane`}
-                              key={speaker}
-                            >
-                              {group.turns
-                                .filter((turn) => turn.speaker === speaker)
-                                .map((turn) => {
-                                  const isActive =
-                                    turn.transcript_turn_id ===
-                                    activeTurn?.transcript_turn_id;
-                                  return (
-                                    <div
-                                      className={isActive ? "active-turn" : ""}
-                                      key={turn.transcript_turn_id}
-                                      ref={(element) => {
-                                        if (element)
-                                          turnElements.current.set(
-                                            turn.transcript_turn_id,
-                                            element,
-                                          );
-                                        else
-                                          turnElements.current.delete(
-                                            turn.transcript_turn_id,
-                                          );
-                                      }}
-                                    >
-                                      <button
-                                        onClick={() => seekTo(turn.start_ms)}
-                                        type="button"
-                                      >
-                                        <span className="mobile-speaker-label">
-                                          {speaker === "customer"
-                                            ? "Customer"
-                                            : "Agent"}
-                                        </span>
-                                        <time>
-                                          {formatTranscriptRange(turn)}
-                                        </time>
-                                        <strong>{turn.text}</strong>
-                                      </button>
-                                    </div>
-                                  );
-                                })}
-                            </div>
-                          ))}
-                          {group.turns
-                            .filter((turn) => turn.speaker === "unknown")
-                            .map((turn) => (
-                              <div
-                                className={`transcript-lane unknown-lane conversation-unknown-lane ${
-                                  turn.transcript_turn_id ===
-                                  activeTurn?.transcript_turn_id
-                                    ? "active-turn"
-                                    : ""
-                                }`}
-                                key={turn.transcript_turn_id}
-                                ref={(element) => {
-                                  if (element)
-                                    turnElements.current.set(
-                                      turn.transcript_turn_id,
-                                      element,
-                                    );
-                                  else
-                                    turnElements.current.delete(
-                                      turn.transcript_turn_id,
-                                    );
-                                }}
+                          <div className="transcript-lane agent-lane">
+                            {turn.speaker === "agent" ? (
+                              <button
+                                onClick={() => seekTo(turn.start_ms)}
+                                type="button"
                               >
-                                <span className="unknown-speaker-label">
-                                  Unattributed
+                                <span className="mobile-speaker-label">
+                                  Agent
                                 </span>
-                                <button
-                                  onClick={() => seekTo(turn.start_ms)}
-                                  type="button"
-                                >
-                                  <time>{formatTranscriptRange(turn)}</time>
-                                  <strong>{turn.text}</strong>
-                                </button>
-                              </div>
-                            ))}
+                                <strong>{turn.text}</strong>
+                              </button>
+                            ) : null}
+                          </div>
+                          <div className="transcript-lane customer-lane">
+                            {turn.speaker === "customer" ? (
+                              <button
+                                onClick={() => seekTo(turn.start_ms)}
+                                type="button"
+                              >
+                                <span className="mobile-speaker-label">
+                                  Customer
+                                </span>
+                                <strong>{turn.text}</strong>
+                              </button>
+                            ) : null}
+                          </div>
+                          {turn.speaker === "unknown" ? (
+                            <div className="transcript-lane unknown-lane conversation-unknown-lane">
+                              <span className="unknown-speaker-label">
+                                Unattributed
+                              </span>
+                              <button
+                                onClick={() => seekTo(turn.start_ms)}
+                                type="button"
+                              >
+                                <strong>{turn.text}</strong>
+                              </button>
+                            </div>
+                          ) : null}
                         </div>
                       </li>
                     ))}
