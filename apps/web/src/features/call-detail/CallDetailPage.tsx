@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { CSSProperties, useEffect, useRef, useState } from "react";
 
 import {
   CallAnalysis,
@@ -31,6 +31,25 @@ function formatPlaybackTime(milliseconds: number) {
 
 function formatTranscriptRange(turn: TranscriptTurn) {
   return `${(turn.start_ms / 1000).toFixed(2)}s–${(turn.end_ms / 1000).toFixed(2)}s`;
+}
+
+function formatTimelineTick(milliseconds: number) {
+  return `${(milliseconds / 1000).toFixed(2)}`;
+}
+
+function buildTimelineTicks(endMs: number) {
+  const intervalMs =
+    endMs <= 60_000 ? 10_000 : endMs <= 180_000 ? 30_000 : 60_000;
+  const ticks: number[] = [];
+  for (let tick = 0; tick <= endMs; tick += intervalMs) ticks.push(tick);
+  if (ticks[ticks.length - 1] !== endMs) ticks.push(endMs);
+  return ticks;
+}
+
+function getSpeakerLabel(speaker: TranscriptTurn["speaker"]) {
+  if (speaker === "agent") return "Agent";
+  if (speaker === "customer") return "Customer";
+  return "Unattributed";
 }
 
 type SpeakerFilter = "all" | TranscriptTurn["speaker"];
@@ -172,6 +191,13 @@ export function CallDetailPage({ callId }: { callId: string }) {
       (matchesSpeaker && matchesSearch)
     );
   });
+  const timelineEndMs = Math.max(
+    10_000,
+    Math.ceil(Math.max(...turns.map((turn) => turn.end_ms), 0) / 10_000) *
+      10_000,
+  );
+  const timelineHeight = Math.max(320, Math.ceil(timelineEndMs / 1000) * 14);
+  const timelineTicks = buildTimelineTicks(timelineEndMs);
   const updateSearchTerm = (value: string) => {
     setSearchTerm(value);
     console.info("transcript_search_updated", {
@@ -394,81 +420,94 @@ export function CallDetailPage({ callId }: { callId: string }) {
                     <strong>Agent</strong>
                     <strong>Customer</strong>
                   </div>
-                  <ol
+                  <div
                     aria-label="Agent and customer conversation timeline"
-                    className="conversation-turns"
+                    className="conversation-timeline-plot"
+                    role="list"
+                    style={
+                      {
+                        "--timeline-height": `${timelineHeight}px`,
+                      } as CSSProperties
+                    }
                   >
-                    {visibleTurns.map((turn) => (
-                      <li
-                        className={`conversation-turn ${turn.speaker}-turn ${
-                          turn.transcript_turn_id ===
-                          activeTurn?.transcript_turn_id
-                            ? "active-turn"
-                            : ""
-                        }`}
-                        key={turn.transcript_turn_id}
-                        ref={(element) => {
-                          if (element)
-                            turnElements.current.set(
-                              turn.transcript_turn_id,
-                              element,
-                            );
-                          else
-                            turnElements.current.delete(
-                              turn.transcript_turn_id,
-                            );
-                        }}
-                      >
-                        <div className="conversation-time-ruler">
-                          <time>{formatTranscriptRange(turn)}</time>
-                          <span aria-hidden="true" className="time-rule">
-                            <span />
-                          </span>
-                        </div>
-                        <div className="conversation-lanes">
-                          <div className="transcript-lane agent-lane">
-                            {turn.speaker === "agent" ? (
-                              <button
-                                onClick={() => seekTo(turn.start_ms)}
-                                type="button"
-                              >
-                                <span className="mobile-speaker-label">
-                                  Agent
-                                </span>
-                                <strong>{turn.text}</strong>
-                              </button>
-                            ) : null}
-                          </div>
-                          <div className="transcript-lane customer-lane">
-                            {turn.speaker === "customer" ? (
-                              <button
-                                onClick={() => seekTo(turn.start_ms)}
-                                type="button"
-                              >
-                                <span className="mobile-speaker-label">
-                                  Customer
-                                </span>
-                                <strong>{turn.text}</strong>
-                              </button>
-                            ) : null}
-                          </div>
-                          {turn.speaker === "unknown" ? (
-                            <div className="transcript-lane unknown-lane conversation-unknown-lane">
+                    <div aria-hidden="true" className="conversation-axis">
+                      {timelineTicks.map((tick) => (
+                        <span
+                          className="conversation-axis-tick"
+                          key={tick}
+                          style={
+                            {
+                              "--tick-top": `${(tick / timelineEndMs) * 100}%`,
+                            } as CSSProperties
+                          }
+                        >
+                          <time>{formatTimelineTick(tick)}</time>
+                        </span>
+                      ))}
+                    </div>
+                    <div
+                      aria-hidden="true"
+                      className="conversation-lane-guides"
+                    >
+                      <span />
+                      <span />
+                    </div>
+                    {visibleTurns.map((turn) => {
+                      const speakerLabel = getSpeakerLabel(turn.speaker);
+                      const startPct = (turn.start_ms / timelineEndMs) * 100;
+                      const durationPct =
+                        ((turn.end_ms - turn.start_ms) / timelineEndMs) * 100;
+                      return (
+                        <div
+                          className={`conversation-turn ${turn.speaker}-turn ${
+                            turn.transcript_turn_id ===
+                            activeTurn?.transcript_turn_id
+                              ? "active-turn"
+                              : ""
+                          }`}
+                          key={turn.transcript_turn_id}
+                          ref={(element) => {
+                            if (element)
+                              turnElements.current.set(
+                                turn.transcript_turn_id,
+                                element,
+                              );
+                            else
+                              turnElements.current.delete(
+                                turn.transcript_turn_id,
+                              );
+                          }}
+                          style={
+                            {
+                              "--turn-start": `${startPct}%`,
+                              "--turn-duration": `${Math.max(durationPct, 7)}%`,
+                            } as CSSProperties
+                          }
+                          role="listitem"
+                        >
+                          <div
+                            className={`transcript-lane ${turn.speaker}-lane`}
+                          >
+                            {turn.speaker === "unknown" ? (
                               <span className="unknown-speaker-label">
                                 Unattributed
                               </span>
-                              <button
-                                onClick={() => seekTo(turn.start_ms)}
-                                type="button"
-                              >
-                                <strong>{turn.text}</strong>
-                              </button>
-                            </div>
-                          ) : null}
+                            ) : null}
+                            <button
+                              aria-label={`${speakerLabel} ${formatTranscriptRange(turn)}: ${turn.text}`}
+                              onClick={() => seekTo(turn.start_ms)}
+                              type="button"
+                            >
+                              <span className="mobile-speaker-label">
+                                {speakerLabel}
+                              </span>
+                              <strong>{turn.text}</strong>
+                            </button>
+                          </div>
                         </div>
-                      </li>
-                    ))}
-                  </ol>
+                      );
+                    })}
+                  </div>
                 </div>
               ) : (
                 <div className="empty-region">

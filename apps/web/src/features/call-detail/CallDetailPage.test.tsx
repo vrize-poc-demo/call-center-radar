@@ -373,7 +373,8 @@ describe("CallDetailPage", () => {
       }),
     ).toBeTruthy();
     expect(page.getAllByRole("listitem")).toHaveLength(3);
-    expect(page.getByText("0.00s–1.00s")).toBeTruthy();
+    expect(page.getByText("0.00")).toBeTruthy();
+    expect(page.getByText("10.00")).toBeTruthy();
     const audio = container.querySelector("audio") as HTMLAudioElement;
     let playerTime = 4;
     Object.defineProperty(audio, "currentTime", {
@@ -475,39 +476,28 @@ describe("CallDetailPage", () => {
       name: "Agent and customer conversation timeline",
     });
     const rows = within(timeline).getAllByRole("listitem");
-    const agentRow = screen
-      .getByText("The requested item will be sent to your address.")
-      .closest("li");
-    const customerRow = screen
-      .getByText("Please confirm the address.")
-      .closest("li");
+    const agentButton = screen.getByRole("button", {
+      name: "Agent 22.02s–44.90s: The requested item will be sent to your address.",
+    });
+    const customerButton = screen.getByRole("button", {
+      name: "Customer 30.00s–32.00s: Please confirm the address.",
+    });
+    const agentRow = agentButton.closest("[role='listitem']");
+    const customerRow = customerButton.closest("[role='listitem']");
 
     expect(rows).toHaveLength(4);
     expect(agentRow).toBeTruthy();
     expect(customerRow).toBeTruthy();
 
-    const agentLanes = agentRow?.querySelectorAll(".transcript-lane");
-    const customerLanes = customerRow?.querySelectorAll(".transcript-lane");
-
-    expect(agentLanes?.[0].classList.contains("agent-lane")).toBe(true);
-    expect(agentLanes?.[1].classList.contains("customer-lane")).toBe(true);
-    expect(customerLanes?.[0].classList.contains("agent-lane")).toBe(true);
-    expect(customerLanes?.[1].classList.contains("customer-lane")).toBe(true);
-    expect(
-      within(agentRow as HTMLElement).getByText("22.02s–44.90s"),
-    ).toBeTruthy();
+    expect(agentRow?.classList.contains("agent-turn")).toBe(true);
+    expect(customerRow?.classList.contains("customer-turn")).toBe(true);
+    expect(screen.getByText("0.00")).toBeTruthy();
+    expect(screen.getByText("50.00")).toBeTruthy();
     expect(screen.queryByText("Overlap")).toBeNull();
-    expect(
-      within(customerRow as HTMLElement).getByText(
-        "Please confirm the address.",
-      ),
-    ).toBeTruthy();
     expect(screen.getByText("Fourth Ranch, Oregon, 72504.")).toBeTruthy();
     expect(screen.getByText("Unattributed speech.")).toBeTruthy();
 
-    fireEvent.click(
-      screen.getByText("The requested item will be sent to your address."),
-    );
+    fireEvent.click(agentButton);
     expect(currentTimeSetter).toHaveBeenCalledWith(22.02);
   });
 
