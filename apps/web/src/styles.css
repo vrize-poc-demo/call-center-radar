@@ -98,47 +98,34 @@ body {
 
 .global-processing-queue-collapsed {
   display: grid;
+  align-content: start;
   justify-items: center;
+  gap: 10px;
   width: 72px;
   padding: 16px 10px;
 }
 
-.queue-side-tab {
-  display: grid;
-  width: 52px;
-  min-height: 220px;
-  align-content: center;
-  justify-items: center;
-  gap: 10px;
-  padding: 14px 8px;
-  border: 1px solid #b8c7d2;
-  border-radius: 12px;
-  background: #f7f9fb;
-  color: #263646;
+.queue-collapsed-count {
+  color: #536273;
+  font-size: 0.72rem;
+  font-weight: 700;
   text-align: center;
 }
 
-.queue-side-tab span,
-.queue-side-tab strong,
-.queue-side-tab small {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-}
-
-.queue-side-tab span {
-  color: #536273;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-}
-
-.queue-side-tab strong {
-  font-size: 0.9rem;
-}
-
-.queue-side-tab small {
-  color: #096b72;
-  font-size: 0.75rem;
-  font-weight: 700;
+.queue-side-tab {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #b8c7d2;
+  border-radius: 999px;
+  background: #f7f9fb;
+  color: #263646;
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
 }
 
 .processing-queue-items {
@@ -1019,20 +1006,8 @@ h1 {
   }
 
   .queue-side-tab {
-    width: 100%;
-    min-height: auto;
-    grid-template-columns: 1fr auto auto;
-    align-items: center;
-    justify-items: start;
-    padding: 10px 12px;
-    text-align: left;
-  }
-
-  .queue-side-tab span,
-  .queue-side-tab strong,
-  .queue-side-tab small {
-    writing-mode: horizontal-tb;
-    transform: none;
+    width: 44px;
+    height: 44px;
   }
 
   .processing-queue-items {

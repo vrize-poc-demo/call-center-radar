@@ -81,15 +81,15 @@ export function GlobalProcessingQueue() {
         aria-label="Call processing"
         className="global-processing-queue global-processing-queue-collapsed"
       >
+        <span className="queue-collapsed-count">{itemCountLabel}</span>
         <button
           aria-expanded="false"
+          aria-label="Expand recent calls"
           className="queue-side-tab"
           onClick={() => setIsCollapsed(false)}
           type="button"
         >
-          <span>Call processing</span>
-          <strong>Recent calls</strong>
-          <small>{itemCountLabel}</small>
+          &gt;
         </button>
       </section>
     );

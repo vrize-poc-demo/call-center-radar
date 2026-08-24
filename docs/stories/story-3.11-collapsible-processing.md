@@ -18,7 +18,7 @@ Managers and demo users can hide the always-visible call-processing / recent-cal
 ### Scope
 
 - Included: Add a collapse control to the expanded Global Processing Queue.
-- Included: Add a compact side-tab state that shows the current recent-call count.
+- Included: Add a compact side state with the current recent-call count and `>` expand button.
 - Included: Preserve polling while the panel is collapsed.
 - Included: Add unit tests for collapse, expand, and polling/count behavior.
 - Excluded: Changing queue API responses, processing worker behavior, or completed-call navigation rules.
@@ -26,8 +26,8 @@ Managers and demo users can hide the always-visible call-processing / recent-cal
 ### Acceptance Criteria
 
 - [x] Global Processing Queue / Recent Calls has a clear hide/collapse control.
-- [x] Collapsed state renders as a compact side tab with a visible item count.
-- [x] Users can expand the panel again from the side tab.
+- [x] Collapsed state renders as a compact side area with a visible item count.
+- [x] Users can expand the panel again from a simple `>` button.
 - [x] Queue polling continues while collapsed.
 - [x] Recent calls / completed calls remain navigable after expanding.
 - [x] Unit tests cover collapse, expand, and item count behavior.
@@ -40,10 +40,10 @@ Managers and demo users can hide the always-visible call-processing / recent-cal
 ```mermaid
 flowchart LR
   A[Queue expanded] --> B[User selects Hide panel]
-  B --> C[Compact side tab]
+  B --> C[Compact side count and > button]
   C --> D[Polling continues]
   D --> E[Count updates]
-  E --> F[User opens tab]
+  E --> F[User selects >]
   F --> A
 ```
 
@@ -52,7 +52,7 @@ flowchart LR
 | Area | Files or module | Responsibility |
 | --- | --- | --- |
 | UI | `apps/web/src/features/processing/GlobalProcessingQueue.tsx` | Owns expanded/collapsed queue state and controls. |
-| Styling | `apps/web/src/styles.css` | Owns the side-tab layout and responsive behavior. |
+| Styling | `apps/web/src/styles.css` | Owns the side count, `>` expand button, and responsive behavior. |
 | API | Not applicable | Existing queue polling API is unchanged. |
 | Persistence | Not applicable | No database or local storage changes. |
 | Tests | `apps/web/src/features/processing/GlobalProcessingQueue.test.tsx` | Verifies collapse, expand, count, and polling behavior. |
@@ -78,7 +78,7 @@ Existing queue polling and dismissal failure messages are unchanged. If polling 
 | Check | Result | Notes |
 | --- | --- | --- |
 | Unit tests | Passed | `npm run test --workspace=@call-center-radar/web -- --run GlobalProcessingQueue` passed 7 tests. |
-| Integration tests | Passed | Component tests cover collapsed tab count, expand behavior, and polling while collapsed. |
+| Integration tests | Passed | Component tests cover collapsed count, `>` expand behavior, and polling while collapsed. |
 | Lint and format | Passed | `npm run lint`. |
 | Build | Passed | `npm run build`. |
 | Accuracy evaluation | Not applicable | UI-only change. |
@@ -88,8 +88,8 @@ Existing queue polling and dismissal failure messages are unchanged. If polling 
 1. Start the app with `npm run dev`.
 2. Confirm the Global Processing Queue / Recent Calls panel is visible.
 3. Select **Hide panel**.
-4. Confirm the panel becomes a compact side tab with the recent-call count.
-5. Select the side tab.
+4. Confirm the panel becomes a compact side area with the recent-call count and `>` button.
+5. Select the `>` button.
 6. Confirm recent calls and completed-call navigation are visible again.
 
 ### Known Gaps and Follow-Up Boundaries
@@ -112,6 +112,7 @@ Update this table before every commit. Explain both the change and its reason; d
 | --- | --- | --- |
 | Feature implementation | Added a collapsible Global Processing Queue side tab, responsive styles, and queue tests. | Users need to hide the recent-calls panel without stopping background processing visibility. |
 | Documentation update | Recorded PR #110 in this story record. | Keep delivery documentation aligned with the opened pull request. |
+| UX refinement | Changed the collapsed expand control to a simple `>` button with the count shown separately. | The demo UI should be quicker to understand and visually lighter. |
 
 ### PR Readiness and Review
 

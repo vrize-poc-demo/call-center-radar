@@ -124,9 +124,10 @@ describe("GlobalProcessingQueue", () => {
     fireEvent.click(screen.getByRole("button", { name: "Hide panel" }));
 
     const expandTab = screen.getByRole("button", {
-      name: /Call processing Recent calls 2 calls/,
+      name: "Expand recent calls",
     });
     expect(expandTab.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.getByText("2 calls")).toBeTruthy();
     expect(screen.queryByText("Nora Jones")).toBeNull();
 
     fireEvent.click(expandTab);
@@ -179,13 +180,14 @@ describe("GlobalProcessingQueue", () => {
 
     expect(
       screen.getByRole("button", {
-        name: /Call processing Recent calls 2 calls/,
+        name: "Expand recent calls",
       }),
     ).toBeTruthy();
+    expect(screen.getByText("2 calls")).toBeTruthy();
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: /Call processing Recent calls 2 calls/,
+        name: "Expand recent calls",
       }),
     );
 
