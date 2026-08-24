@@ -7,8 +7,9 @@ from fastapi.testclient import TestClient
 
 from app.config import Settings
 from app.main import create_app
-from app.pipeline import ProcessingPipeline
+from app.pipeline import ProcessingPipeline, ProcessingResult
 from app.transcription import AudioInfo, AudioInspectionError, TranscribedTurn, TranscriptionError
+from app.worker import DurableProcessingWorker
 
 
 class FakeTranscriber:
@@ -45,6 +46,21 @@ class BlockingTranscriber(FakeTranscriber):
         self.started.set()
         assert self.release.wait(timeout=2)
         return super().transcribe(audio_path, audio_info)
+
+
+class RecoveringPipeline:
+    def __init__(self, state: dict, processed: threading.Event) -> None:
+        self.state = state
+        self.processed = processed
+
+    def process_next(self):
+        self.state["attempts"] += 1
+        if self.state["attempts"] == 1:
+            raise RuntimeError("boom")
+        if self.state["attempts"] == 2:
+            self.processed.set()
+            return ProcessingResult("job_recovered", "completed", 1, None, 1)
+        return None
 
 
 def build_settings(tmp_path) -> Settings:
@@ -231,6 +247,48 @@ def test_recovery_returns_interrupted_work_to_queued_with_audit_event(tmp_path) 
         ).fetchone()
     assert job["status"] == "queued"
     assert tuple(event) == ("transcribing", "queued", "worker_restart_recovery")
+
+
+def test_worker_failure_marks_interrupted_job_failed_with_audit_event(tmp_path) -> None:
+    app = create_app(build_settings(tmp_path))
+    job_id = create_queued_job(app, tmp_path, b"audio")
+    with TestClient(app):
+        with app.state.database.connect() as connection:
+            connection.execute(
+                "UPDATE processing_jobs SET status = 'analyzing' WHERE job_id = ?", (job_id,)
+            )
+        assert app.state.processing_worker.fail_interrupted_jobs("worker_error") == 1
+
+    with app.state.database.connect() as connection:
+        job = connection.execute(
+            "SELECT status, failure_reason FROM processing_jobs WHERE job_id = ?", (job_id,)
+        ).fetchone()
+        event = connection.execute(
+            "SELECT from_status, to_status, reason FROM processing_job_events"
+        ).fetchone()
+    assert tuple(job) == ("failed", "worker_error")
+    assert tuple(event) == ("analyzing", "failed", "worker_error")
+
+
+def test_worker_loop_survives_unexpected_pipeline_error(tmp_path) -> None:
+    app = create_app(build_settings(tmp_path))
+    state = {"attempts": 0}
+    processed = threading.Event()
+
+    with TestClient(app):
+        worker = DurableProcessingWorker(
+            app.state.database,
+            app.state.logger,
+            lambda: RecoveringPipeline(state, processed),
+        )
+
+        worker.start()
+        try:
+            assert processed.wait(timeout=2)
+        finally:
+            worker.stop()
+
+    assert state["attempts"] >= 2
 
 
 def test_sqlite_remains_readable_while_transcription_runs(tmp_path, monkeypatch) -> None:
