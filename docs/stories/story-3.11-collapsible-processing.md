@@ -100,8 +100,8 @@ Existing queue polling and dismissal failure messages are unchanged. If polling 
 ## 5. Delivery Record
 
 - Branch: `codex/story-3.11-collapsible-processing`
-- Pull request: TBD
-- Commit(s): TBD
+- Pull request: #110
+- Commit(s): Feature branch commits in PR #110
 - Review result: TBD
 
 ### Change Log
@@ -110,7 +110,8 @@ Update this table before every commit. Explain both the change and its reason; d
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Added a collapsible Global Processing Queue side tab, responsive styles, and queue tests. | Users need to hide the recent-calls panel without stopping background processing visibility. |
+| Feature implementation | Added a collapsible Global Processing Queue side tab, responsive styles, and queue tests. | Users need to hide the recent-calls panel without stopping background processing visibility. |
+| Documentation update | Recorded PR #110 in this story record. | Keep delivery documentation aligned with the opened pull request. |
 
 ### PR Readiness and Review
 
