@@ -347,13 +347,13 @@ export function CallDetailPage({ callId }: { callId: string }) {
           </p>
         </section>
         <section className="detail-panel transcript-panel">
-          <h2>Transcript</h2>
+          <h2>Conversation Timeline</h2>
           <p>{detail.transcript_turn_count} saved turns</p>
           {turns.length ? (
             <>
               <div className="transcript-controls">
                 <label>
-                  Search transcript
+                  Search conversation
                   <input
                     onChange={(event) => updateSearchTerm(event.target.value)}
                     placeholder="Find a phrase"
@@ -392,14 +392,18 @@ export function CallDetailPage({ callId }: { callId: string }) {
                 </p>
               ) : null}
               {visibleTurns.length ? (
-                <div className="transcript-sequence">
-                  <div aria-hidden="true" className="transcript-lane-headings">
-                    <strong>Customer</strong>
+                <div className="conversation-timeline">
+                  <div
+                    aria-hidden="true"
+                    className="conversation-timeline-headings"
+                  >
+                    <strong>Time</strong>
                     <strong>Agent</strong>
+                    <strong>Customer</strong>
                   </div>
                   <ol
-                    aria-label="Chronological transcript"
-                    className="transcript-groups"
+                    aria-label="Agent and customer conversation timeline"
+                    className="transcript-groups conversation-timeline-groups"
                   >
                     {transcriptSequence.map((group, index) => (
                       <li
@@ -411,22 +415,24 @@ export function CallDetailPage({ callId }: { callId: string }) {
                         className={group.has_overlap ? "overlap-group" : ""}
                         key={group.id}
                       >
-                        <div className="transcript-group-meta">
-                          <span>
-                            Sequence {index + 1}
-                            {group.has_overlap
-                              ? ` · Shared time ${formatTranscriptGroupRange(group.start_ms, group.end_ms)}`
-                              : null}
+                        <div className="conversation-time-ruler">
+                          <time>
+                            {formatTranscriptGroupRange(
+                              group.start_ms,
+                              group.end_ms,
+                            )}
+                          </time>
+                          <span aria-hidden="true" className="time-rule">
+                            <span />
                           </span>
                           {group.has_overlap ? (
                             <span>
-                              Timing overlaps; exact sentence order is
-                              unavailable.
+                              Overlap
                             </span>
                           ) : null}
                         </div>
-                        <div className="transcript-group-lanes">
-                          {(["customer", "agent"] as const).map((speaker) => (
+                        <div className="conversation-lanes">
+                          {(["agent", "customer"] as const).map((speaker) => (
                             <div
                               aria-label={`${speaker === "customer" ? "Customer" : "Agent"} messages in sequence ${index + 1}`}
                               className={`transcript-lane ${speaker}-lane`}
@@ -477,7 +483,7 @@ export function CallDetailPage({ callId }: { callId: string }) {
                             .filter((turn) => turn.speaker === "unknown")
                             .map((turn) => (
                               <div
-                                className={`transcript-lane unknown-lane ${
+                                className={`transcript-lane unknown-lane conversation-unknown-lane ${
                                   turn.transcript_turn_id ===
                                   activeTurn?.transcript_turn_id
                                     ? "active-turn"
@@ -515,13 +521,13 @@ export function CallDetailPage({ callId }: { callId: string }) {
                 </div>
               ) : (
                 <div className="empty-region">
-                  No saved transcript turns match these filters.
+                  No saved conversation turns match these filters.
                 </div>
               )}
             </>
           ) : (
             <div className="empty-region">
-              No transcript turns are saved for this call yet.
+              No conversation turns are saved for this call yet.
             </div>
           )}
         </section>

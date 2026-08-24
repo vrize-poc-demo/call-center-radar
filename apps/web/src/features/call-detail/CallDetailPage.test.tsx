@@ -177,11 +177,13 @@ describe("CallDetailPage", () => {
     expect(
       screen.getByRole("heading", { name: "Call recording" }),
     ).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Transcript" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "Conversation Timeline" }),
+    ).toBeTruthy();
     const panelHeadings = screen
       .getAllByRole("heading", { level: 2 })
       .map((heading) => heading.textContent);
-    expect(panelHeadings.indexOf("Transcript")).toBeLessThan(
+    expect(panelHeadings.indexOf("Conversation Timeline")).toBeLessThan(
       panelHeadings.indexOf("Call analysis"),
     );
     expect(panelHeadings.indexOf("Call analysis")).toBeLessThan(
@@ -366,10 +368,12 @@ describe("CallDetailPage", () => {
 
     await page.findByText("Welcome to support");
     expect(
-      page.getByRole("list", { name: "Chronological transcript" }),
+      page.getByRole("list", {
+        name: "Agent and customer conversation timeline",
+      }),
     ).toBeTruthy();
     expect(page.getAllByRole("listitem")).toHaveLength(3);
-    expect(page.getByText("0.00s–1.00s")).toBeTruthy();
+    expect(page.getAllByText("0.00s–1.00s").length).toBeGreaterThanOrEqual(2);
     const audio = container.querySelector("audio") as HTMLAudioElement;
     let playerTime = 4;
     Object.defineProperty(audio, "currentTime", {
@@ -382,7 +386,7 @@ describe("CallDetailPage", () => {
     fireEvent.timeUpdate(audio);
 
     fireEvent.change(
-      page.getByRole("searchbox", { name: "Search transcript" }),
+      page.getByRole("searchbox", { name: "Search conversation" }),
       {
         target: { value: "password" },
       },
@@ -470,16 +474,20 @@ describe("CallDetailPage", () => {
     const overlapGroup = await screen.findByRole("listitem", {
       name: "Overlapping transcript group 1",
     });
+    const timelineLanes = overlapGroup.querySelectorAll(".transcript-lane");
+
+    expect(timelineLanes[0].classList.contains("agent-lane")).toBe(true);
+    expect(timelineLanes[1].classList.contains("customer-lane")).toBe(true);
 
     expect(
       within(overlapGroup).getByText(
         "The requested item will be sent to your address.",
       ),
     ).toBeTruthy();
-    expect(within(overlapGroup).getByText("22.02s–44.90s")).toBeTruthy();
     expect(
-      within(overlapGroup).getByText("Sequence 1 · Shared time 22.02s–44.90s"),
-    ).toBeTruthy();
+      within(overlapGroup).getAllByText("22.02s–44.90s").length,
+    ).toBeGreaterThanOrEqual(2);
+    expect(within(overlapGroup).getByText("Overlap")).toBeTruthy();
     expect(
       within(overlapGroup).getByText("Please confirm the address."),
     ).toBeTruthy();
@@ -487,11 +495,6 @@ describe("CallDetailPage", () => {
       within(overlapGroup).getByText("Fourth Ranch, Oregon, 72504."),
     ).toBeTruthy();
     expect(within(overlapGroup).getByText("Unattributed speech.")).toBeTruthy();
-    expect(
-      within(overlapGroup).getByText(
-        "Timing overlaps; exact sentence order is unavailable.",
-      ),
-    ).toBeTruthy();
 
     fireEvent.click(
       within(overlapGroup).getByText(
