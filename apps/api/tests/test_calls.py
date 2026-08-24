@@ -221,3 +221,36 @@ def test_active_job_cannot_be_removed_from_queue(tmp_path) -> None:
     assert response.json()["detail"] == (
         "Only completed or failed calls can be removed from the queue."
     )
+
+
+def test_clear_all_call_data_removes_persisted_rows_and_files(tmp_path) -> None:
+    settings = build_settings(tmp_path)
+    app = create_app(settings)
+    with TestClient(app) as client:
+        registered = client.post(
+            "/api/calls",
+            files={
+                "audio": ("sample.wav", b"audio bytes", "audio/wav"),
+                "metadata": ("sample.json", VALID_METADATA, "application/json"),
+            },
+        ).json()
+        with app.state.database.connect() as connection:
+            connection.execute(
+                "UPDATE processing_jobs SET status = ? WHERE job_id = ?",
+                ("completed", registered["job_id"]),
+            )
+
+        response = client.delete("/api/calls/data")
+        queue = client.get("/api/calls/processing-queue")
+        detail = client.get(f"/api/calls/{registered['call_id']}")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["calls_deleted"] == 1
+    assert payload["processing_jobs_deleted"] == 1
+    assert payload["transcript_turns_deleted"] == 0
+    assert payload["analysis_rows_deleted"] == 1
+    assert payload["upload_files_deleted"] == 2
+    assert queue.json() == {"items": []}
+    assert detail.status_code == 404
+    assert not settings.upload_dir.exists() or not any(settings.upload_dir.iterdir())

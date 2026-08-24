@@ -23,6 +23,14 @@ export type ProcessingQueueItem = {
   failure_reason: string | null;
 };
 
+export type ClearCallDataResult = {
+  calls_deleted: number;
+  processing_jobs_deleted: number;
+  transcript_turns_deleted: number;
+  analysis_rows_deleted: number;
+  upload_files_deleted: number;
+};
+
 export type CallDetail = {
   call_id: string;
   agent_name: string;
@@ -254,6 +262,16 @@ export async function dismissProcessingQueueItem(jobId: string): Promise<void> {
   if (!response.ok) {
     throw new Error("The call could not be removed from the queue.");
   }
+}
+
+export async function clearAllCallData(): Promise<ClearCallDataResult> {
+  const response = await fetch(`${apiBaseUrl}/api/calls/data`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    throw new Error("Stored call data could not be cleared.");
+  }
+  return (await response.json()) as ClearCallDataResult;
 }
 
 export async function getCallDetail(callId: string): Promise<CallDetail> {

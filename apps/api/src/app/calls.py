@@ -1,4 +1,5 @@
 import json
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
@@ -46,6 +47,14 @@ class ProcessingQueueItem(BaseModel):
 
 class ProcessingQueue(BaseModel):
     items: list[ProcessingQueueItem]
+
+
+class ClearCallDataResult(BaseModel):
+    calls_deleted: int
+    processing_jobs_deleted: int
+    transcript_turns_deleted: int
+    analysis_rows_deleted: int
+    upload_files_deleted: int
 
 
 class CallDetail(BaseModel):
@@ -243,6 +252,71 @@ def load_call_detail(database, call_id: str):
         ).fetchone()
 
 
+def clear_call_data(database, upload_dir: Path | None) -> ClearCallDataResult:
+    tables = [
+        "call_analysis_treatment_signals",
+        "call_analysis_silence_windows",
+        "call_analysis_repeated_question_events",
+        "call_analysis_false_resolution_signals",
+        "call_analysis_mood_shifts",
+        "call_analysis_claims",
+        "call_analyses",
+        "radar_priority_factors",
+        "radar_priority_scores",
+        "trace_events",
+        "transcript_turns",
+        "processing_jobs",
+        "calls",
+    ]
+    deleted_counts = {table: 0 for table in tables}
+    upload_files_deleted = 0
+
+    with database.connect() as connection:
+        for table in tables:
+            deleted_counts[table] = connection.execute(f"DELETE FROM {table}").rowcount
+        sequence_table = connection.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'sqlite_sequence'"
+        ).fetchone()
+        if sequence_table is not None:
+            connection.execute(
+                "DELETE FROM sqlite_sequence WHERE name IN ("
+                + ", ".join("?" for _ in tables)
+                + ")",
+                tables,
+            )
+        connection.commit()
+
+    if upload_dir is not None and upload_dir.is_dir():
+        for child in upload_dir.iterdir():
+            if child.is_file() or child.is_symlink():
+                child.unlink(missing_ok=True)
+                upload_files_deleted += 1
+            elif child.is_dir():
+                shutil.rmtree(child, ignore_errors=True)
+
+    return ClearCallDataResult(
+        calls_deleted=deleted_counts["calls"],
+        processing_jobs_deleted=deleted_counts["processing_jobs"],
+        transcript_turns_deleted=deleted_counts["transcript_turns"],
+        analysis_rows_deleted=sum(
+            deleted_counts[table]
+            for table in [
+                "call_analysis_treatment_signals",
+                "call_analysis_silence_windows",
+                "call_analysis_repeated_question_events",
+                "call_analysis_false_resolution_signals",
+                "call_analysis_mood_shifts",
+                "call_analysis_claims",
+                "call_analyses",
+                "radar_priority_factors",
+                "radar_priority_scores",
+                "trace_events",
+            ]
+        ),
+        upload_files_deleted=upload_files_deleted,
+    )
+
+
 @router.get("/processing-queue", response_model=ProcessingQueue)
 def get_processing_queue(request: Request) -> ProcessingQueue:
     """Return recent durable processing jobs without exposing call content."""
@@ -417,3 +491,18 @@ def process_call(job_id: str, request: Request) -> ProcessingStatus:
             detail="Processing job not found.",
         ) from None
     return ProcessingStatus(**result.__dict__)
+
+
+@router.delete("/data", response_model=ClearCallDataResult)
+def clear_all_call_data(request: Request) -> ClearCallDataResult:
+    result = clear_call_data(
+        request.app.state.database,
+        request.app.state.settings.upload_dir,
+    )
+    log_event(
+        request.app.state.logger,
+        "call_data_cleared",
+        "All call data was cleared from SQLite and the upload directory",
+        context=result.model_dump(),
+    )
+    return result
