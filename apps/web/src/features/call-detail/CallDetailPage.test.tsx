@@ -373,8 +373,7 @@ describe("CallDetailPage", () => {
       }),
     ).toBeTruthy();
     expect(page.getAllByRole("listitem")).toHaveLength(3);
-    expect(page.getByText("0.00")).toBeTruthy();
-    expect(page.getByText("10.00")).toBeTruthy();
+    expect(page.queryByText("0.00s–1.00s")).toBeNull();
     const audio = container.querySelector("audio") as HTMLAudioElement;
     let playerTime = 4;
     Object.defineProperty(audio, "currentTime", {
@@ -491,8 +490,8 @@ describe("CallDetailPage", () => {
 
     expect(agentRow?.classList.contains("agent-turn")).toBe(true);
     expect(customerRow?.classList.contains("customer-turn")).toBe(true);
-    expect(screen.getByText("0.00")).toBeTruthy();
-    expect(screen.getByText("50.00")).toBeTruthy();
+    expect(screen.queryByText("22.02s–44.90s")).toBeNull();
+    expect(screen.queryByText("50.00")).toBeNull();
     expect(screen.queryByText("Overlap")).toBeNull();
     expect(screen.getByText("Fourth Ranch, Oregon, 72504.")).toBeTruthy();
     expect(screen.getByText("Unattributed speech.")).toBeTruthy();

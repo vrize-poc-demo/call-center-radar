@@ -13,12 +13,12 @@
 
 ### User-Visible Goal
 
-Managers and technical reviewers can read the call as a time-aligned conversation, with one graph-style time axis on the left, the agent lane first, and the customer lane second. This keeps simultaneous speech understandable without pretending the call is a normal chat thread.
+Managers and technical reviewers can read the call as a clean two-column conversation, with the agent lane first and the customer lane second. The UI keeps the spoken text readable and avoids visible timing clutter.
 
 ### Scope
 
 - Included: Rename the Call Detail transcript section to **Conversation Timeline**.
-- Included: Render a single call-duration time axis plus Agent and Customer communication lanes.
+- Included: Render text-only Agent and Customer communication lanes.
 - Included: Keep agent on the left and customer on the right.
 - Included: Preserve chronological ordering, search/filter, active playback highlighting, click-to-seek, and evidence jump behavior.
 - Included: Update Call Detail tests for the new timeline semantics.
@@ -29,7 +29,7 @@ Managers and technical reviewers can read the call as a time-aligned conversatio
 - [x] Rename transcript section to **Conversation Timeline**.
 - [x] Render three columns: `Time`, `Agent`, and `Customer`.
 - [x] Agent lane appears left of Customer lane.
-- [x] The time column uses one visible graph-style scale from `00.00` to the rounded call end.
+- [x] Visible timing labels are removed from the conversation view to prevent overlap and clutter.
 - [x] Each saved transcript turn appears in the correct speaker lane.
 - [x] Turns remain ordered by timestamp.
 - [x] Overlapping agent/customer speech remains timestamped without adding misleading sequence blocks or labels.
@@ -37,7 +37,7 @@ Managers and technical reviewers can read the call as a time-aligned conversatio
 - [x] The active playback turn remains highlighted.
 - [x] Evidence jump scrolls/highlights the correct turn.
 - [x] Search/filter still works.
-- [x] Unit tests cover lane placement, time ruler labels, active highlight, and click-to-seek.
+- [x] Unit tests cover lane placement, hidden accessible timing labels, active highlight, and click-to-seek.
 - [x] Story documentation explains the UI choice and constraints.
 
 ## 2. Design
@@ -47,12 +47,11 @@ Managers and technical reviewers can read the call as a time-aligned conversatio
 ```mermaid
 flowchart LR
   A[Saved transcript turns] --> B[Filter by text and speaker]
-  B --> C[Calculate rounded call-duration axis]
-  C --> D[Plot turns by timestamp]
-  D --> E[Render Agent lane]
-  D --> F[Render Customer lane]
-  E --> G[Click turn seeks audio]
-  F --> G
+  B --> C[Render chronological text rows]
+  C --> D[Render Agent lane]
+  C --> E[Render Customer lane]
+  D --> F[Click turn seeks audio]
+  E --> F
 ```
 
 ### Components and Ownership
@@ -60,7 +59,7 @@ flowchart LR
 | Area | Files or module | Responsibility |
 | --- | --- | --- |
 | UI | `apps/web/src/features/call-detail/CallDetailPage.tsx` | Renders the Conversation Timeline and preserves seek/highlight behavior. |
-| Styling | `apps/web/src/styles.css` | Owns the graph-style time axis, lane columns, speaker styling, and responsive layout. |
+| Styling | `apps/web/src/styles.css` | Owns the lane columns, speaker styling, and responsive layout. |
 | Timeline grouping | Not applicable | The Call Detail screen intentionally avoids sequence/group containers so the UI reads as a continuous conversation. |
 | API | Not applicable | Existing transcript API contract is unchanged. |
 | Persistence | Not applicable | Existing saved transcript turns are reused. |
@@ -98,14 +97,14 @@ Existing empty, loading, and failed transcript states remain. Unknown-speaker tu
 2. Open a completed Call Detail page.
 3. Confirm the section title is **Conversation Timeline**.
 4. Confirm the timeline columns are Time, Agent, and Customer.
-5. Confirm the left time axis is shown once from `00.00` to the rounded call end, not repeated per message.
+5. Confirm no visible time labels overlap the conversation text.
 6. Click an agent or customer turn and confirm the audio jumps to that timestamp.
 7. Use search and speaker filter and confirm matching turns remain visible.
 8. Click evidence from analysis and confirm it highlights the correct timeline turn.
 
 ### Known Gaps and Follow-Up Boundaries
 
-- The time axis is proportional to saved transcript turn timing and rounded up to the next 10-second boundary.
+- Visible timing is intentionally hidden in the conversation view; timestamps remain in accessible button labels and click-to-seek behavior.
 - This does not add diarization for unknown-speaker mono audio.
 
 ## 5. Delivery Record
@@ -124,6 +123,7 @@ Update this table before every commit. Explain both the change and its reason; d
 | `e216245` | Replaced the sequence transcript presentation with an agent-first time-ruler conversation timeline. | Call audio can overlap, so a lane-based timeline is clearer and more truthful than chat bubbles. |
 | Pending | Simplified the timeline into chronological turn rows and removed sequence containers and overlap text. | The grouped presentation looked confusing for managers and made one long agent turn visually swallow several customer turns. |
 | Pending | Replaced repeated per-turn time ranges with one graph-style time axis and plotted speaker messages by timestamp. | Managers need one readable call timeline from start to end, not repeated row labels that look like a table. |
+| Pending | Removed the visible time axis and kept a text-only two-column conversation. | The plotted graph caused close messages to overlap; for the demo, readable text is more important than visible timing. |
 
 ### PR Readiness and Review
 

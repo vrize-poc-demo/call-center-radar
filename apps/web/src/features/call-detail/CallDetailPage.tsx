@@ -1,4 +1,4 @@
-import { CSSProperties, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   CallAnalysis,
@@ -31,19 +31,6 @@ function formatPlaybackTime(milliseconds: number) {
 
 function formatTranscriptRange(turn: TranscriptTurn) {
   return `${(turn.start_ms / 1000).toFixed(2)}s–${(turn.end_ms / 1000).toFixed(2)}s`;
-}
-
-function formatTimelineTick(milliseconds: number) {
-  return `${(milliseconds / 1000).toFixed(2)}`;
-}
-
-function buildTimelineTicks(endMs: number) {
-  const intervalMs =
-    endMs <= 60_000 ? 10_000 : endMs <= 180_000 ? 30_000 : 60_000;
-  const ticks: number[] = [];
-  for (let tick = 0; tick <= endMs; tick += intervalMs) ticks.push(tick);
-  if (ticks[ticks.length - 1] !== endMs) ticks.push(endMs);
-  return ticks;
 }
 
 function getSpeakerLabel(speaker: TranscriptTurn["speaker"]) {
@@ -191,13 +178,6 @@ export function CallDetailPage({ callId }: { callId: string }) {
       (matchesSpeaker && matchesSearch)
     );
   });
-  const timelineEndMs = Math.max(
-    10_000,
-    Math.ceil(Math.max(...turns.map((turn) => turn.end_ms), 0) / 10_000) *
-      10_000,
-  );
-  const timelineHeight = Math.max(320, Math.ceil(timelineEndMs / 1000) * 14);
-  const timelineTicks = buildTimelineTicks(timelineEndMs);
   const updateSearchTerm = (value: string) => {
     setSearchTerm(value);
     console.info("transcript_search_updated", {
@@ -416,47 +396,16 @@ export function CallDetailPage({ callId }: { callId: string }) {
                     aria-hidden="true"
                     className="conversation-timeline-headings"
                   >
-                    <strong>Time</strong>
                     <strong>Agent</strong>
                     <strong>Customer</strong>
                   </div>
                   <div
                     aria-label="Agent and customer conversation timeline"
-                    className="conversation-timeline-plot"
+                    className="conversation-turns"
                     role="list"
-                    style={
-                      {
-                        "--timeline-height": `${timelineHeight}px`,
-                      } as CSSProperties
-                    }
                   >
-                    <div aria-hidden="true" className="conversation-axis">
-                      {timelineTicks.map((tick) => (
-                        <span
-                          className="conversation-axis-tick"
-                          key={tick}
-                          style={
-                            {
-                              "--tick-top": `${(tick / timelineEndMs) * 100}%`,
-                            } as CSSProperties
-                          }
-                        >
-                          <time>{formatTimelineTick(tick)}</time>
-                        </span>
-                      ))}
-                    </div>
-                    <div
-                      aria-hidden="true"
-                      className="conversation-lane-guides"
-                    >
-                      <span />
-                      <span />
-                    </div>
                     {visibleTurns.map((turn) => {
                       const speakerLabel = getSpeakerLabel(turn.speaker);
-                      const startPct = (turn.start_ms / timelineEndMs) * 100;
-                      const durationPct =
-                        ((turn.end_ms - turn.start_ms) / timelineEndMs) * 100;
                       return (
                         <div
                           className={`conversation-turn ${turn.speaker}-turn ${
@@ -477,12 +426,6 @@ export function CallDetailPage({ callId }: { callId: string }) {
                                 turn.transcript_turn_id,
                               );
                           }}
-                          style={
-                            {
-                              "--turn-start": `${startPct}%`,
-                              "--turn-duration": `${Math.max(durationPct, 7)}%`,
-                            } as CSSProperties
-                          }
                           role="listitem"
                         >
                           <div
