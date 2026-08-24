@@ -103,8 +103,8 @@ If `run_once()` raises unexpectedly, the worker catches the exception, fails any
 ## 5. Delivery Record
 
 - Branch: `feature/worker-queue-resilience`
-- Pull request: TBD
-- Commit(s): TBD
+- Pull request: https://github.com/vrize-poc-demo/call-center-radar/pull/107
+- Commit(s): `1b9b5b1`
 - Review result: TBD
 
 ### Change Log
@@ -113,11 +113,11 @@ Update this table before every commit. Explain both the change and its reason; d
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Added worker exception recovery, active-job failure handling, and regression tests. | Prevent a single unexpected local processing error from leaving new call uploads stuck in `Queued`. |
+| `1b9b5b1` | Added worker exception recovery, active-job failure handling, and regression tests. | Prevent a single unexpected local processing error from leaving new call uploads stuck in `Queued`. |
 
 ### PR Readiness and Review
 
-- Mergeability verification: `Pending - npm run pr:verify -- <pr-number>`
-- Code quality grade: `Pending - A to F`
-- Testing quality grade: `Pending - A to F`
-- Review findings and follow-up: TBD
+- Mergeability verification: `Blocked locally - npm run pr:verify -- 107 could not run because GitHub CLI (gh) is not installed; Git Bash retry also failed on missing gh.`
+- Code quality grade: `A`
+- Testing quality grade: `A`
+- Review findings and follow-up: No known blocking issues. Install GitHub CLI on the local Windows environment to run the repository PR verification script end-to-end.
