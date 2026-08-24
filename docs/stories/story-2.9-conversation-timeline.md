@@ -18,7 +18,7 @@ Managers and technical reviewers can read the call as a clean two-column convers
 ### Scope
 
 - Included: Rename the Call Detail transcript section to **Conversation Timeline**.
-- Included: Render text-only Agent and Customer communication lanes.
+- Included: Render a text-only conversation stream where Agent messages align left and Customer messages align right.
 - Included: Keep agent on the left and customer on the right.
 - Included: Split long multi-sentence turns for display readability without changing saved transcript evidence.
 - Included: Preserve chronological ordering, search/filter, active playback highlighting, click-to-seek, and evidence jump behavior.
@@ -128,6 +128,7 @@ Update this table before every commit. Explain both the change and its reason; d
 | Pending | Replaced repeated per-turn time ranges with one graph-style time axis and plotted speaker messages by timestamp. | Managers need one readable call timeline from start to end, not repeated row labels that look like a table. |
 | Pending | Removed the visible time axis and kept a text-only two-column conversation. | The plotted graph caused close messages to overlap; for the demo, readable text is more important than visible timing. |
 | Pending | Added display-only sentence splitting and readable ordering for long overlapping STT turns. | The sample call had one long agent turn that visually appeared before the customer question; managers need the conversation to read naturally. |
+| Pending | Changed the conversation layout from reserved two-column grid rows to a compact aligned stream. | The two-column grid left large blank gaps whenever only one speaker spoke for several turns. |
 
 ### PR Readiness and Review
 

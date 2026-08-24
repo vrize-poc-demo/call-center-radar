@@ -675,19 +675,23 @@ h1 {
   margin: 0;
 }
 .conversation-turn {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  display: flex;
   list-style: none;
 }
-.agent-turn .transcript-lane {
-  grid-column: 1;
+.agent-turn {
+  justify-content: flex-start;
 }
-.customer-turn .transcript-lane {
-  grid-column: 2;
+.customer-turn {
+  justify-content: flex-end;
+}
+.unknown-turn {
+  justify-content: center;
+}
+.conversation-turn .transcript-lane {
+  width: min(48%, 560px);
 }
 .unknown-turn .transcript-lane {
-  grid-column: 1 / -1;
+  width: min(76%, 720px);
 }
 .conversation-timeline-headings,
 .conversation-lanes {
@@ -1041,8 +1045,7 @@ h1 {
   .agent-turn .transcript-lane,
   .customer-turn .transcript-lane,
   .unknown-turn .transcript-lane {
-    grid-template-columns: 1fr;
-    grid-column: 1;
+    width: 100%;
   }
   .mobile-speaker-label {
     display: block;
