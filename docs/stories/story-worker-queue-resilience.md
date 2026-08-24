@@ -107,7 +107,8 @@ If `run_once()` raises unexpectedly, the worker catches the exception, fails any
 
 - Branch: `feature/worker-queue-resilience`
 - Pull request: https://github.com/vrize-poc-demo/call-center-radar/pull/107
-- Commit(s): `1b9b5b1`
+- Follow-up fixture pull request: https://github.com/vrize-poc-demo/call-center-radar/pull/108
+- Commit(s): `1b9b5b1`, `dc06116`
 - Review result: TBD
 
 ### Change Log
@@ -117,7 +118,7 @@ Update this table before every commit. Explain both the change and its reason; d
 | Commit | What changed | Why |
 | --- | --- | --- |
 | `1b9b5b1` | Added worker exception recovery, active-job failure handling, and regression tests. | Prevent a single unexpected local processing error from leaving new call uploads stuck in `Queued`. |
-| Pending | Added demo category audio and metadata fixtures. | Give demo users ready-to-upload spoken calls for each dashboard state/category. |
+| `dc06116` | Added demo category audio and metadata fixtures. | Give demo users ready-to-upload spoken calls for each dashboard state/category. |
 
 ### PR Readiness and Review
 
