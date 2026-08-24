@@ -1,0 +1,18 @@
+﻿{
+    "agent":  {
+                  "speaker_id":  1,
+                  "metadata":  {
+                                   "agent_name":  "Liam Agent"
+                               }
+              },
+    "caller":  {
+                   "speaker_id":  2,
+                   "metadata":  {
+                                    "first and last name":  "Unresolved Customer"
+                                }
+               },
+    "demo":  {
+                 "expected_category":  "Unresolved",
+                 "audio_file":  "04-unresolved.wav"
+             }
+}

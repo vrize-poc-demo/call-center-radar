@@ -22,6 +22,7 @@ Uploaded calls should not remain stuck in `Queued` because one unexpected local 
   - Mark interrupted `transcribing` or `analyzing` jobs as `failed` with `worker_error` after an unexpected worker-loop error.
   - Log worker recovery and failed interrupted jobs without call transcript or audio content.
   - Add regression tests for failure marking and worker-loop recovery.
+  - Add demo category audio and JSON metadata fixtures for manual dashboard testing.
 - Excluded:
   - Changing transcription model quality or speed.
   - Adding live-call ingestion.
@@ -54,6 +55,7 @@ flowchart LR
 | UI | Not applicable | Queue UI already reflects `failed` and `completed` status from the API. |
 | API | `apps/api/src/app/worker.py` | Keep the durable worker alive after unexpected processing errors. |
 | Persistence | `processing_jobs`, `processing_job_events` | Store terminal `failed` status and audit transition reason `worker_error`. |
+| Demo data | `sample-data/demo-category-audio/` | Provide spoken WAV calls and matching metadata for dashboard category demos. |
 | Tests | `apps/api/tests/test_pipeline.py` | Prove interrupted work fails cleanly and the worker loop survives an exception. |
 
 ### Contracts and Data
@@ -93,6 +95,7 @@ If `run_once()` raises unexpectedly, the worker catches the exception, fails any
 2. Register a call.
 3. If processing fails unexpectedly, confirm the queue shows a terminal failed state instead of staying queued forever.
 4. Register another call and confirm the worker still accepts/continues processing.
+5. Use `sample-data/demo-category-audio/audio/*.wav` with the matching `sample-data/demo-category-audio/metadata/*.json` files to populate dashboard demo categories.
 
 ### Known Gaps and Follow-Up Boundaries
 
@@ -104,7 +107,8 @@ If `run_once()` raises unexpectedly, the worker catches the exception, fails any
 
 - Branch: `feature/worker-queue-resilience`
 - Pull request: https://github.com/vrize-poc-demo/call-center-radar/pull/107
-- Commit(s): `1b9b5b1`
+- Follow-up fixture pull request: https://github.com/vrize-poc-demo/call-center-radar/pull/108
+- Commit(s): `1b9b5b1`, `dc06116`
 - Review result: TBD
 
 ### Change Log
@@ -114,6 +118,7 @@ Update this table before every commit. Explain both the change and its reason; d
 | Commit | What changed | Why |
 | --- | --- | --- |
 | `1b9b5b1` | Added worker exception recovery, active-job failure handling, and regression tests. | Prevent a single unexpected local processing error from leaving new call uploads stuck in `Queued`. |
+| `dc06116` | Added demo category audio and metadata fixtures. | Give demo users ready-to-upload spoken calls for each dashboard state/category. |
 
 ### PR Readiness and Review
 

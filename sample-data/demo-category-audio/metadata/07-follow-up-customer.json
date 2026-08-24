@@ -1,0 +1,18 @@
+﻿{
+    "agent":  {
+                  "speaker_id":  1,
+                  "metadata":  {
+                                   "agent_name":  "Sophia Agent"
+                               }
+              },
+    "caller":  {
+                   "speaker_id":  2,
+                   "metadata":  {
+                                    "first and last name":  "Followup Customer"
+                                }
+               },
+    "demo":  {
+                 "expected_category":  "Follow-up customer",
+                 "audio_file":  "07-follow-up-customer.wav"
+             }
+}
