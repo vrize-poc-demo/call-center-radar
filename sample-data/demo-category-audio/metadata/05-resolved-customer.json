@@ -1,0 +1,18 @@
+﻿{
+    "agent":  {
+                  "speaker_id":  1,
+                  "metadata":  {
+                                   "agent_name":  "Ava Agent"
+                               }
+              },
+    "caller":  {
+                   "speaker_id":  2,
+                   "metadata":  {
+                                    "first and last name":  "Happy Resolved Customer"
+                                }
+               },
+    "demo":  {
+                 "expected_category":  "Resolved customer",
+                 "audio_file":  "05-resolved-customer.wav"
+             }
+}

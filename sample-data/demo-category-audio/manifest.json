@@ -1,0 +1,50 @@
+﻿[
+    {
+        "category":  "Analyzed calls / resolved",
+        "audio":  "C:\\Hack-Projects\\call-center-radar\\sample-data\\demo-category-audio\\audio\\01-analyzed-resolved.wav",
+        "metadata":  "C:\\Hack-Projects\\call-center-radar\\sample-data\\demo-category-audio\\metadata\\01-analyzed-resolved.json",
+        "ffprobe":  "2,29.299063"
+    },
+    {
+        "category":  "Needs attention",
+        "audio":  "C:\\Hack-Projects\\call-center-radar\\sample-data\\demo-category-audio\\audio\\02-needs-attention.wav",
+        "metadata":  "C:\\Hack-Projects\\call-center-radar\\sample-data\\demo-category-audio\\metadata\\02-needs-attention.json",
+        "ffprobe":  "2,26.999625"
+    },
+    {
+        "category":  "High risk",
+        "audio":  "C:\\Hack-Projects\\call-center-radar\\sample-data\\demo-category-audio\\audio\\03-high-risk.wav",
+        "metadata":  "C:\\Hack-Projects\\call-center-radar\\sample-data\\demo-category-audio\\metadata\\03-high-risk.json",
+        "ffprobe":  "2,30.283563"
+    },
+    {
+        "category":  "Unresolved",
+        "audio":  "C:\\Hack-Projects\\call-center-radar\\sample-data\\demo-category-audio\\audio\\04-unresolved.wav",
+        "metadata":  "C:\\Hack-Projects\\call-center-radar\\sample-data\\demo-category-audio\\metadata\\04-unresolved.json",
+        "ffprobe":  "2,29.099063"
+    },
+    {
+        "category":  "Resolved customer",
+        "audio":  "C:\\Hack-Projects\\call-center-radar\\sample-data\\demo-category-audio\\audio\\05-resolved-customer.wav",
+        "metadata":  "C:\\Hack-Projects\\call-center-radar\\sample-data\\demo-category-audio\\metadata\\05-resolved-customer.json",
+        "ffprobe":  "2,23.104875"
+    },
+    {
+        "category":  "Contradiction customer",
+        "audio":  "C:\\Hack-Projects\\call-center-radar\\sample-data\\demo-category-audio\\audio\\06-contradiction-customer.wav",
+        "metadata":  "C:\\Hack-Projects\\call-center-radar\\sample-data\\demo-category-audio\\metadata\\06-contradiction-customer.json",
+        "ffprobe":  "2,28.079500"
+    },
+    {
+        "category":  "Follow-up customer",
+        "audio":  "C:\\Hack-Projects\\call-center-radar\\sample-data\\demo-category-audio\\audio\\07-follow-up-customer.wav",
+        "metadata":  "C:\\Hack-Projects\\call-center-radar\\sample-data\\demo-category-audio\\metadata\\07-follow-up-customer.json",
+        "ffprobe":  "2,26.114438"
+    },
+    {
+        "category":  "High-risk customer",
+        "audio":  "C:\\Hack-Projects\\call-center-radar\\sample-data\\demo-category-audio\\audio\\08-high-risk-customer.wav",
+        "metadata":  "C:\\Hack-Projects\\call-center-radar\\sample-data\\demo-category-audio\\metadata\\08-high-risk-customer.json",
+        "ffprobe":  "2,32.148500"
+    }
+]
