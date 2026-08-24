@@ -88,7 +88,7 @@ Existing empty, loading, and failed transcript states remain. Unknown-speaker tu
 | --- | --- | --- |
 | Unit tests | Passed | `npm run test --workspace=@call-center-radar/web -- --run CallDetailPage` passed 20 Call Detail tests. |
 | Integration tests | Passed | Component tests cover section naming, timeline list semantics, lane order, time labels, overlap display, search, active state, evidence behavior, and click-to-seek. |
-| Lint and format | Passed | `npm run lint` completed with ESLint and Ruff passing. |
+| Lint and format | Passed | `npm run lint` completed with ESLint and Ruff passing. `npm run format:check` completed with Prettier and Ruff format checks passing. |
 | Build | Passed | `npm run build` completed the TypeScript and Vite production build. |
 | Accuracy evaluation | Not applicable | UI-only presentation change. |
 

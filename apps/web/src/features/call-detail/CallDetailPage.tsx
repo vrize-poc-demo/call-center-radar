@@ -425,11 +425,7 @@ export function CallDetailPage({ callId }: { callId: string }) {
                           <span aria-hidden="true" className="time-rule">
                             <span />
                           </span>
-                          {group.has_overlap ? (
-                            <span>
-                              Overlap
-                            </span>
-                          ) : null}
+                          {group.has_overlap ? <span>Overlap</span> : null}
                         </div>
                         <div className="conversation-lanes">
                           {(["agent", "customer"] as const).map((speaker) => (
