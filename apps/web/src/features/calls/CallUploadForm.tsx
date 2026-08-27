@@ -75,7 +75,10 @@ export function CallUploadForm() {
     return [...groups.values()];
   }
 
-  const folderPairs = useMemo(() => groupSelectedFiles(folderFiles), [folderFiles]);
+  const folderPairs = useMemo(
+    () => groupSelectedFiles(folderFiles),
+    [folderFiles],
+  );
 
   async function handleBatchSubmit() {
     if (!folderPairs.length && !audioFiles.length) {
@@ -359,9 +362,7 @@ export function CallUploadForm() {
           </p>
           <ul>
             {batchResults.map((item) => (
-              <li key={item.call_id}>
-                {item.call_id} queued for processing
-              </li>
+              <li key={item.call_id}>{item.call_id} queued for processing</li>
             ))}
           </ul>
         </div>

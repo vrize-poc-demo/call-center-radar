@@ -7,11 +7,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  clearAllCallData,
-  processCall,
-  registerCall,
-} from "../../api/calls";
+import { clearAllCallData, processCall, registerCall } from "../../api/calls";
 import { CallUploadForm } from "./CallUploadForm";
 
 vi.mock("../../api/calls", () => ({
@@ -116,17 +112,13 @@ describe("CallUploadForm", () => {
 
     await waitFor(() => expect(registerCall).toHaveBeenCalledTimes(2));
     expect(processCall).toHaveBeenCalledTimes(2);
-    expect(
-      screen.getByText("Registered and queued 2 calls."),
-    ).toBeTruthy();
+    expect(screen.getByText("Registered and queued 2 calls.")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Clear all data" }));
 
     await waitFor(() => expect(clearAllCallData).toHaveBeenCalledTimes(1));
     expect(
-      screen.getByText(
-        "Cleared 2 stored calls and removed 4 uploaded files.",
-      ),
+      screen.getByText("Cleared 2 stored calls and removed 4 uploaded files."),
     ).toBeTruthy();
   });
 });
