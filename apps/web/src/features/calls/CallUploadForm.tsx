@@ -291,6 +291,7 @@ export function CallUploadForm() {
               {isSubmitting ? "Registering…" : "Register call"}
             </button>
             <button
+              className="clear-data-button"
               disabled={isClearing}
               onClick={() => void handleClearAll()}
               type="button"
@@ -366,6 +367,7 @@ export function CallUploadForm() {
               {isSubmitting ? "Uploading…" : "Upload batch"}
             </button>
             <button
+              className="clear-data-button"
               disabled={isClearing}
               onClick={() => void handleClearAll()}
               type="button"

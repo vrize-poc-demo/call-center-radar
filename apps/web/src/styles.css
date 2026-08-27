@@ -576,7 +576,6 @@ h1 {
 }
 
 .upload-form button {
-  justify-self: start;
   padding: 11px 16px;
   color: #fff;
   font: inherit;
@@ -590,6 +589,24 @@ h1 {
 .upload-form button:disabled {
   cursor: progress;
   opacity: 0.7;
+}
+
+.upload-form-actions {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.upload-form-actions button:first-child {
+  grid-column: 1;
+}
+
+.upload-form-actions .clear-data-button {
+  grid-column: 3;
+  color: #9f1c1c;
+  background: #fff;
+  border: 1px solid #d6b2ad;
 }
 
 .form-error {
