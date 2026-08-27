@@ -42,6 +42,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 logger,
                 app_settings,
                 transcriber=getattr(app.state, "transcriber", None),
+                analysis_provider=getattr(app.state, "analysis_provider", None),
             ),
         )
         log_event(logger, "api_started", "Call Center Radar API started")

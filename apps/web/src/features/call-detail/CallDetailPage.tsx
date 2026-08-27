@@ -293,9 +293,6 @@ export function CallDetailPage({ callId }: { callId: string }) {
   if (error)
     return (
       <main className="detail-page detail-message">
-        <a className="back-link" href="/">
-          Back to calls
-        </a>
         <h1>Call detail unavailable</h1>
         <p role="alert">{error}</p>
       </main>
@@ -303,9 +300,6 @@ export function CallDetailPage({ callId }: { callId: string }) {
   if (!detail)
     return (
       <main aria-busy="true" className="detail-page detail-message">
-        <a className="back-link" href="/">
-          Back to calls
-        </a>
         <p className="eyebrow">Call detail</p>
         <h1>Loading call</h1>
         <p>
@@ -317,9 +311,6 @@ export function CallDetailPage({ callId }: { callId: string }) {
   const status = detail.processing_status.replaceAll("_", " ");
   return (
     <main className="detail-page">
-      <a className="back-link" href="/">
-        Back to calls
-      </a>
       <header className="detail-header">
         <div>
           <p className="eyebrow">Call detail</p>

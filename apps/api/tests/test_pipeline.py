@@ -1,3 +1,4 @@
+import json
 import threading
 import wave
 from pathlib import Path
@@ -5,6 +6,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from app.analysis_provider import GeneratedAnalysis
 from app.config import Settings
 from app.main import create_app
 from app.pipeline import ProcessingPipeline, ProcessingResult
@@ -48,6 +50,30 @@ class BlockingTranscriber(FakeTranscriber):
         return super().transcribe(audio_path, audio_info)
 
 
+class FakeAnalysisProvider:
+    def generate(self, turns) -> GeneratedAnalysis:
+        turn = turns[0]
+        payload = {
+            "intent": "Customer asked for help",
+            "mood": "neutral",
+            "resolution": "resolved",
+            "summary": "Customer asked for help and the call was resolved.",
+            "manager_brief": "Routine resolved support call.",
+            "recommended_action": "No manager action required.",
+            "claims": [
+                {
+                    "claim": "Customer need was discussed",
+                    "transcript_turn_id": turn.transcript_turn_id,
+                    "quote": turn.text,
+                    "start_ms": turn.start_ms,
+                    "end_ms": turn.end_ms,
+                }
+            ],
+            "mood_shifts": [],
+        }
+        return GeneratedAnalysis(raw_output=json.dumps(payload), model_version="fake-llm:v1")
+
+
 class RecoveringPipeline:
     def __init__(self, state: dict, processed: threading.Event) -> None:
         self.state = state
@@ -81,6 +107,8 @@ def create_wav(path, channels: int = 1) -> None:
 
 
 def create_queued_job(app, tmp_path, audio_bytes: bytes, filename: str = "call.wav") -> str:
+    if not hasattr(app.state, "analysis_provider"):
+        app.state.analysis_provider = None
     with TestClient(app) as client:
         response = client.post(
             "/api/calls",
@@ -138,6 +166,32 @@ def test_pipeline_completes_valid_mono_wav_and_persists_events(tmp_path, monkeyp
         transcript = client.get(f"/api/calls/{call_id}/transcript")
     assert transcript.status_code == 200
     assert transcript.json()["turns"][0]["speaker"] == "unknown"
+
+
+def test_pipeline_generates_analysis_and_priority_before_completion(tmp_path, monkeypatch) -> None:
+    settings = build_settings(tmp_path)
+    app = create_app(settings)
+    app.state.analysis_provider = FakeAnalysisProvider()
+    wav_path = tmp_path / "source.wav"
+    create_wav(wav_path, channels=1)
+    job_id = create_queued_job(app, tmp_path, wav_path.read_bytes())
+    monkeypatch.setattr(
+        "app.pipeline.inspect_audio", lambda _: AudioInfo(channels=1, duration_ms=4)
+    )
+
+    with TestClient(app) as client:
+        app.state.transcriber = FakeTranscriber()
+        response = client.post(f"/api/calls/{job_id}/process")
+        completed = app.state.processing_worker.run_once()
+        dashboard = client.get("/api/dashboard/triage")
+
+    assert response.status_code == 202
+    assert completed is not None and completed.status == "completed"
+    assert dashboard.status_code == 200
+    assert dashboard.json()["calls"][0]["analysis"]["summary"] == (
+        "Customer asked for help and the call was resolved."
+    )
+    assert dashboard.json()["calls"][0]["radar_priority"] == 0
 
 
 def test_pipeline_marks_invalid_audio_failed_and_persists_reason(tmp_path, monkeypatch) -> None:

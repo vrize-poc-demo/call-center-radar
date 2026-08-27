@@ -122,6 +122,7 @@ Update this table before every commit. Explain both the change and its reason; d
 | Pending | Replaced the root `concurrently` runner with a cross-platform Node launcher. | Keep the single dev command working on macOS, Linux, and Windows without shell-specific assumptions. |
 | Pending | Merged latest `development` into PR #103 and applied Prettier formatting to the upload form and tests. | GitHub CI failed on `npm run format:check` for `CallUploadForm.tsx` and `CallUploadForm.test.tsx`; the branch also needed current target-branch changes. |
 | Pending | Split the register page into `Single call upload` and `Batch upload` tabs, and removed the sample-folder picker. | The demo should present a simple choice: one call, or multiple audio files paired with multiple metadata files; folder upload was confusing for managers. |
+| Pending | Removed the duplicate Call Detail `Back to calls` link and moved analysis plus Radar Priority generation into the worker pipeline. | Home was only showing calls after Call Detail lazily generated analysis; completed processing now creates dashboard-ready records without requiring a manager to open the detail page first. |
 
 ### PR Readiness and Review
 

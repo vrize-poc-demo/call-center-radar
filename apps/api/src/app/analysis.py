@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field, ValidationError
 
 from app.agent_treatment import detect_agent_treatment_signals
-from app.analysis_provider import AnalysisProviderError
+from app.analysis_provider import AnalysisProvider, AnalysisProviderError
 from app.false_resolution import RULE_ID, detect_false_resolution
 from app.logging import log_event
 from app.repeated_questions import RULE_ID as REPEATED_QUESTION_RULE_ID
@@ -459,9 +459,17 @@ def persist_analysis(connection, call_db_id: int, analysis: CallAnalysis) -> Cal
     return persisted
 
 
-def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysis:
+def generate_and_persist_analysis_for_call(
+    call_id: str,
+    database,
+    logger,
+    settings,
+    analysis_provider: AnalysisProvider,
+    *,
+    request_id: str | None = None,
+) -> CallAnalysis:
     started_at = time.perf_counter()
-    with request.app.state.database.connect() as connection:
+    with database.connect() as connection:
         call = connection.execute("SELECT id FROM calls WHERE call_id = ?", (call_id,)).fetchone()
         if call is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Call not found.")
@@ -471,18 +479,17 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
             (call["id"],),
         ).fetchall()
         turns = [TranscriptTurn(**dict(row)) for row in rows]
-        request_id = getattr(request.state, "request_id", None)
         record_call_trace_event(
             connection,
             call_db_id=call["id"],
             request_id=request_id,
             event_type="analysis_started",
             event_status="started",
-            model_version=f"ollama:{request.app.state.settings.ollama_model}",
+            model_version=f"ollama:{settings.ollama_model}",
             rule_version=ANALYSIS_RULE_VERSION,
         )
         try:
-            generated = request.app.state.analysis_provider.generate(turns)
+            generated = analysis_provider.generate(turns)
             analysis = parse_model_output(generated.raw_output, generated.model_version)
             analysis.claims = derive_claim_evidence(analysis.claims, turns)
             analysis.mood_shifts, rejected_mood_shift_reasons = filter_valid_mood_shifts(
@@ -490,7 +497,7 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
             )
             if rejected_mood_shift_reasons:
                 log_event(
-                    request.app.state.logger,
+                    logger,
                     "optional_mood_shifts_discarded",
                     "Unsupported optional mood shifts were discarded",
                     context={
@@ -524,7 +531,7 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
                     turns,
                 )
                 log_event(
-                    request.app.state.logger,
+                    logger,
                     "false_resolution_detected",
                     "False-resolution rule found a later customer contradiction",
                     context={
@@ -536,7 +543,7 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
                 )
             elif detection.suppression_reason is not None:
                 log_event(
-                    request.app.state.logger,
+                    logger,
                     "false_resolution_suppressed",
                     "False-resolution candidate was not strong enough to expose",
                     context={
@@ -568,7 +575,7 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
             ]
             if analysis.repeated_questions:
                 log_event(
-                    request.app.state.logger,
+                    logger,
                     "repeated_questions_detected",
                     "Repeated information requests detected",
                     context={
@@ -594,7 +601,7 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
             ]
             if analysis.treatment_signals:
                 log_event(
-                    request.app.state.logger,
+                    logger,
                     "treatment_signals_detected",
                     "Evidence-backed customer treatment signals detected",
                     context={
@@ -607,7 +614,7 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
                 )
             if unknown_speaker_turn_count:
                 log_event(
-                    request.app.state.logger,
+                    logger,
                     "treatment_signals_suppressed",
                     "Unknown-speaker turns were excluded from treatment detection",
                     context={
@@ -638,7 +645,7 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
             balance = calculate_conversation_balance(turns)
             analysis.conversation_balance = ConversationBalance(**balance.__dict__)
             log_event(
-                request.app.state.logger,
+                logger,
                 "conversation_timing_calculated",
                 "Silence windows and attributed talk balance calculated",
                 context={
@@ -666,14 +673,14 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
                 request_id=request_id,
                 event_type="analysis_failed",
                 event_status="failed",
-                model_version=f"ollama:{request.app.state.settings.ollama_model}",
+                model_version=f"ollama:{settings.ollama_model}",
                 rule_version=ANALYSIS_RULE_VERSION,
                 validation_result="not_run",
                 failure_reason="analysis_provider_unavailable",
             )
             connection.commit()
             log_event(
-                request.app.state.logger,
+                logger,
                 "analysis_provider_failed",
                 "Local structured analysis provider failed",
                 context={"call_id": call_id, "reason": str(error)},
@@ -699,19 +706,19 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
                 request_id=request_id,
                 event_type="analysis_validation_failed",
                 event_status="failed",
-                model_version=f"ollama:{request.app.state.settings.ollama_model}",
+                model_version=f"ollama:{settings.ollama_model}",
                 rule_version=ANALYSIS_RULE_VERSION,
                 validation_result="rejected",
                 failure_reason=failure_reason,
             )
             connection.commit()
             log_event(
-                request.app.state.logger,
+                logger,
                 "analysis_schema_failed",
                 "Structured analysis schema failed",
                 context={
                     "call_id": call_id,
-                    "model_version": request.app.state.settings.ollama_model,
+                    "model_version": settings.ollama_model,
                     "reason": failure_reason,
                     "summary_word_count": (
                         error.word_count if isinstance(error, SummaryValidationError) else None
@@ -723,7 +730,7 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
                 status_code=status.HTTP_502_BAD_GATEWAY, detail="Analysis output was invalid."
             ) from None
     log_event(
-        request.app.state.logger,
+        logger,
         "analysis_persisted",
         "Structured call analysis generated and persisted",
         context={
@@ -739,6 +746,17 @@ def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysi
         },
     )
     return analysis
+
+
+def generate_and_persist_analysis(call_id: str, request: Request) -> CallAnalysis:
+    return generate_and_persist_analysis_for_call(
+        call_id,
+        request.app.state.database,
+        request.app.state.logger,
+        request.app.state.settings,
+        request.app.state.analysis_provider,
+        request_id=getattr(request.state, "request_id", None),
+    )
 
 
 @router.get("/{call_id}/analysis", response_model=AnalysisResponse)

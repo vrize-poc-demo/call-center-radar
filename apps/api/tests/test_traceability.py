@@ -186,6 +186,7 @@ def test_unknown_call_trace_returns_clear_not_found(tmp_path) -> None:
 
 def test_legacy_queued_job_receives_trace_id_when_processing_starts(tmp_path, monkeypatch) -> None:
     app = create_app(build_settings(tmp_path))
+    app.state.analysis_provider = None
     audio = wav_bytes(tmp_path / "legacy.wav")
     monkeypatch.setattr(
         "app.pipeline.inspect_audio", lambda _: AudioInfo(channels=1, duration_ms=4)

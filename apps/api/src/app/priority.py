@@ -109,9 +109,8 @@ def load_priority(connection, call_id: str) -> RadarPriority | None:
     )
 
 
-@router.post("/{call_id}/priority", response_model=RadarPriority)
-def calculate_and_persist_priority(call_id: str, request: Request) -> RadarPriority:
-    with request.app.state.database.connect() as connection:
+def calculate_and_persist_priority_for_call(call_id: str, database, logger) -> RadarPriority:
+    with database.connect() as connection:
         call = connection.execute("SELECT id FROM calls WHERE call_id = ?", (call_id,)).fetchone()
         if call is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Call not found.")
@@ -122,7 +121,7 @@ def calculate_and_persist_priority(call_id: str, request: Request) -> RadarPrior
 
     assert priority is not None
     log_event(
-        request.app.state.logger,
+        logger,
         "radar_priority_calculated",
         "Radar Priority score calculated and persisted",
         context={
@@ -133,6 +132,15 @@ def calculate_and_persist_priority(call_id: str, request: Request) -> RadarPrior
         },
     )
     return priority
+
+
+@router.post("/{call_id}/priority", response_model=RadarPriority)
+def calculate_and_persist_priority(call_id: str, request: Request) -> RadarPriority:
+    return calculate_and_persist_priority_for_call(
+        call_id,
+        request.app.state.database,
+        request.app.state.logger,
+    )
 
 
 @router.get("/{call_id}/priority", response_model=RadarPriority)
