@@ -1,0 +1,18 @@
+﻿{
+    "agent":  {
+                  "speaker_id":  1,
+                  "metadata":  {
+                                   "agent_name":  "Isha Agent"
+                               }
+              },
+    "caller":  {
+                   "speaker_id":  2,
+                   "metadata":  {
+                                    "first and last name":  "High Risk Customer"
+                                }
+               },
+    "demo":  {
+                 "expected_category":  "High risk",
+                 "audio_file":  "03-high-risk.wav"
+             }
+}

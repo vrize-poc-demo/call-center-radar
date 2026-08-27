@@ -1,0 +1,18 @@
+﻿{
+    "agent":  {
+                  "speaker_id":  1,
+                  "metadata":  {
+                                   "agent_name":  "Mason Agent"
+                               }
+              },
+    "caller":  {
+                   "speaker_id":  2,
+                   "metadata":  {
+                                    "first and last name":  "Escalation Customer"
+                                }
+               },
+    "demo":  {
+                 "expected_category":  "High-risk customer",
+                 "audio_file":  "08-high-risk-customer.wav"
+             }
+}

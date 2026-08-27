@@ -100,6 +100,43 @@ class DurableProcessingWorker:
             )
         return len(jobs)
 
+    def fail_interrupted_jobs(self, reason: str) -> int:
+        """Fail active jobs after an unexpected worker crash so the queue can advance."""
+        with self.database.connect() as connection:
+            jobs = connection.execute(
+                """
+                SELECT id, job_id, status FROM processing_jobs
+                WHERE status IN ('transcribing', 'analyzing')
+                ORDER BY id
+                """
+            ).fetchall()
+            for job in jobs:
+                connection.execute(
+                    """
+                    UPDATE processing_jobs
+                    SET status = 'failed', failure_reason = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                    """,
+                    (reason, job["id"]),
+                )
+                connection.execute(
+                    """
+                    INSERT INTO processing_job_events (
+                        processing_job_id, from_status, to_status, reason
+                    ) VALUES (?, ?, 'failed', ?)
+                    """,
+                    (job["id"], job["status"], reason),
+                )
+
+        for job in jobs:
+            log_event(
+                self.logger,
+                "processing_failed_after_worker_error",
+                "Interrupted processing job failed after an unexpected worker error",
+                context={"job_id": job["job_id"], "from_status": job["status"], "reason": reason},
+            )
+        return len(jobs)
+
     def run_once(self) -> ProcessingResult | None:
         result = self.pipeline_factory().process_next()
         if result is not None:
@@ -113,7 +150,19 @@ class DurableProcessingWorker:
 
     def _run(self) -> None:
         while not self._stop_event.is_set():
-            if self.run_once() is not None:
-                continue
+            try:
+                if self.run_once() is not None:
+                    continue
+            except Exception as error:
+                failed_count = self.fail_interrupted_jobs("worker_error")
+                log_event(
+                    self.logger,
+                    "processing_worker_error",
+                    "Processing worker recovered from an unexpected error",
+                    context={
+                        "error_type": type(error).__name__,
+                        "failed_interrupted_job_count": failed_count,
+                    },
+                )
             self._wake_event.wait(timeout=0.5)
             self._wake_event.clear()

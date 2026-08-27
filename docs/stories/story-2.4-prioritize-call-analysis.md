@@ -7,7 +7,7 @@
 **Owner:** vipinv-dev
 
 **Epic:** Call Detail core experience
-**Last updated:** 2026-08-24
+**Last updated:** 2026-08-27
 
 ## 1. Outcome
 
@@ -105,6 +105,7 @@ Update this table before every commit. Explain both the change and its reason; d
 | Commit | What changed | Why |
 | --- | --- | --- |
 | Feature branch commit | Reordered Call Detail panels and updated the section-order test. | Managers should see call analysis before technical processing diagnostics. |
+| Merge-conflict resolution | Merged latest `development` into the PR branch and kept the newer `Conversation Timeline` heading in the section-order test. | PR #106 conflicted after later Call Detail timeline work renamed the transcript section; the original story goal still requires Call analysis before Processing. |
 
 ### PR Readiness and Review
 

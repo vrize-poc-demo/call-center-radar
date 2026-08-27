@@ -1,0 +1,18 @@
+﻿{
+    "agent":  {
+                  "speaker_id":  1,
+                  "metadata":  {
+                                   "agent_name":  "Ethan Agent"
+                               }
+              },
+    "caller":  {
+                   "speaker_id":  2,
+                   "metadata":  {
+                                    "first and last name":  "Contradiction Customer"
+                                }
+               },
+    "demo":  {
+                 "expected_category":  "Contradiction customer",
+                 "audio_file":  "06-contradiction-customer.wav"
+             }
+}

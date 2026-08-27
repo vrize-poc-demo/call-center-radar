@@ -20,8 +20,8 @@ import {
   MoodShift,
   TranscriptTurn,
 } from "../../api/calls";
+import { buildConversationDisplayTurns } from "./conversationDisplay";
 import { selectActiveTranscriptTurn } from "./transcriptPlayback";
-import { buildTranscriptSequence } from "./transcriptSequence";
 
 function formatPlaybackTime(milliseconds: number) {
   const totalSeconds = Math.floor(milliseconds / 1000);
@@ -30,12 +30,16 @@ function formatPlaybackTime(milliseconds: number) {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
-function formatTranscriptRange(turn: TranscriptTurn) {
+function formatTranscriptRange(
+  turn: Pick<TranscriptTurn, "start_ms" | "end_ms">,
+) {
   return `${(turn.start_ms / 1000).toFixed(2)}s–${(turn.end_ms / 1000).toFixed(2)}s`;
 }
 
-function formatTranscriptGroupRange(startMs: number, endMs: number) {
-  return `${(startMs / 1000).toFixed(2)}s–${(endMs / 1000).toFixed(2)}s`;
+function getSpeakerLabel(speaker: TranscriptTurn["speaker"]) {
+  if (speaker === "agent") return "Agent";
+  if (speaker === "customer") return "Customer";
+  return "Unattributed";
 }
 
 type SpeakerFilter = "all" | TranscriptTurn["speaker"];
@@ -166,19 +170,18 @@ export function CallDetailPage({ callId }: { callId: string }) {
   }, [activeTurn]);
 
   const normalizedSearchTerm = searchTerm.trim().toLocaleLowerCase();
-  const visibleTurns = turns.filter((turn) => {
+  const displayTurns = buildConversationDisplayTurns(turns);
+  const visibleDisplayTurns = displayTurns.filter((turn) => {
     const matchesSpeaker =
       speakerFilter === "all" || turn.speaker === speakerFilter;
     const matchesSearch = turn.text
       .toLocaleLowerCase()
       .includes(normalizedSearchTerm);
     return (
-      turn.transcript_turn_id === activeTurn?.transcript_turn_id ||
+      turn.source_turn_id === activeTurn?.transcript_turn_id ||
       (matchesSpeaker && matchesSearch)
     );
   });
-  const transcriptSequence = buildTranscriptSequence(visibleTurns);
-
   const updateSearchTerm = (value: string) => {
     setSearchTerm(value);
     console.info("transcript_search_updated", {
@@ -347,13 +350,13 @@ export function CallDetailPage({ callId }: { callId: string }) {
           </p>
         </section>
         <section className="detail-panel transcript-panel">
-          <h2>Transcript</h2>
+          <h2>Conversation Timeline</h2>
           <p>{detail.transcript_turn_count} saved turns</p>
           {turns.length ? (
             <>
               <div className="transcript-controls">
                 <label>
-                  Search transcript
+                  Search conversation
                   <input
                     onChange={(event) => updateSearchTerm(event.target.value)}
                     placeholder="Find a phrase"
@@ -377,7 +380,8 @@ export function CallDetailPage({ callId }: { callId: string }) {
                 </label>
               </div>
               <p aria-live="polite" className="transcript-result-count">
-                Showing {visibleTurns.length} of {turns.length} turns
+                Showing {visibleDisplayTurns.length} messages from{" "}
+                {turns.length} saved turns
               </p>
               {activeTurn &&
               !(
@@ -391,137 +395,75 @@ export function CallDetailPage({ callId }: { callId: string }) {
                   Showing the active turn alongside your filters.
                 </p>
               ) : null}
-              {visibleTurns.length ? (
-                <div className="transcript-sequence">
-                  <div aria-hidden="true" className="transcript-lane-headings">
-                    <strong>Customer</strong>
-                    <strong>Agent</strong>
-                  </div>
-                  <ol
-                    aria-label="Chronological transcript"
-                    className="transcript-groups"
+              {visibleDisplayTurns.length ? (
+                <div className="conversation-timeline">
+                  <div
+                    aria-hidden="true"
+                    className="conversation-timeline-headings"
                   >
-                    {transcriptSequence.map((group, index) => (
-                      <li
-                        aria-label={
-                          group.has_overlap
-                            ? `Overlapping transcript group ${index + 1}`
-                            : `Transcript group ${index + 1}`
-                        }
-                        className={group.has_overlap ? "overlap-group" : ""}
-                        key={group.id}
-                      >
-                        <div className="transcript-group-meta">
-                          <span>
-                            Sequence {index + 1}
-                            {group.has_overlap
-                              ? ` · Shared time ${formatTranscriptGroupRange(group.start_ms, group.end_ms)}`
-                              : null}
-                          </span>
-                          {group.has_overlap ? (
-                            <span>
-                              Timing overlaps; exact sentence order is
-                              unavailable.
-                            </span>
-                          ) : null}
-                        </div>
-                        <div className="transcript-group-lanes">
-                          {(["customer", "agent"] as const).map((speaker) => (
-                            <div
-                              aria-label={`${speaker === "customer" ? "Customer" : "Agent"} messages in sequence ${index + 1}`}
-                              className={`transcript-lane ${speaker}-lane`}
-                              key={speaker}
+                    <strong>Agent</strong>
+                    <strong>Customer</strong>
+                  </div>
+                  <div
+                    aria-label="Agent and customer conversation timeline"
+                    className="conversation-turns"
+                    role="list"
+                  >
+                    {visibleDisplayTurns.map((turn) => {
+                      const speakerLabel = getSpeakerLabel(turn.speaker);
+                      return (
+                        <div
+                          className={`conversation-turn ${turn.speaker}-turn ${
+                            turn.source_turn_id ===
+                            activeTurn?.transcript_turn_id
+                              ? "active-turn"
+                              : ""
+                          }`}
+                          key={turn.id}
+                          ref={(element) => {
+                            if (element)
+                              turnElements.current.set(
+                                turn.source_turn_id,
+                                element,
+                              );
+                            else
+                              turnElements.current.delete(turn.source_turn_id);
+                          }}
+                          role="listitem"
+                        >
+                          <div
+                            className={`transcript-lane ${turn.speaker}-lane`}
+                          >
+                            {turn.speaker === "unknown" ? (
+                              <span className="unknown-speaker-label">
+                                Unattributed
+                              </span>
+                            ) : null}
+                            <button
+                              aria-label={`${speakerLabel} ${formatTranscriptRange(turn)}: ${turn.text}`}
+                              onClick={() => seekTo(turn.start_ms)}
+                              type="button"
                             >
-                              {group.turns
-                                .filter((turn) => turn.speaker === speaker)
-                                .map((turn) => {
-                                  const isActive =
-                                    turn.transcript_turn_id ===
-                                    activeTurn?.transcript_turn_id;
-                                  return (
-                                    <div
-                                      className={isActive ? "active-turn" : ""}
-                                      key={turn.transcript_turn_id}
-                                      ref={(element) => {
-                                        if (element)
-                                          turnElements.current.set(
-                                            turn.transcript_turn_id,
-                                            element,
-                                          );
-                                        else
-                                          turnElements.current.delete(
-                                            turn.transcript_turn_id,
-                                          );
-                                      }}
-                                    >
-                                      <button
-                                        onClick={() => seekTo(turn.start_ms)}
-                                        type="button"
-                                      >
-                                        <span className="mobile-speaker-label">
-                                          {speaker === "customer"
-                                            ? "Customer"
-                                            : "Agent"}
-                                        </span>
-                                        <time>
-                                          {formatTranscriptRange(turn)}
-                                        </time>
-                                        <strong>{turn.text}</strong>
-                                      </button>
-                                    </div>
-                                  );
-                                })}
-                            </div>
-                          ))}
-                          {group.turns
-                            .filter((turn) => turn.speaker === "unknown")
-                            .map((turn) => (
-                              <div
-                                className={`transcript-lane unknown-lane ${
-                                  turn.transcript_turn_id ===
-                                  activeTurn?.transcript_turn_id
-                                    ? "active-turn"
-                                    : ""
-                                }`}
-                                key={turn.transcript_turn_id}
-                                ref={(element) => {
-                                  if (element)
-                                    turnElements.current.set(
-                                      turn.transcript_turn_id,
-                                      element,
-                                    );
-                                  else
-                                    turnElements.current.delete(
-                                      turn.transcript_turn_id,
-                                    );
-                                }}
-                              >
-                                <span className="unknown-speaker-label">
-                                  Unattributed
-                                </span>
-                                <button
-                                  onClick={() => seekTo(turn.start_ms)}
-                                  type="button"
-                                >
-                                  <time>{formatTranscriptRange(turn)}</time>
-                                  <strong>{turn.text}</strong>
-                                </button>
-                              </div>
-                            ))}
+                              <span className="mobile-speaker-label">
+                                {speakerLabel}
+                              </span>
+                              <strong>{turn.text}</strong>
+                            </button>
+                          </div>
                         </div>
-                      </li>
-                    ))}
-                  </ol>
+                      );
+                    })}
+                  </div>
                 </div>
               ) : (
                 <div className="empty-region">
-                  No saved transcript turns match these filters.
+                  No saved conversation turns match these filters.
                 </div>
               )}
             </>
           ) : (
             <div className="empty-region">
-              No transcript turns are saved for this call yet.
+              No conversation turns are saved for this call yet.
             </div>
           )}
         </section>

@@ -177,11 +177,13 @@ describe("CallDetailPage", () => {
     expect(
       screen.getByRole("heading", { name: "Call recording" }),
     ).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Transcript" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "Conversation Timeline" }),
+    ).toBeTruthy();
     const panelHeadings = screen
       .getAllByRole("heading", { level: 2 })
       .map((heading) => heading.textContent);
-    expect(panelHeadings.indexOf("Transcript")).toBeLessThan(
+    expect(panelHeadings.indexOf("Conversation Timeline")).toBeLessThan(
       panelHeadings.indexOf("Call analysis"),
     );
     expect(panelHeadings.indexOf("Call analysis")).toBeLessThan(
@@ -366,10 +368,12 @@ describe("CallDetailPage", () => {
 
     await page.findByText("Welcome to support");
     expect(
-      page.getByRole("list", { name: "Chronological transcript" }),
+      page.getByRole("list", {
+        name: "Agent and customer conversation timeline",
+      }),
     ).toBeTruthy();
     expect(page.getAllByRole("listitem")).toHaveLength(3);
-    expect(page.getByText("0.00s–1.00s")).toBeTruthy();
+    expect(page.queryByText("0.00s–1.00s")).toBeNull();
     const audio = container.querySelector("audio") as HTMLAudioElement;
     let playerTime = 4;
     Object.defineProperty(audio, "currentTime", {
@@ -382,7 +386,7 @@ describe("CallDetailPage", () => {
     fireEvent.timeUpdate(audio);
 
     fireEvent.change(
-      page.getByRole("searchbox", { name: "Search transcript" }),
+      page.getByRole("searchbox", { name: "Search conversation" }),
       {
         target: { value: "password" },
       },
@@ -417,7 +421,7 @@ describe("CallDetailPage", () => {
         .scrollIntoView;
   });
 
-  it("groups overlapping speaker turns without implying exact sentence order", async () => {
+  it("renders chronological speaker turns in agent and customer lanes", async () => {
     mockedGetCallDetail.mockResolvedValue({
       call_id: "call-1",
       agent_name: "Agent",
@@ -467,37 +471,32 @@ describe("CallDetailPage", () => {
     );
     vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
 
-    const overlapGroup = await screen.findByRole("listitem", {
-      name: "Overlapping transcript group 1",
+    const timeline = await screen.findByRole("list", {
+      name: "Agent and customer conversation timeline",
     });
+    const rows = within(timeline).getAllByRole("listitem");
+    const agentButton = screen.getByRole("button", {
+      name: "Agent 22.02s–44.90s: The requested item will be sent to your address.",
+    });
+    const customerButton = screen.getByRole("button", {
+      name: "Customer 30.00s–32.00s: Please confirm the address.",
+    });
+    const agentRow = agentButton.closest("[role='listitem']");
+    const customerRow = customerButton.closest("[role='listitem']");
 
-    expect(
-      within(overlapGroup).getByText(
-        "The requested item will be sent to your address.",
-      ),
-    ).toBeTruthy();
-    expect(within(overlapGroup).getByText("22.02s–44.90s")).toBeTruthy();
-    expect(
-      within(overlapGroup).getByText("Sequence 1 · Shared time 22.02s–44.90s"),
-    ).toBeTruthy();
-    expect(
-      within(overlapGroup).getByText("Please confirm the address."),
-    ).toBeTruthy();
-    expect(
-      within(overlapGroup).getByText("Fourth Ranch, Oregon, 72504."),
-    ).toBeTruthy();
-    expect(within(overlapGroup).getByText("Unattributed speech.")).toBeTruthy();
-    expect(
-      within(overlapGroup).getByText(
-        "Timing overlaps; exact sentence order is unavailable.",
-      ),
-    ).toBeTruthy();
+    expect(rows).toHaveLength(4);
+    expect(agentRow).toBeTruthy();
+    expect(customerRow).toBeTruthy();
 
-    fireEvent.click(
-      within(overlapGroup).getByText(
-        "The requested item will be sent to your address.",
-      ),
-    );
+    expect(agentRow?.classList.contains("agent-turn")).toBe(true);
+    expect(customerRow?.classList.contains("customer-turn")).toBe(true);
+    expect(screen.queryByText("22.02s–44.90s")).toBeNull();
+    expect(screen.queryByText("50.00")).toBeNull();
+    expect(screen.queryByText("Overlap")).toBeNull();
+    expect(screen.getByText("Fourth Ranch, Oregon, 72504.")).toBeTruthy();
+    expect(screen.getByText("Unattributed speech.")).toBeTruthy();
+
+    fireEvent.click(agentButton);
     expect(currentTimeSetter).toHaveBeenCalledWith(22.02);
   });
 
