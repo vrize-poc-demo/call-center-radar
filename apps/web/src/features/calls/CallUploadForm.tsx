@@ -1,7 +1,6 @@
 import { ChangeEvent, FormEvent, useMemo, useState } from "react";
 
 import {
-  clearAllCallData,
   CallRegistration,
   processCall,
   ProcessingStatus,
@@ -27,8 +26,6 @@ export function CallUploadForm() {
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isClearing, setIsClearing] = useState(false);
-  const [resetConfirmed, setResetConfirmed] = useState(false);
   const [agentName, setAgentName] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [audioFiles, setAudioFiles] = useState<File[]>([]);
@@ -146,34 +143,6 @@ export function CallUploadForm() {
       );
     } finally {
       setIsSubmitting(false);
-    }
-  }
-
-  async function handleClearAll() {
-    setIsClearing(true);
-    setError(null);
-    setStatusMessage(null);
-    try {
-      const cleared = await clearAllCallData();
-      setResult(null);
-      setProcessingResult(null);
-      setBatchResults([]);
-      setAudioFiles([]);
-      setMetadataFiles([]);
-      setAgentName("");
-      setCustomerName("");
-      setResetConfirmed(false);
-      setStatusMessage(
-        `Cleared ${cleared.calls_deleted} stored call${cleared.calls_deleted === 1 ? "" : "s"} and removed ${cleared.upload_files_deleted} uploaded file${cleared.upload_files_deleted === 1 ? "" : "s"}.`,
-      );
-    } catch (clearError) {
-      setError(
-        clearError instanceof Error
-          ? clearError.message
-          : "Stored call data could not be cleared.",
-      );
-    } finally {
-      setIsClearing(false);
     }
   }
 
@@ -363,34 +332,6 @@ export function CallUploadForm() {
           </div>
         </div>
       )}
-
-      <details className="upload-settings">
-        <summary>Settings</summary>
-        <div className="upload-settings-panel">
-          <p className="field-hint">
-            Demo reset clears saved calls, transcripts, analysis, queue history,
-            and uploaded files from this local POC.
-          </p>
-          <label className="reset-confirmation">
-            <input
-              checked={resetConfirmed}
-              onChange={(event) =>
-                setResetConfirmed(event.currentTarget.checked)
-              }
-              type="checkbox"
-            />
-            I understand this will clear the local demo data.
-          </label>
-          <button
-            className="clear-data-button"
-            disabled={isClearing || !resetConfirmed}
-            onClick={() => void handleClearAll()}
-            type="button"
-          >
-            {isClearing ? "Clearing…" : "Clear all data"}
-          </button>
-        </div>
-      </details>
 
       {error ? (
         <p className="form-error" role="alert">

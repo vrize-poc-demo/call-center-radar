@@ -123,7 +123,7 @@ Update this table before every commit. Explain both the change and its reason; d
 | Pending | Merged latest `development` into PR #103 and applied Prettier formatting to the upload form and tests. | GitHub CI failed on `npm run format:check` for `CallUploadForm.tsx` and `CallUploadForm.test.tsx`; the branch also needed current target-branch changes. |
 | Pending | Split the register page into `Single call upload` and `Batch upload` tabs, and removed the sample-folder picker. | The demo should present a simple choice: one call, or multiple audio files paired with multiple metadata files; folder upload was confusing for managers. |
 | Pending | Removed the duplicate Call Detail `Back to calls` link and moved analysis plus Radar Priority generation into the worker pipeline. | Home was only showing calls after Call Detail lazily generated analysis; completed processing now creates dashboard-ready records without requiring a manager to open the detail page first. |
-| Pending | Moved the destructive clear-all action into a collapsed Settings panel with an explicit confirmation checkbox. | Demo reset must remain available for fresh runs, but it should not be easy to hit accidentally during normal call registration. |
+| Pending | Moved the destructive clear-all action out of Register and into a hidden collapsed-sidebar settings control that requires typing `DELETE`. | Demo reset must remain available for fresh runs, but it should not be visible in normal upload workflows or easy to trigger accidentally. |
 
 ### PR Readiness and Review
 
