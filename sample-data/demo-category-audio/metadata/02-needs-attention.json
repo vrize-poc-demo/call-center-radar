@@ -1,0 +1,18 @@
+﻿{
+    "agent":  {
+                  "speaker_id":  1,
+                  "metadata":  {
+                                   "agent_name":  "Noah Agent"
+                               }
+              },
+    "caller":  {
+                   "speaker_id":  2,
+                   "metadata":  {
+                                    "first and last name":  "Needs Attention Customer"
+                                }
+               },
+    "demo":  {
+                 "expected_category":  "Needs attention",
+                 "audio_file":  "02-needs-attention.wav"
+             }
+}

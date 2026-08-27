@@ -40,7 +40,14 @@ npm run dev
 
 The manager UI runs at `http://localhost:5173`. The API runs at `http://localhost:8000/api`.
 `npm run dev` is the single runner for both services and is cross-platform on macOS, Linux, and
-Windows when `./.venv` is present.
+Windows when `./.venv` is present. It also starts the local Ollama analysis service when Ollama is
+installed on `PATH`, verifies the configured model, and pulls the model once if it is missing.
+
+Useful local AI overrides:
+
+- `CALL_RADAR_START_OLLAMA=false npm run dev` starts only the app services.
+- `CALL_RADAR_PULL_OLLAMA_MODEL=false npm run dev` fails fast if the configured model is missing.
+- `CALL_RADAR_OLLAMA_MODEL=<model> npm run dev` changes the local structured-analysis model.
 
 Run the pull-request quality gate before requesting review:
 

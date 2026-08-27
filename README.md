@@ -178,13 +178,12 @@ Call analysis runs on this Mac through Ollama. It is free for the POC and does n
 
 ```bash
 brew install ollama
-ollama serve
-ollama pull qwen2.5:7b
+npm run dev
 ```
 
-Keep `ollama serve` running before starting the API. The API sends structured, timestamped transcript turns to `http://127.0.0.1:11434`, asks the local model for strict JSON, then rejects any claim or mood shift whose turn ID, quote, or timestamps do not exactly match saved SQLite transcript data. It never falls back to keyword heuristics. If Ollama is unavailable, analysis returns a retriable `503` and existing saved analysis remains unchanged.
+The single dev runner starts `ollama serve` when the local Ollama API is not already running, verifies the default model, and pulls `qwen2.5:7b` once if it is missing. The API sends structured, timestamped transcript turns to `http://127.0.0.1:11434`, asks the local model for strict JSON, then rejects any claim or mood shift whose turn ID, quote, or timestamps do not exactly match saved SQLite transcript data. It never falls back to keyword heuristics. If Ollama is unavailable, analysis returns a retriable `503` and existing saved analysis remains unchanged.
 
-Optional settings: `CALL_RADAR_OLLAMA_BASE_URL`, `CALL_RADAR_OLLAMA_MODEL`, and `CALL_RADAR_ANALYSIS_TIMEOUT_SECONDS`. The default model is `qwen2.5:7b`.
+Optional settings: `CALL_RADAR_OLLAMA_BASE_URL`, `CALL_RADAR_OLLAMA_MODEL`, `CALL_RADAR_ANALYSIS_TIMEOUT_SECONDS`, `CALL_RADAR_START_OLLAMA=false`, and `CALL_RADAR_PULL_OLLAMA_MODEL=false`. The default model is `qwen2.5:7b`.
 
 ## Run Locally
 
@@ -196,11 +195,12 @@ npm run dev
 
 That starts:
 
+- the local Ollama analysis service on `http://127.0.0.1:11434`
 - the web app on Vite
 - the API server on `http://127.0.0.1:8000`
 
 The runner is cross-platform and works on macOS, Linux, and Windows as long as the
-project virtual environment exists at `./.venv`.
+project virtual environment exists at `./.venv` and Ollama is installed on `PATH`.
 
 If you want to run them separately:
 
