@@ -63,7 +63,7 @@ describe("CallUploadForm", () => {
     ).toBe("?call=call-1");
   });
 
-  it("uploads a batch of selected audio files and clears stored data", async () => {
+  it("uploads a batch and hides reset behind confirmed settings", async () => {
     vi.mocked(registerCall)
       .mockResolvedValueOnce({
         call_id: "call-1",
@@ -116,7 +116,18 @@ describe("CallUploadForm", () => {
     expect(processCall).toHaveBeenCalledTimes(2);
     expect(screen.getByText("Registered and queued 2 calls.")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Clear all data" }));
+    const resetButton = screen.getByRole("button", { name: "Clear all data" });
+    expect(resetButton).toHaveProperty("disabled", true);
+
+    fireEvent.click(screen.getByText("Settings"));
+    fireEvent.click(
+      screen.getByLabelText(
+        "I understand this will clear the local demo data.",
+      ),
+    );
+    expect(resetButton).toHaveProperty("disabled", false);
+
+    fireEvent.click(resetButton);
 
     await waitFor(() => expect(clearAllCallData).toHaveBeenCalledTimes(1));
     expect(

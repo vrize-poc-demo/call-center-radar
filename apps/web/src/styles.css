@@ -654,18 +654,49 @@ h1 {
 }
 
 .upload-form-actions {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.upload-form-actions button:first-child {
-  grid-column: 1;
+.upload-settings {
+  justify-self: end;
+  width: min(100%, 420px);
+  margin-top: 4px;
 }
 
-.upload-form-actions .clear-data-button {
-  grid-column: 3;
+.upload-settings summary {
+  width: fit-content;
+  margin-left: auto;
+  color: #52616d;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.upload-settings-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  margin-top: 10px;
+  background: #f8fafb;
+  border: 1px solid #d8e2e7;
+  border-radius: 8px;
+}
+
+.reset-confirmation {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #354657;
+  font-size: 0.95rem;
+}
+
+.reset-confirmation input {
+  width: auto;
+}
+
+.clear-data-button {
+  justify-self: end;
   color: #9f1c1c;
   background: #fff;
   border: 1px solid #d6b2ad;
