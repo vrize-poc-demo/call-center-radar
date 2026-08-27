@@ -19,6 +19,7 @@ function fileStem(file: File) {
 }
 
 export function CallUploadForm() {
+  const [activeTab, setActiveTab] = useState<"single" | "batch">("single");
   const [result, setResult] = useState<CallRegistration | null>(null);
   const [processingResult, setProcessingResult] =
     useState<ProcessingStatus | null>(null);
@@ -31,7 +32,6 @@ export function CallUploadForm() {
   const [customerName, setCustomerName] = useState("");
   const [audioFiles, setAudioFiles] = useState<File[]>([]);
   const [metadataFiles, setMetadataFiles] = useState<File[]>([]);
-  const [folderFiles, setFolderFiles] = useState<File[]>([]);
 
   async function populateNamesFromMetadata(
     event: ChangeEvent<HTMLInputElement>,
@@ -60,29 +60,32 @@ export function CallUploadForm() {
     }
   }
 
-  function groupSelectedFiles(files: File[]) {
+  const batchPairs = useMemo(() => {
     const groups = new Map<string, BatchFileGroup>();
-    for (const file of files) {
-      const stem = fileStem(file);
+
+    for (const audioFile of audioFiles) {
+      const stem = fileStem(audioFile);
       const entry = groups.get(stem) ?? { stem };
-      if (file.type.startsWith("audio/") || /\.(mp3|wav)$/i.test(file.name)) {
-        entry.audioFile = file;
-      } else if (file.name.toLowerCase().endsWith(".json")) {
-        entry.metadataFile = file;
-      }
+      entry.audioFile = audioFile;
       groups.set(stem, entry);
     }
-    return [...groups.values()];
-  }
 
-  const folderPairs = useMemo(
-    () => groupSelectedFiles(folderFiles),
-    [folderFiles],
-  );
+    for (const metadataFile of metadataFiles) {
+      const stem = fileStem(metadataFile);
+      const entry = groups.get(stem) ?? { stem };
+      entry.metadataFile = metadataFile;
+      groups.set(stem, entry);
+    }
+
+    return audioFiles.map((audioFile) => {
+      const stem = fileStem(audioFile);
+      return groups.get(stem) ?? { stem, audioFile };
+    });
+  }, [audioFiles, metadataFiles]);
 
   async function handleBatchSubmit() {
-    if (!folderPairs.length && !audioFiles.length) {
-      setError("Select at least one audio file or folder to upload.");
+    if (!audioFiles.length) {
+      setError("Select at least one audio file to upload.");
       return;
     }
 
@@ -96,16 +99,7 @@ export function CallUploadForm() {
     const uploaded: CallRegistration[] = [];
 
     try {
-      const entries = folderPairs.length
-        ? folderPairs
-        : audioFiles.map((audioFile) => {
-            const metadataFile = metadataFiles.find(
-              (file) => fileStem(file) === fileStem(audioFile),
-            );
-            return { stem: fileStem(audioFile), audioFile, metadataFile };
-          });
-
-      for (const entry of entries) {
+      for (const entry of batchPairs) {
         if (!entry.audioFile) {
           continue;
         }
@@ -141,7 +135,6 @@ export function CallUploadForm() {
       );
       setAudioFiles([]);
       setMetadataFiles([]);
-      setFolderFiles([]);
       setAgentName("");
       setCustomerName("");
     } catch (submissionError) {
@@ -166,7 +159,6 @@ export function CallUploadForm() {
       setBatchResults([]);
       setAudioFiles([]);
       setMetadataFiles([]);
-      setFolderFiles([]);
       setAgentName("");
       setCustomerName("");
       setStatusMessage(
@@ -220,114 +212,169 @@ export function CallUploadForm() {
         </p>
       </div>
 
-      <form className="upload-form" onSubmit={handleSubmit}>
-        <label>
-          Call recording
-          <input
-            accept="audio/mpeg,audio/wav,.mp3,.wav"
-            name="audio"
-            required
-            type="file"
-          />
-        </label>
-        <label>
-          Call metadata
-          <input
-            accept="application/json,.json"
-            name="metadata"
-            onChange={populateNamesFromMetadata}
-            type="file"
-          />
-          <span className="field-hint">
-            Optional: selecting JSON fills the editable fields below.
-          </span>
-        </label>
-        <div className="upload-hint-block">
-          <p className="field-hint">
-            Batch import: select multiple audio files, multiple metadata files,
-            or a whole folder of paired sample files.
-          </p>
+      <div className="upload-tabs" role="tablist" aria-label="Upload mode">
+        <button
+          aria-controls="single-call-upload-panel"
+          aria-selected={activeTab === "single"}
+          id="single-call-upload-tab"
+          onClick={() => setActiveTab("single")}
+          role="tab"
+          type="button"
+        >
+          Single call upload
+        </button>
+        <button
+          aria-controls="batch-upload-panel"
+          aria-selected={activeTab === "batch"}
+          id="batch-upload-tab"
+          onClick={() => setActiveTab("batch")}
+          role="tab"
+          type="button"
+        >
+          Batch upload
+        </button>
+      </div>
+
+      {activeTab === "single" ? (
+        <form
+          aria-labelledby="single-call-upload-tab"
+          className="upload-form"
+          id="single-call-upload-panel"
+          onSubmit={handleSubmit}
+          role="tabpanel"
+        >
+          <label>
+            Call recording
+            <input
+              accept="audio/mpeg,audio/wav,.mp3,.wav"
+              name="audio"
+              required
+              type="file"
+            />
+          </label>
+          <label>
+            Call metadata
+            <input
+              accept="application/json,.json"
+              name="metadata"
+              onChange={populateNamesFromMetadata}
+              type="file"
+            />
+            <span className="field-hint">
+              Optional: selecting JSON fills the editable fields below.
+            </span>
+          </label>
+          <label>
+            Agent name
+            <input
+              maxLength={120}
+              name="agent_name"
+              onChange={(event) => setAgentName(event.target.value)}
+              required
+              type="text"
+              value={agentName}
+            />
+          </label>
+          <label>
+            Customer name
+            <input
+              maxLength={120}
+              name="customer_name"
+              onChange={(event) => setCustomerName(event.target.value)}
+              required
+              type="text"
+              value={customerName}
+            />
+          </label>
+          <div className="upload-form-actions">
+            <button disabled={isSubmitting} type="submit">
+              {isSubmitting ? "Registering…" : "Register call"}
+            </button>
+            <button
+              disabled={isClearing}
+              onClick={() => void handleClearAll()}
+              type="button"
+            >
+              {isClearing ? "Clearing…" : "Clear all data"}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div
+          aria-labelledby="batch-upload-tab"
+          className="upload-form"
+          id="batch-upload-panel"
+          role="tabpanel"
+        >
+          <div className="upload-hint-block">
+            <p className="field-hint">
+              Select multiple recordings and the matching JSON metadata files.
+              Files are paired by filename, for example{" "}
+              <strong>call-1.wav</strong> with <strong>call-1.json</strong>.
+            </p>
+          </div>
+          <label>
+            Audio files
+            <input
+              accept="audio/mpeg,audio/wav,.mp3,.wav"
+              multiple
+              onChange={(event) =>
+                setAudioFiles([...(event.currentTarget.files ?? [])])
+              }
+              type="file"
+            />
+          </label>
+          <label>
+            Metadata files
+            <input
+              accept="application/json,.json"
+              multiple
+              onChange={(event) =>
+                setMetadataFiles([...(event.currentTarget.files ?? [])])
+              }
+              type="file"
+            />
+          </label>
+          <label>
+            Default agent name
+            <input
+              maxLength={120}
+              onChange={(event) => setAgentName(event.target.value)}
+              type="text"
+              value={agentName}
+            />
+            <span className="field-hint">
+              Used only when an audio file does not have a matching metadata
+              file.
+            </span>
+          </label>
+          <label>
+            Default customer name
+            <input
+              maxLength={120}
+              onChange={(event) => setCustomerName(event.target.value)}
+              type="text"
+              value={customerName}
+            />
+          </label>
+          <div className="upload-form-actions">
+            <button
+              disabled={isSubmitting}
+              onClick={() => void handleBatchSubmit()}
+              type="button"
+            >
+              {isSubmitting ? "Uploading…" : "Upload batch"}
+            </button>
+            <button
+              disabled={isClearing}
+              onClick={() => void handleClearAll()}
+              type="button"
+            >
+              {isClearing ? "Clearing…" : "Clear all data"}
+            </button>
+          </div>
         </div>
-        <label>
-          Audio files
-          <input
-            accept="audio/mpeg,audio/wav,.mp3,.wav"
-            multiple
-            onChange={(event) =>
-              setAudioFiles([...(event.currentTarget.files ?? [])])
-            }
-            type="file"
-          />
-        </label>
-        <label>
-          Metadata files
-          <input
-            accept="application/json,.json"
-            multiple
-            onChange={(event) =>
-              setMetadataFiles([...(event.currentTarget.files ?? [])])
-            }
-            type="file"
-          />
-        </label>
-        <label>
-          Sample folder
-          <input
-            // @ts-expect-error webkitdirectory is supported in Chromium-based browsers.
-            webkitdirectory=""
-            multiple
-            onChange={(event) =>
-              setFolderFiles([...(event.currentTarget.files ?? [])])
-            }
-            type="file"
-          />
-          <span className="field-hint">
-            Pick the sample-data folder to import every matching audio and JSON
-            file in one step.
-          </span>
-        </label>
-        <label>
-          Agent name
-          <input
-            maxLength={120}
-            name="agent_name"
-            onChange={(event) => setAgentName(event.target.value)}
-            required
-            type="text"
-            value={agentName}
-          />
-        </label>
-        <label>
-          Customer name
-          <input
-            maxLength={120}
-            name="customer_name"
-            onChange={(event) => setCustomerName(event.target.value)}
-            required
-            type="text"
-            value={customerName}
-          />
-        </label>
-        <div className="upload-form-actions">
-          <button disabled={isSubmitting} type="submit">
-            {isSubmitting ? "Registering…" : "Register call"}
-          </button>
-          <button
-            disabled={isSubmitting}
-            onClick={() => void handleBatchSubmit()}
-            type="button"
-          >
-            {isSubmitting ? "Uploading…" : "Upload batch"}
-          </button>
-          <button
-            disabled={isClearing}
-            onClick={() => void handleClearAll()}
-            type="button"
-          >
-            {isClearing ? "Clearing…" : "Clear all data"}
-          </button>
-        </div>
-      </form>
+      )}
 
       {error ? (
         <p className="form-error" role="alert">

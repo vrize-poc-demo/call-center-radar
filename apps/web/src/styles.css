@@ -521,6 +521,35 @@ h1 {
   color: #52616d;
 }
 
+.upload-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 4px;
+  border: 1px solid #d8e2e7;
+  border-radius: 10px;
+  background: #f7f9fb;
+}
+
+.upload-tabs button {
+  min-height: 42px;
+  padding: 10px 12px;
+  color: #263646;
+  font: inherit;
+  font-weight: 750;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.upload-tabs button[aria-selected="true"] {
+  color: #096b72;
+  background: #ffffff;
+  border-color: #b8c7d2;
+  box-shadow: 0 1px 4px rgb(23 33 43 / 8%);
+}
+
 .upload-form {
   display: grid;
   gap: 16px;

@@ -92,6 +92,8 @@ describe("CallUploadForm", () => {
 
     render(<CallUploadForm />);
 
+    fireEvent.click(screen.getByRole("tab", { name: "Batch upload" }));
+
     fireEvent.change(screen.getByLabelText("Audio files"), {
       target: {
         files: [
@@ -101,10 +103,10 @@ describe("CallUploadForm", () => {
       },
     });
 
-    fireEvent.change(screen.getByLabelText("Agent name"), {
+    fireEvent.change(screen.getByLabelText(/^Default agent name/), {
       target: { value: "Agent" },
     });
-    fireEvent.change(screen.getByLabelText("Customer name"), {
+    fireEvent.change(screen.getByLabelText(/^Default customer name/), {
       target: { value: "Customer" },
     });
 
