@@ -28,6 +28,68 @@ body {
   overflow-x: hidden;
 }
 
+.app-top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 58px;
+  padding: 10px 24px;
+  border-bottom: 1px solid #d8e2e7;
+  background: rgb(255 255 255 / 94%);
+  backdrop-filter: blur(10px);
+}
+
+.app-home-link,
+.app-top-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-home-link {
+  color: #17212b;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.app-home-mark {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  color: #096b72;
+  border: 1px solid #b8c7d2;
+  border-radius: 8px;
+  background: #f7f9fb;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.app-top-nav-links {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.app-top-nav-links a {
+  padding: 7px 10px;
+  color: #263646;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.app-top-nav-links a:hover {
+  color: #096b72;
+  border-color: #b8c7d2;
+  background: #f7f9fb;
+}
+
 .global-processing-queue {
   position: sticky;
   z-index: 1;
@@ -1025,6 +1087,18 @@ h1 {
 @media (max-width: 720px) {
   .app-workspace {
     display: block;
+  }
+
+  .app-top-nav {
+    position: static;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 16px;
+  }
+
+  .app-top-nav-links {
+    justify-content: flex-start;
   }
 
   .global-processing-queue {
