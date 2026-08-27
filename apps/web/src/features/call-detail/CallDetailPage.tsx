@@ -4,13 +4,11 @@ import {
   CallAnalysis,
   CallDetail,
   calculatePriority,
-  EvidenceCandidate,
   EvidenceClaim,
   FalseResolutionSignal,
   getAnalysis,
   getCallAudioUrl,
   getCallDetail,
-  getEvidence,
   getTranscript,
   PriorityFactor,
   RadarPriority,
@@ -58,7 +56,6 @@ type EvidenceTrace = {
 export function CallDetailPage({ callId }: { callId: string }) {
   const [detail, setDetail] = useState<CallDetail | null>(null);
   const [turns, setTurns] = useState<TranscriptTurn[]>([]);
-  const [evidence, setEvidence] = useState<EvidenceCandidate[]>([]);
   const [priority, setPriority] = useState<RadarPriority | null>(null);
   const [analysis, setAnalysis] = useState<CallAnalysis | null>(null);
   const [selectedTrace, setSelectedTrace] = useState<EvidenceTrace | null>(
@@ -91,9 +88,6 @@ export function CallDetailPage({ callId }: { callId: string }) {
         console.warn("transcript_load_failed");
         if (active) setTurns([]);
       });
-    getEvidence(callId)
-      .then((value) => active && setEvidence(value))
-      .catch(() => console.warn("evidence_load_failed"));
     calculatePriority(callId)
       .then((value) => active && setPriority(value))
       .catch(() => console.warn("radar_priority_load_failed"));
@@ -118,9 +112,6 @@ export function CallDetailPage({ callId }: { callId: string }) {
       void getTranscript(callId)
         .then((value) => active && setTurns(value))
         .catch(() => console.warn("transcript_load_failed"));
-      void getEvidence(callId)
-        .then((value) => active && setEvidence(value))
-        .catch(() => console.warn("evidence_load_failed"));
     };
     const refreshDetail = () => {
       void getCallDetail(callId)
@@ -725,36 +716,6 @@ export function CallDetailPage({ callId }: { callId: string }) {
                 : `${detail.audio_channels === 1 ? "Mono" : "Stereo"} audio validated.`}
           </p>
         </section>
-        <aside className="detail-panel evidence-panel">
-          <h2>Evidence</h2>
-          {evidence.length ? (
-            <ol className="evidence-candidates">
-              {evidence.map((candidate) => (
-                <li key={candidate.evidence_id}>
-                  <button
-                    onClick={() => seekTo(candidate.start_ms)}
-                    type="button"
-                  >
-                    <strong>{candidate.label}</strong>
-                    <time>{(candidate.start_ms / 1000).toFixed(1)}s</time>
-                    <span>{candidate.quote}</span>
-                  </button>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <div className="empty-region">
-              No deterministic evidence candidates were found.
-            </div>
-          )}
-          <button
-            className="jump-button"
-            onClick={() => seekTo(0)}
-            type="button"
-          >
-            Jump to call start
-          </button>
-        </aside>
       </div>
       {showScoreExplanation || selectedTrace ? (
         <aside

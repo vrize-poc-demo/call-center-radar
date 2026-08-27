@@ -124,6 +124,7 @@ Update this table before every commit. Explain both the change and its reason; d
 | Pending | Split the register page into `Single call upload` and `Batch upload` tabs, and removed the sample-folder picker. | The demo should present a simple choice: one call, or multiple audio files paired with multiple metadata files; folder upload was confusing for managers. |
 | Pending | Removed the duplicate Call Detail `Back to calls` link and moved analysis plus Radar Priority generation into the worker pipeline. | Home was only showing calls after Call Detail lazily generated analysis; completed processing now creates dashboard-ready records without requiring a manager to open the detail page first. |
 | Pending | Moved the destructive clear-all action out of Register and into a hidden collapsed-sidebar settings control that requires typing `DELETE`. | Demo reset must remain available for fresh runs, but it should not be visible in normal upload workflows or easy to trigger accidentally. |
+| Pending | Removed the standalone Evidence card from Call Detail while keeping analysis and priority evidence drawers available. | The detail page should stay manager-simple and avoid duplicating evidence lists that are already reachable from the relevant judgment. |
 
 ### PR Readiness and Review
 
