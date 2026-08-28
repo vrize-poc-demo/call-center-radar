@@ -125,6 +125,7 @@ Update this table before every commit. Explain both the change and its reason; d
 | Pending | Removed the duplicate Call Detail `Back to calls` link and moved analysis plus Radar Priority generation into the worker pipeline. | Home was only showing calls after Call Detail lazily generated analysis; completed processing now creates dashboard-ready records without requiring a manager to open the detail page first. |
 | Pending | Moved the destructive clear-all action out of Register and into a hidden collapsed-sidebar settings control that requires typing `DELETE`. | Demo reset must remain available for fresh runs, but it should not be visible in normal upload workflows or easy to trigger accidentally. |
 | Pending | Removed the standalone Evidence card from Call Detail while keeping analysis and priority evidence drawers available. | The detail page should stay manager-simple and avoid duplicating evidence lists that are already reachable from the relevant judgment. |
+| Pending | Changed the Call Detail conversation timeline to compact paired agent/customer rows without vertical time gaps. | Managers need to read the call exchange in conversational order, not as a sparse graph-like timeline. |
 
 ### PR Readiness and Review
 

@@ -329,7 +329,7 @@ describe("CallDetailPage", () => {
         name: "Agent and customer conversation timeline",
       }),
     ).toBeTruthy();
-    expect(page.getAllByRole("listitem")).toHaveLength(3);
+    expect(page.getAllByRole("listitem")).toHaveLength(2);
     expect(page.queryByText("0.00s–1.00s")).toBeNull();
     const audio = container.querySelector("audio") as HTMLAudioElement;
     let playerTime = 4;
@@ -441,12 +441,10 @@ describe("CallDetailPage", () => {
     const agentRow = agentButton.closest("[role='listitem']");
     const customerRow = customerButton.closest("[role='listitem']");
 
-    expect(rows).toHaveLength(4);
+    expect(rows).toHaveLength(3);
     expect(agentRow).toBeTruthy();
     expect(customerRow).toBeTruthy();
-
-    expect(agentRow?.classList.contains("agent-turn")).toBe(true);
-    expect(customerRow?.classList.contains("customer-turn")).toBe(true);
+    expect(agentRow).toBe(customerRow);
     expect(screen.queryByText("22.02s–44.90s")).toBeNull();
     expect(screen.queryByText("50.00")).toBeNull();
     expect(screen.queryByText("Overlap")).toBeNull();

@@ -849,28 +849,18 @@ h1 {
 }
 .conversation-turns {
   display: grid;
-  gap: 8px;
+  gap: 7px;
   padding: 0;
   margin: 0;
 }
-.conversation-turn {
-  display: flex;
+.conversation-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
   list-style: none;
 }
-.agent-turn {
-  justify-content: flex-start;
-}
-.customer-turn {
-  justify-content: flex-end;
-}
-.unknown-turn {
-  justify-content: center;
-}
-.conversation-turn .transcript-lane {
-  width: min(48%, 560px);
-}
-.unknown-turn .transcript-lane {
-  width: min(76%, 720px);
+.conversation-row .transcript-lane {
+  min-width: 0;
 }
 .conversation-timeline-headings,
 .conversation-lanes {
@@ -890,8 +880,10 @@ h1 {
 .conversation-timeline-headings strong:last-child {
   color: #096b72;
 }
-.transcript-lane {
-  min-width: 0;
+.unknown-lane {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: min(76%, 720px);
 }
 .unknown-speaker-label {
   display: block;
@@ -1123,7 +1115,7 @@ h1 {
   border-color: #bfdae0;
   background: #f7fcfd;
 }
-.conversation-turn.active-turn button,
+.conversation-row.active-turn button,
 .active-turn button {
   background: #dff4f1;
   border-color: #096b72;
@@ -1232,10 +1224,9 @@ h1 {
   .conversation-timeline-headings {
     display: none;
   }
-  .conversation-turn,
-  .agent-turn .transcript-lane,
-  .customer-turn .transcript-lane,
-  .unknown-turn .transcript-lane {
+  .conversation-row,
+  .unknown-lane {
+    grid-template-columns: 1fr;
     width: 100%;
   }
   .mobile-speaker-label {

@@ -21,6 +21,17 @@ import {
 import { buildConversationDisplayTurns } from "./conversationDisplay";
 import { selectActiveTranscriptTurn } from "./transcriptPlayback";
 
+type ConversationDisplayTurn = ReturnType<
+  typeof buildConversationDisplayTurns
+>[number];
+
+type ConversationRow = {
+  id: string;
+  agent?: ConversationDisplayTurn;
+  customer?: ConversationDisplayTurn;
+  unknown?: ConversationDisplayTurn;
+};
+
 function formatPlaybackTime(milliseconds: number) {
   const totalSeconds = Math.floor(milliseconds / 1000);
   const minutes = Math.floor(totalSeconds / 60);
@@ -52,6 +63,30 @@ type EvidenceTrace = {
   evidence_id?: string;
   broken: boolean;
 };
+
+function buildConversationRows(turns: ConversationDisplayTurn[]) {
+  const rows: ConversationRow[] = [];
+  for (const turn of turns) {
+    if (turn.speaker === "unknown") {
+      rows.push({ id: turn.id, unknown: turn });
+      continue;
+    }
+
+    const lastRow = rows.at(-1);
+    const canShareLastRow =
+      lastRow &&
+      !lastRow.unknown &&
+      !lastRow[turn.speaker] &&
+      (lastRow.agent || lastRow.customer);
+
+    if (canShareLastRow) {
+      lastRow[turn.speaker] = turn;
+    } else {
+      rows.push({ id: turn.id, [turn.speaker]: turn });
+    }
+  }
+  return rows;
+}
 
 export function CallDetailPage({ callId }: { callId: string }) {
   const [detail, setDetail] = useState<CallDetail | null>(null);
@@ -173,6 +208,7 @@ export function CallDetailPage({ callId }: { callId: string }) {
       (matchesSpeaker && matchesSearch)
     );
   });
+  const visibleConversationRows = buildConversationRows(visibleDisplayTurns);
   const updateSearchTerm = (value: string) => {
     setSearchTerm(value);
     console.info("transcript_search_updated", {
@@ -391,47 +427,87 @@ export function CallDetailPage({ callId }: { callId: string }) {
                     className="conversation-turns"
                     role="list"
                   >
-                    {visibleDisplayTurns.map((turn) => {
-                      const speakerLabel = getSpeakerLabel(turn.speaker);
+                    {visibleConversationRows.map((row) => {
+                      const rowTurns = [
+                        row.agent,
+                        row.customer,
+                        row.unknown,
+                      ].filter(Boolean) as ConversationDisplayTurn[];
+                      const isActive = rowTurns.some(
+                        (turn) =>
+                          turn.source_turn_id ===
+                          activeTurn?.transcript_turn_id,
+                      );
                       return (
                         <div
-                          className={`conversation-turn ${turn.speaker}-turn ${
-                            turn.source_turn_id ===
-                            activeTurn?.transcript_turn_id
-                              ? "active-turn"
-                              : ""
-                          }`}
-                          key={turn.id}
-                          ref={(element) => {
-                            if (element)
-                              turnElements.current.set(
-                                turn.source_turn_id,
-                                element,
-                              );
-                            else
-                              turnElements.current.delete(turn.source_turn_id);
-                          }}
+                          className={`conversation-row ${isActive ? "active-turn" : ""}`}
+                          key={row.id}
                           role="listitem"
                         >
-                          <div
-                            className={`transcript-lane ${turn.speaker}-lane`}
-                          >
-                            {turn.speaker === "unknown" ? (
+                          {(["agent", "customer"] as const).map((speaker) => {
+                            const turn = row[speaker];
+                            const speakerLabel = getSpeakerLabel(speaker);
+                            return (
+                              <div
+                                className={`transcript-lane ${speaker}-lane`}
+                                key={speaker}
+                                ref={(element) => {
+                                  if (element && turn)
+                                    turnElements.current.set(
+                                      turn.source_turn_id,
+                                      element,
+                                    );
+                                  else if (turn)
+                                    turnElements.current.delete(
+                                      turn.source_turn_id,
+                                    );
+                                }}
+                              >
+                                {turn ? (
+                                  <button
+                                    aria-label={`${speakerLabel} ${formatTranscriptRange(turn)}: ${turn.text}`}
+                                    onClick={() => seekTo(turn.start_ms)}
+                                    type="button"
+                                  >
+                                    <span className="mobile-speaker-label">
+                                      {speakerLabel}
+                                    </span>
+                                    <strong>{turn.text}</strong>
+                                  </button>
+                                ) : null}
+                              </div>
+                            );
+                          })}
+                          {row.unknown ? (
+                            <div
+                              className="transcript-lane unknown-lane"
+                              ref={(element) => {
+                                if (element)
+                                  turnElements.current.set(
+                                    row.unknown!.source_turn_id,
+                                    element,
+                                  );
+                                else
+                                  turnElements.current.delete(
+                                    row.unknown!.source_turn_id,
+                                  );
+                              }}
+                            >
                               <span className="unknown-speaker-label">
                                 Unattributed
                               </span>
-                            ) : null}
-                            <button
-                              aria-label={`${speakerLabel} ${formatTranscriptRange(turn)}: ${turn.text}`}
-                              onClick={() => seekTo(turn.start_ms)}
-                              type="button"
-                            >
-                              <span className="mobile-speaker-label">
-                                {speakerLabel}
-                              </span>
-                              <strong>{turn.text}</strong>
-                            </button>
-                          </div>
+                              <button
+                                aria-label={`Unattributed ${formatTranscriptRange(row.unknown)}: ${row.unknown.text}`}
+                                onClick={() => seekTo(row.unknown!.start_ms)}
+                                type="button"
+                              >
+                                <span className="mobile-speaker-label">
+                                  Unattributed
+                                </span>
+                                <strong>{row.unknown.text}</strong>
+                              </button>
+                            </div>
+                          ) : null}
                         </div>
                       );
                     })}
