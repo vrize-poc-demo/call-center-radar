@@ -1,13 +1,21 @@
 from fastapi.testclient import TestClient
 
 from app.config import Settings
-from app.dashboard import coaching_note, estimate_call_satisfaction
+from app.dashboard import call_risk_level, coaching_note, estimate_call_satisfaction
 from app.main import create_app
 
 
 def test_estimates_satisfaction_from_evidence_without_employee_scoring() -> None:
     assert estimate_call_satisfaction("positive", "resolved", False, 0) == 92
     assert estimate_call_satisfaction("negative", "unresolved", True, 2) == 4
+
+
+def test_manager_risk_uses_analysis_flags_not_score_only() -> None:
+    assert call_risk_level(60, "neutral", "resolved", False) == "low"
+    assert call_risk_level(95, "positive", "resolved", False) == "medium"
+    assert call_risk_level(60, "neutral", "unresolved", False) == "high"
+    assert call_risk_level(20, "neutral", "resolved", True) == "high"
+    assert call_risk_level(40, "negative", "resolved", False) == "medium"
 
 
 def test_returns_supportive_agent_summary_from_persisted_analysis(tmp_path) -> None:
@@ -48,7 +56,7 @@ def test_returns_supportive_agent_summary_from_persisted_analysis(tmp_path) -> N
                 agent_name="Susmitha",
                 mood="neutral",
                 resolution="resolved",
-                priority=10,
+                priority=70,
                 treatment_signals=0,
             )
         response = client.get("/api/dashboard/agents")
@@ -77,7 +85,8 @@ def test_returns_supportive_agent_summary_from_persisted_analysis(tmp_path) -> N
     assert agents[1]["calls_with_handle_time"] == 0
     assert agents[1]["resolved_count"] == 1
     assert agents[1]["resolved_rate"] == 100
-    assert agents[1]["average_priority"] == 10
+    assert agents[1]["average_priority"] == 70
+    assert agents[1]["high_risk_count"] == 0
     assert agents[1]["coaching_note"] == "No coaching concern stands out from analyzed evidence."
 
 

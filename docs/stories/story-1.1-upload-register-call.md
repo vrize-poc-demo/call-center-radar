@@ -126,6 +126,7 @@ Update this table before every commit. Explain both the change and its reason; d
 | Pending | Moved the destructive clear-all action out of Register and into a hidden collapsed-sidebar settings control that requires typing `DELETE`. | Demo reset must remain available for fresh runs, but it should not be visible in normal upload workflows or easy to trigger accidentally. |
 | Pending | Removed the standalone Evidence card from Call Detail while keeping analysis and priority evidence drawers available. | The detail page should stay manager-simple and avoid duplicating evidence lists that are already reachable from the relevant judgment. |
 | Pending | Changed the Call Detail conversation timeline to compact paired agent/customer rows without vertical time gaps. | Managers need to read the call exchange in conversational order, not as a sparse graph-like timeline. |
+| Pending | Changed manager-facing risk labels to use persisted mood, resolution, false-resolution, and treatment flags instead of the Radar Priority threshold alone. | Neutral/resolved calls should not appear as high risk unless a stronger manager-attention flag exists; this keeps the dashboard aligned to the original POC requirement. |
 
 ### PR Readiness and Review
 

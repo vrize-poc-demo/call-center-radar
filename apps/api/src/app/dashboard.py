@@ -90,6 +90,27 @@ def risk_level(score: int | None) -> str:
     return "low"
 
 
+def call_risk_level(
+    score: int | None,
+    mood: str,
+    resolution: str,
+    false_resolution: bool,
+    treatment_signal_count: int = 0,
+) -> str:
+    """Classify manager-facing risk from score plus persisted analysis flags."""
+    if score is None:
+        return "unscored"
+    if false_resolution:
+        return "high"
+    if resolution == "unresolved":
+        return "high" if score >= 60 else "medium"
+    if mood == "negative" or treatment_signal_count > 0:
+        return "high" if score >= 60 else "medium"
+    if resolution == "resolved" and mood in {"neutral", "positive"}:
+        return "medium" if score >= 80 else "low"
+    return risk_level(score)
+
+
 def estimate_call_satisfaction(
     mood: str,
     resolution: str,
@@ -278,7 +299,16 @@ def get_agent_summary_read_model(request: Request) -> AgentSummaryReadModel:
         group = grouped[row["agent_name"]]
         treatment_count = row["treatment_signal_count"]
         false_resolution = bool(row["false_resolution"])
-        high_risk = row["radar_priority"] >= 60
+        high_risk = (
+            call_risk_level(
+                row["radar_priority"],
+                row["mood"],
+                row["resolution"],
+                false_resolution,
+                treatment_count,
+            )
+            == "high"
+        )
         unresolved = row["resolution"] == "unresolved"
         resolved = row["resolution"] == "resolved"
         difficult = high_risk or unresolved or false_resolution or treatment_count > 0
@@ -433,7 +463,12 @@ def _to_triage_call(row) -> TriageCall:
         call_id=data["call_id"],
         created_at=data["created_at"],
         radar_priority=data["radar_priority"],
-        risk_level=risk_level(data["radar_priority"]),
+        risk_level=call_risk_level(
+            data["radar_priority"],
+            data["mood"],
+            data["resolution"],
+            bool(data["false_resolution"]),
+        ),
         analysis=TriageAnalysis(
             intent=data["intent"],
             mood=data["mood"],
