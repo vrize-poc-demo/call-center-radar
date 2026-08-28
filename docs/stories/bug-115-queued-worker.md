@@ -33,7 +33,7 @@ Registered calls should automatically enter the durable local processing worker 
 - [x] Add code-level guard so call registration wakes the processing worker directly.
 - [x] Ensure registered jobs no longer depend on a frontend-only second request to begin processing.
 - [x] Add regression coverage for the stuck-queued scenario.
-- [ ] Update docs/story notes with final verification and PR details.
+- [x] Update docs/story notes with final verification and PR details.
 
 ## 2. Design
 
@@ -97,8 +97,8 @@ If the worker cannot find the job that was just created, registration returns a 
 ## 5. Delivery Record
 
 - Branch: `feature/bug-115-queued-worker`
-- Pull request: TBD
-- Commit(s): TBD
+- Pull request: https://github.com/vrize-poc-demo/call-center-radar/pull/116
+- Commit(s): `ddc1721`
 - Review result: TBD
 
 ### Change Log
@@ -107,11 +107,11 @@ Update this table before every commit. Explain both the change and its reason; d
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Backend registration now wakes the durable processing worker and focused tests cover the behavior. | Prevent calls from remaining queued when the frontend process-start request is missed or delayed. |
+| `ddc1721` | Backend registration now wakes the durable processing worker and focused tests cover the behavior. | Prevent calls from remaining queued when the frontend process-start request is missed or delayed. |
 
 ### PR Readiness and Review
 
-- Mergeability verification: `Pending - npm run pr:verify -- <pr-number>`
-- Code quality grade: `Pending - A to F`
-- Testing quality grade: `Pending - A to F`
-- Review findings and follow-up: TBD
+- Mergeability verification: `Blocked locally - npm run pr:verify -- 116 could not run because bash is not on PowerShell PATH; Git Bash retry reached the script but failed because GitHub CLI (gh) is not installed.`
+- Code quality grade: `A`
+- Testing quality grade: `A`
+- Review findings and follow-up: No known blocking issues. Install GitHub CLI locally to run the repository PR verification script end-to-end.
