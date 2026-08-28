@@ -430,6 +430,19 @@ async def register_call(
         "Call and initial processing job registered",
         context={"call_id": uploaded_call.call_id, "job_id": uploaded_call.job_id},
     )
+    try:
+        request.app.state.processing_worker.enqueue(uploaded_call.job_id)
+    except KeyError:
+        log_event(
+            logger,
+            "processing_enqueue_failed",
+            "Processing job was registered but could not be enqueued",
+            context={"call_id": uploaded_call.call_id, "job_id": uploaded_call.job_id},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Call was registered, but processing could not be queued.",
+        ) from None
     return CallRegistration(
         call_id=uploaded_call.call_id,
         job_id=uploaded_call.job_id,

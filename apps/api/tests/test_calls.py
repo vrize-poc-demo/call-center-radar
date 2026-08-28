@@ -2,11 +2,21 @@ from fastapi.testclient import TestClient
 
 from app.config import Settings
 from app.main import create_app
+from app.pipeline import ProcessingResult
 
 VALID_METADATA = b"""{
   "agent": {"metadata": {"agent_name": "Agent One"}},
   "caller": {"metadata": {"first and last name": "Customer One"}}
 }"""
+
+
+class RecordingWorker:
+    def __init__(self) -> None:
+        self.enqueued_job_ids: list[str] = []
+
+    def enqueue(self, job_id: str) -> ProcessingResult:
+        self.enqueued_job_ids.append(job_id)
+        return ProcessingResult(job_id, "queued", None, None)
 
 
 def build_settings(tmp_path, max_upload_bytes: int = 1024) -> Settings:
@@ -57,6 +67,22 @@ def test_register_call_creates_linked_call_and_queued_job(tmp_path) -> None:
     assert record["customer_name"] == "Customer One"
     assert (settings.upload_dir / f"{payload['call_id']}.mp3").read_bytes() == b"demo audio"
     assert (settings.upload_dir / f"{payload['call_id']}.json").read_bytes() == VALID_METADATA
+
+
+def test_register_call_wakes_processing_worker_without_extra_process_request(tmp_path) -> None:
+    app = create_app(build_settings(tmp_path))
+    worker = RecordingWorker()
+
+    with TestClient(app) as client:
+        app.state.processing_worker = worker
+        response = client.post(
+            "/api/calls",
+            data={"agent_name": "Agent", "customer_name": "Customer"},
+            files={"audio": ("sample.wav", b"audio bytes", "audio/wav")},
+        )
+
+    assert response.status_code == 201
+    assert worker.enqueued_job_ids == [response.json()["job_id"]]
 
 
 def test_register_call_rejects_unsupported_audio_without_creating_records(tmp_path) -> None:
