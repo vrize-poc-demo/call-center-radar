@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import {
+  clearAllCallData,
   dismissProcessingQueueItem,
   getProcessingQueue,
   ProcessingQueueItem,
@@ -36,6 +37,10 @@ export function GlobalProcessingQueue() {
   const [error, setError] = useState<string | null>(null);
   const [dismissingJobId, setDismissingJobId] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isResetOpen, setIsResetOpen] = useState(false);
+  const [resetConfirmation, setResetConfirmation] = useState("");
+  const [isClearing, setIsClearing] = useState(false);
+  const [resetMessage, setResetMessage] = useState<string | null>(null);
   const itemCount = items?.length ?? 0;
   const itemCountLabel =
     items === null
@@ -75,22 +80,101 @@ export function GlobalProcessingQueue() {
     console.info("queue_to_detail_requested", { call_id: item.call_id });
   }
 
+  async function clearDemoData() {
+    setIsClearing(true);
+    setResetMessage(null);
+    setError(null);
+    try {
+      const cleared = await clearAllCallData();
+      setItems([]);
+      setResetConfirmation("");
+      setResetMessage(
+        `Cleared ${cleared.calls_deleted} stored call${cleared.calls_deleted === 1 ? "" : "s"} and removed ${cleared.upload_files_deleted} uploaded file${cleared.upload_files_deleted === 1 ? "" : "s"}.`,
+      );
+    } catch {
+      console.warn("demo_reset_failed");
+      setResetMessage("Demo data could not be cleared. Please try again.");
+    } finally {
+      setIsClearing(false);
+    }
+  }
+
+  const resetDialog = isResetOpen ? (
+    <div className="queue-reset-backdrop" role="presentation">
+      <section
+        aria-labelledby="queue-reset-title"
+        aria-modal="true"
+        className="queue-reset-dialog"
+        role="dialog"
+      >
+        <h2 id="queue-reset-title">Clear demo data</h2>
+        <p>
+          This removes saved calls, transcripts, analysis, queue history, and
+          uploaded files from this local POC.
+        </p>
+        <label>
+          Type DELETE to confirm
+          <input
+            autoFocus
+            onChange={(event) =>
+              setResetConfirmation(event.currentTarget.value)
+            }
+            value={resetConfirmation}
+          />
+        </label>
+        {resetMessage ? <p role="status">{resetMessage}</p> : null}
+        <div className="queue-reset-actions">
+          <button
+            className="clear-data-button"
+            disabled={isClearing || resetConfirmation !== "DELETE"}
+            onClick={() => void clearDemoData()}
+            type="button"
+          >
+            {isClearing ? "Clearing…" : "Clear all data"}
+          </button>
+          <button
+            onClick={() => {
+              setIsResetOpen(false);
+              setResetConfirmation("");
+              setResetMessage(null);
+            }}
+            type="button"
+          >
+            Cancel
+          </button>
+        </div>
+      </section>
+    </div>
+  ) : null;
+
   if (isCollapsed) {
     return (
       <section
         aria-label="Call processing"
         className="global-processing-queue global-processing-queue-collapsed"
       >
-        <span className="queue-collapsed-count">{itemCountLabel}</span>
+        <div className="queue-collapsed-top">
+          <span className="queue-collapsed-count">{itemCountLabel}</span>
+          <button
+            aria-expanded="false"
+            aria-label="Expand recent calls"
+            className="queue-side-tab"
+            onClick={() => setIsCollapsed(false)}
+            type="button"
+          >
+            &gt;
+          </button>
+        </div>
         <button
-          aria-expanded="false"
-          aria-label="Expand recent calls"
-          className="queue-side-tab"
-          onClick={() => setIsCollapsed(false)}
+          aria-label="Open demo reset settings"
+          className="queue-settings-button"
+          onClick={() => setIsResetOpen(true)}
+          title="Demo reset"
           type="button"
         >
-          &gt;
+          ⚙
         </button>
+        {resetDialog}
       </section>
     );
   }
@@ -168,6 +252,7 @@ export function GlobalProcessingQueue() {
           ))}
         </ol>
       ) : null}
+      {resetDialog}
     </section>
   );
 }

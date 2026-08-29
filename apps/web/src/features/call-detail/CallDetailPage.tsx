@@ -4,13 +4,11 @@ import {
   CallAnalysis,
   CallDetail,
   calculatePriority,
-  EvidenceCandidate,
   EvidenceClaim,
   FalseResolutionSignal,
   getAnalysis,
   getCallAudioUrl,
   getCallDetail,
-  getEvidence,
   getTranscript,
   PriorityFactor,
   RadarPriority,
@@ -22,6 +20,17 @@ import {
 } from "../../api/calls";
 import { buildConversationDisplayTurns } from "./conversationDisplay";
 import { selectActiveTranscriptTurn } from "./transcriptPlayback";
+
+type ConversationDisplayTurn = ReturnType<
+  typeof buildConversationDisplayTurns
+>[number];
+
+type ConversationRow = {
+  id: string;
+  agent?: ConversationDisplayTurn;
+  customer?: ConversationDisplayTurn;
+  unknown?: ConversationDisplayTurn;
+};
 
 function formatPlaybackTime(milliseconds: number) {
   const totalSeconds = Math.floor(milliseconds / 1000);
@@ -55,10 +64,33 @@ type EvidenceTrace = {
   broken: boolean;
 };
 
+function buildConversationRows(turns: ConversationDisplayTurn[]) {
+  const rows: ConversationRow[] = [];
+  for (const turn of turns) {
+    if (turn.speaker === "unknown") {
+      rows.push({ id: turn.id, unknown: turn });
+      continue;
+    }
+
+    const lastRow = rows.at(-1);
+    const canShareLastRow =
+      lastRow &&
+      !lastRow.unknown &&
+      !lastRow[turn.speaker] &&
+      (lastRow.agent || lastRow.customer);
+
+    if (canShareLastRow) {
+      lastRow[turn.speaker] = turn;
+    } else {
+      rows.push({ id: turn.id, [turn.speaker]: turn });
+    }
+  }
+  return rows;
+}
+
 export function CallDetailPage({ callId }: { callId: string }) {
   const [detail, setDetail] = useState<CallDetail | null>(null);
   const [turns, setTurns] = useState<TranscriptTurn[]>([]);
-  const [evidence, setEvidence] = useState<EvidenceCandidate[]>([]);
   const [priority, setPriority] = useState<RadarPriority | null>(null);
   const [analysis, setAnalysis] = useState<CallAnalysis | null>(null);
   const [selectedTrace, setSelectedTrace] = useState<EvidenceTrace | null>(
@@ -91,9 +123,6 @@ export function CallDetailPage({ callId }: { callId: string }) {
         console.warn("transcript_load_failed");
         if (active) setTurns([]);
       });
-    getEvidence(callId)
-      .then((value) => active && setEvidence(value))
-      .catch(() => console.warn("evidence_load_failed"));
     calculatePriority(callId)
       .then((value) => active && setPriority(value))
       .catch(() => console.warn("radar_priority_load_failed"));
@@ -118,9 +147,6 @@ export function CallDetailPage({ callId }: { callId: string }) {
       void getTranscript(callId)
         .then((value) => active && setTurns(value))
         .catch(() => console.warn("transcript_load_failed"));
-      void getEvidence(callId)
-        .then((value) => active && setEvidence(value))
-        .catch(() => console.warn("evidence_load_failed"));
     };
     const refreshDetail = () => {
       void getCallDetail(callId)
@@ -182,6 +208,7 @@ export function CallDetailPage({ callId }: { callId: string }) {
       (matchesSpeaker && matchesSearch)
     );
   });
+  const visibleConversationRows = buildConversationRows(visibleDisplayTurns);
   const updateSearchTerm = (value: string) => {
     setSearchTerm(value);
     console.info("transcript_search_updated", {
@@ -293,9 +320,6 @@ export function CallDetailPage({ callId }: { callId: string }) {
   if (error)
     return (
       <main className="detail-page detail-message">
-        <a className="back-link" href="/">
-          Back to calls
-        </a>
         <h1>Call detail unavailable</h1>
         <p role="alert">{error}</p>
       </main>
@@ -303,9 +327,6 @@ export function CallDetailPage({ callId }: { callId: string }) {
   if (!detail)
     return (
       <main aria-busy="true" className="detail-page detail-message">
-        <a className="back-link" href="/">
-          Back to calls
-        </a>
         <p className="eyebrow">Call detail</p>
         <h1>Loading call</h1>
         <p>
@@ -317,9 +338,6 @@ export function CallDetailPage({ callId }: { callId: string }) {
   const status = detail.processing_status.replaceAll("_", " ");
   return (
     <main className="detail-page">
-      <a className="back-link" href="/">
-        Back to calls
-      </a>
       <header className="detail-header">
         <div>
           <p className="eyebrow">Call detail</p>
@@ -409,47 +427,87 @@ export function CallDetailPage({ callId }: { callId: string }) {
                     className="conversation-turns"
                     role="list"
                   >
-                    {visibleDisplayTurns.map((turn) => {
-                      const speakerLabel = getSpeakerLabel(turn.speaker);
+                    {visibleConversationRows.map((row) => {
+                      const rowTurns = [
+                        row.agent,
+                        row.customer,
+                        row.unknown,
+                      ].filter(Boolean) as ConversationDisplayTurn[];
+                      const isActive = rowTurns.some(
+                        (turn) =>
+                          turn.source_turn_id ===
+                          activeTurn?.transcript_turn_id,
+                      );
                       return (
                         <div
-                          className={`conversation-turn ${turn.speaker}-turn ${
-                            turn.source_turn_id ===
-                            activeTurn?.transcript_turn_id
-                              ? "active-turn"
-                              : ""
-                          }`}
-                          key={turn.id}
-                          ref={(element) => {
-                            if (element)
-                              turnElements.current.set(
-                                turn.source_turn_id,
-                                element,
-                              );
-                            else
-                              turnElements.current.delete(turn.source_turn_id);
-                          }}
+                          className={`conversation-row ${isActive ? "active-turn" : ""}`}
+                          key={row.id}
                           role="listitem"
                         >
-                          <div
-                            className={`transcript-lane ${turn.speaker}-lane`}
-                          >
-                            {turn.speaker === "unknown" ? (
+                          {(["agent", "customer"] as const).map((speaker) => {
+                            const turn = row[speaker];
+                            const speakerLabel = getSpeakerLabel(speaker);
+                            return (
+                              <div
+                                className={`transcript-lane ${speaker}-lane`}
+                                key={speaker}
+                                ref={(element) => {
+                                  if (element && turn)
+                                    turnElements.current.set(
+                                      turn.source_turn_id,
+                                      element,
+                                    );
+                                  else if (turn)
+                                    turnElements.current.delete(
+                                      turn.source_turn_id,
+                                    );
+                                }}
+                              >
+                                {turn ? (
+                                  <button
+                                    aria-label={`${speakerLabel} ${formatTranscriptRange(turn)}: ${turn.text}`}
+                                    onClick={() => seekTo(turn.start_ms)}
+                                    type="button"
+                                  >
+                                    <span className="mobile-speaker-label">
+                                      {speakerLabel}
+                                    </span>
+                                    <strong>{turn.text}</strong>
+                                  </button>
+                                ) : null}
+                              </div>
+                            );
+                          })}
+                          {row.unknown ? (
+                            <div
+                              className="transcript-lane unknown-lane"
+                              ref={(element) => {
+                                if (element)
+                                  turnElements.current.set(
+                                    row.unknown!.source_turn_id,
+                                    element,
+                                  );
+                                else
+                                  turnElements.current.delete(
+                                    row.unknown!.source_turn_id,
+                                  );
+                              }}
+                            >
                               <span className="unknown-speaker-label">
                                 Unattributed
                               </span>
-                            ) : null}
-                            <button
-                              aria-label={`${speakerLabel} ${formatTranscriptRange(turn)}: ${turn.text}`}
-                              onClick={() => seekTo(turn.start_ms)}
-                              type="button"
-                            >
-                              <span className="mobile-speaker-label">
-                                {speakerLabel}
-                              </span>
-                              <strong>{turn.text}</strong>
-                            </button>
-                          </div>
+                              <button
+                                aria-label={`Unattributed ${formatTranscriptRange(row.unknown)}: ${row.unknown.text}`}
+                                onClick={() => seekTo(row.unknown!.start_ms)}
+                                type="button"
+                              >
+                                <span className="mobile-speaker-label">
+                                  Unattributed
+                                </span>
+                                <strong>{row.unknown.text}</strong>
+                              </button>
+                            </div>
+                          ) : null}
                         </div>
                       );
                     })}
@@ -734,36 +792,6 @@ export function CallDetailPage({ callId }: { callId: string }) {
                 : `${detail.audio_channels === 1 ? "Mono" : "Stereo"} audio validated.`}
           </p>
         </section>
-        <aside className="detail-panel evidence-panel">
-          <h2>Evidence</h2>
-          {evidence.length ? (
-            <ol className="evidence-candidates">
-              {evidence.map((candidate) => (
-                <li key={candidate.evidence_id}>
-                  <button
-                    onClick={() => seekTo(candidate.start_ms)}
-                    type="button"
-                  >
-                    <strong>{candidate.label}</strong>
-                    <time>{(candidate.start_ms / 1000).toFixed(1)}s</time>
-                    <span>{candidate.quote}</span>
-                  </button>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <div className="empty-region">
-              No deterministic evidence candidates were found.
-            </div>
-          )}
-          <button
-            className="jump-button"
-            onClick={() => seekTo(0)}
-            type="button"
-          >
-            Jump to call start
-          </button>
-        </aside>
       </div>
       {showScoreExplanation || selectedTrace ? (
         <aside

@@ -8,16 +8,19 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  clearAllCallData,
   dismissProcessingQueueItem,
   getProcessingQueue,
 } from "../../api/calls";
 import { GlobalProcessingQueue } from "./GlobalProcessingQueue";
 
 vi.mock("../../api/calls", () => ({
+  clearAllCallData: vi.fn(),
   dismissProcessingQueueItem: vi.fn(),
   getProcessingQueue: vi.fn(),
 }));
 
+const mockedClearAllCallData = vi.mocked(clearAllCallData);
 const mockedGetProcessingQueue = vi.mocked(getProcessingQueue);
 const mockedDismissProcessingQueueItem = vi.mocked(dismissProcessingQueueItem);
 
@@ -192,6 +195,58 @@ describe("GlobalProcessingQueue", () => {
     );
 
     expect(screen.getByText("Nora Jones")).toBeTruthy();
+  });
+
+  it("keeps demo reset hidden in the collapsed sidebar and requires DELETE", async () => {
+    mockedGetProcessingQueue.mockResolvedValue([
+      {
+        job_id: "job-ready",
+        call_id: "call-ready",
+        customer_name: "Nora Jones",
+        status: "completed",
+        updated_at: "2026-08-22 08:59:00",
+        failure_reason: null,
+      },
+    ]);
+    mockedClearAllCallData.mockResolvedValue({
+      calls_deleted: 1,
+      processing_jobs_deleted: 1,
+      transcript_turns_deleted: 4,
+      analysis_rows_deleted: 1,
+      upload_files_deleted: 2,
+    });
+
+    render(<GlobalProcessingQueue />);
+    expect(await screen.findByText("Nora Jones")).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Open demo reset settings" }),
+    ).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Hide panel" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open demo reset settings" }),
+    );
+
+    const clearButton = screen.getByRole("button", { name: "Clear all data" });
+    expect(clearButton).toHaveProperty("disabled", true);
+
+    fireEvent.change(screen.getByLabelText("Type DELETE to confirm"), {
+      target: { value: "DELETE" },
+    });
+    expect(clearButton).toHaveProperty("disabled", false);
+    fireEvent.click(clearButton);
+
+    await screen.findByText(
+      "Cleared 1 stored call and removed 2 uploaded files.",
+    );
+    expect(mockedClearAllCallData).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Expand recent calls" }),
+    );
+    expect(
+      screen.getByText("No calls are processing or ready to review yet."),
+    ).toBeTruthy();
   });
 
   it("removes a completed item after the safe queue-dismissal request succeeds", async () => {

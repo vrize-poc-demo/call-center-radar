@@ -13,7 +13,6 @@ import {
   calculatePriority,
   getAnalysis,
   getCallDetail,
-  getEvidence,
   getTranscript,
 } from "../../api/calls";
 import { CallDetailPage } from "./CallDetailPage";
@@ -21,7 +20,6 @@ import { selectActiveTranscriptTurn } from "./transcriptPlayback";
 
 vi.mock("../../api/calls", () => ({
   getCallDetail: vi.fn(),
-  getEvidence: vi.fn(),
   getTranscript: vi.fn(),
   calculatePriority: vi.fn(),
   getAnalysis: vi.fn(),
@@ -30,12 +28,10 @@ vi.mock("../../api/calls", () => ({
 
 const mockedGetCallDetail = vi.mocked(getCallDetail);
 const mockedGetTranscript = vi.mocked(getTranscript);
-const mockedGetEvidence = vi.mocked(getEvidence);
 const mockedCalculatePriority = vi.mocked(calculatePriority);
 const mockedGetAnalysis = vi.mocked(getAnalysis);
 
 beforeEach(() => {
-  mockedGetEvidence.mockResolvedValue([]);
   mockedCalculatePriority.mockResolvedValue({
     call_id: "call-1",
     score: 0,
@@ -192,7 +188,7 @@ describe("CallDetailPage", () => {
     expect(panelHeadings.indexOf("Radar Priority")).toBeLessThan(
       panelHeadings.indexOf("Processing"),
     );
-    expect(screen.getByRole("heading", { name: "Evidence" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Evidence" })).toBeNull();
     expect(screen.getByText("Welcome")).toBeTruthy();
   });
 
@@ -279,45 +275,6 @@ describe("CallDetailPage", () => {
     expect(mockedGetCallDetail).toHaveBeenCalledTimes(2);
   });
 
-  it("shows deterministic evidence and jumps to its saved timestamp", async () => {
-    mockedGetCallDetail.mockResolvedValue({
-      call_id: "call-1",
-      agent_name: "Agent",
-      customer_name: "Customer",
-      created_at: "2026-08-22",
-      processing_status: "completed",
-      audio_channels: 1,
-      failure_reason: null,
-      transcript_turn_count: 1,
-    });
-    mockedGetTranscript.mockResolvedValue([]);
-    mockedGetEvidence.mockResolvedValue([
-      {
-        evidence_id: "evidence-1",
-        rule_id: "problem_phrase",
-        label: "Problem statement",
-        transcript_turn_id: "turn-1",
-        start_ms: 1500,
-        end_ms: 2000,
-        quote: "I need help with this error.",
-      },
-    ]);
-    const { container } = render(<CallDetailPage callId="call-1" />);
-    const currentTimeSetter = vi.spyOn(
-      HTMLMediaElement.prototype,
-      "currentTime",
-      "set",
-    );
-    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
-
-    fireEvent.click(
-      await within(container).findByText("I need help with this error."),
-    );
-
-    expect(currentTimeSetter).toHaveBeenCalledWith(1.5);
-    expect(within(container).getByText("Problem statement")).toBeTruthy();
-  });
-
   it("searches, filters, and keeps the active turn visible", async () => {
     mockedGetCallDetail.mockResolvedValue({
       call_id: "call-1",
@@ -372,7 +329,7 @@ describe("CallDetailPage", () => {
         name: "Agent and customer conversation timeline",
       }),
     ).toBeTruthy();
-    expect(page.getAllByRole("listitem")).toHaveLength(3);
+    expect(page.getAllByRole("listitem")).toHaveLength(2);
     expect(page.queryByText("0.00s–1.00s")).toBeNull();
     const audio = container.querySelector("audio") as HTMLAudioElement;
     let playerTime = 4;
@@ -484,12 +441,10 @@ describe("CallDetailPage", () => {
     const agentRow = agentButton.closest("[role='listitem']");
     const customerRow = customerButton.closest("[role='listitem']");
 
-    expect(rows).toHaveLength(4);
+    expect(rows).toHaveLength(3);
     expect(agentRow).toBeTruthy();
     expect(customerRow).toBeTruthy();
-
-    expect(agentRow?.classList.contains("agent-turn")).toBe(true);
-    expect(customerRow?.classList.contains("customer-turn")).toBe(true);
+    expect(agentRow).toBe(customerRow);
     expect(screen.queryByText("22.02s–44.90s")).toBeNull();
     expect(screen.queryByText("50.00")).toBeNull();
     expect(screen.queryByText("Overlap")).toBeNull();
@@ -553,7 +508,7 @@ describe("CallDetailPage", () => {
         text: "Synced turn",
       },
     ]);
-    const { container } = render(<CallDetailPage callId="call-1" />);
+    render(<CallDetailPage callId="call-1" />);
     await screen.findByText("Synced turn");
     const currentTimeSetter = vi.spyOn(
       HTMLMediaElement.prototype,
@@ -570,12 +525,6 @@ describe("CallDetailPage", () => {
       ).toBeTruthy(),
     );
     expect(currentTimeSetter).toHaveBeenCalledWith(0.5);
-
-    fireEvent.click(
-      within(container).getByRole("button", { name: "Jump to call start" }),
-    );
-
-    expect(currentTimeSetter).toHaveBeenLastCalledWith(0);
   });
 
   it("opens a score explanation drawer and jumps to its exact evidence", async () => {

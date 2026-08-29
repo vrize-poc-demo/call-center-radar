@@ -1,7 +1,6 @@
 import { ChangeEvent, FormEvent, useMemo, useState } from "react";
 
 import {
-  clearAllCallData,
   CallRegistration,
   processCall,
   ProcessingStatus,
@@ -27,7 +26,6 @@ export function CallUploadForm() {
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isClearing, setIsClearing] = useState(false);
   const [agentName, setAgentName] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [audioFiles, setAudioFiles] = useState<File[]>([]);
@@ -148,33 +146,6 @@ export function CallUploadForm() {
     }
   }
 
-  async function handleClearAll() {
-    setIsClearing(true);
-    setError(null);
-    setStatusMessage(null);
-    try {
-      const cleared = await clearAllCallData();
-      setResult(null);
-      setProcessingResult(null);
-      setBatchResults([]);
-      setAudioFiles([]);
-      setMetadataFiles([]);
-      setAgentName("");
-      setCustomerName("");
-      setStatusMessage(
-        `Cleared ${cleared.calls_deleted} stored call${cleared.calls_deleted === 1 ? "" : "s"} and removed ${cleared.upload_files_deleted} uploaded file${cleared.upload_files_deleted === 1 ? "" : "s"}.`,
-      );
-    } catch (clearError) {
-      setError(
-        clearError instanceof Error
-          ? clearError.message
-          : "Stored call data could not be cleared.",
-      );
-    } finally {
-      setIsClearing(false);
-    }
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -290,14 +261,6 @@ export function CallUploadForm() {
             <button disabled={isSubmitting} type="submit">
               {isSubmitting ? "Registering…" : "Register call"}
             </button>
-            <button
-              className="clear-data-button"
-              disabled={isClearing}
-              onClick={() => void handleClearAll()}
-              type="button"
-            >
-              {isClearing ? "Clearing…" : "Clear all data"}
-            </button>
           </div>
         </form>
       ) : (
@@ -365,14 +328,6 @@ export function CallUploadForm() {
               type="button"
             >
               {isSubmitting ? "Uploading…" : "Upload batch"}
-            </button>
-            <button
-              className="clear-data-button"
-              disabled={isClearing}
-              onClick={() => void handleClearAll()}
-              type="button"
-            >
-              {isClearing ? "Clearing…" : "Clear all data"}
             </button>
           </div>
         </div>
