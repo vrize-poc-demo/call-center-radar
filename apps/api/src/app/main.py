@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.analysis import router as analysis_router
 from app.analysis_provider import OllamaAnalysisProvider
@@ -127,6 +128,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(dashboard_router)
     app.include_router(priority_router)
     app.include_router(traceability_router)
+
+    if app_settings.static_dir is not None and app_settings.static_dir.is_dir():
+        app.mount("/", StaticFiles(directory=app_settings.static_dir, html=True), name="web")
 
     return app
 

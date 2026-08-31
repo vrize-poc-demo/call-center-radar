@@ -212,6 +212,69 @@ npm run dev:web
 npm run dev:api
 ```
 
+## Run With Docker
+
+For reviewers who do not want to install Python, Node, FFmpeg, or Ollama on their
+machine, run the POC with Docker Compose.
+
+Prerequisites:
+
+- Docker Desktop or Docker Engine with Docker Compose
+- At least 8 GB free disk space for the app image, Whisper cache, and Ollama model
+- Enough RAM for local transcription and the Ollama model; 8 GB system RAM is a
+  practical minimum
+
+Build and start the app:
+
+```bash
+docker compose up --build
+```
+
+Open the app:
+
+```text
+http://localhost:8080
+```
+
+The first transcription downloads the free `faster-whisper` model into a Docker
+volume. For LLM analysis, pull the local Ollama model once:
+
+```bash
+docker compose up -d ollama
+docker compose run --rm ollama-model
+```
+
+Then keep the main app running:
+
+```bash
+docker compose up --build app
+```
+
+Docker services:
+
+- `app`: FastAPI API plus the built React UI at `http://localhost:8080`
+- `ollama`: local LLM server at `http://localhost:11434`
+- `ollama-model`: one-time setup helper that pulls `qwen2.5:7b`
+
+Persistent Docker volumes:
+
+- `call-radar-data`: SQLite database and uploaded audio/metadata files
+- `call-radar-whisper-cache`: downloaded faster-whisper model files
+- `call-radar-ollama`: downloaded Ollama model files
+
+Reset the Docker demo data:
+
+```bash
+docker compose down -v
+```
+
+Useful health checks:
+
+```bash
+curl http://localhost:8080/api/health
+curl http://localhost:11434/api/tags
+```
+
 ## Build
 
 To build the web app:

@@ -20,6 +20,7 @@ class Settings:
     ollama_base_url: str = "http://127.0.0.1:11434"
     ollama_model: str = "qwen2.5:7b"
     analysis_timeout_seconds: float = 90.0
+    static_dir: Path | None = None
 
     @classmethod
     def from_environment(cls) -> "Settings":
@@ -45,8 +46,15 @@ class Settings:
             ollama_base_url=os.getenv("CALL_RADAR_OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
             ollama_model=os.getenv("CALL_RADAR_OLLAMA_MODEL", "qwen2.5:7b"),
             analysis_timeout_seconds=float(os.getenv("CALL_RADAR_ANALYSIS_TIMEOUT_SECONDS", "90")),
+            static_dir=_optional_from_project_root(os.getenv("CALL_RADAR_STATIC_DIR")),
         )
 
 
 def _from_project_root(path: Path) -> Path:
     return path if path.is_absolute() else PROJECT_ROOT / path
+
+
+def _optional_from_project_root(value: str | None) -> Path | None:
+    if value is None or not value.strip():
+        return None
+    return _from_project_root(Path(value))
