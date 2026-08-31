@@ -150,3 +150,22 @@ def test_each_api_response_has_a_server_generated_request_id(tmp_path) -> None:
     assert first.headers["x-request-id"].startswith("req_")
     assert second.headers["x-request-id"].startswith("req_")
     assert first.headers["x-request-id"] != second.headers["x-request-id"]
+
+
+def test_static_frontend_is_served_when_configured(tmp_path) -> None:
+    static_dir = tmp_path / "web"
+    static_dir.mkdir()
+    (static_dir / "index.html").write_text("<h1>Call Center Radar</h1>")
+    app = create_app(
+        Settings(
+            database_path=tmp_path / "call_radar.db",
+            sample_data_dir=tmp_path / "samples",
+            static_dir=static_dir,
+        )
+    )
+
+    with TestClient(app) as client:
+        response = client.get("/")
+
+    assert response.status_code == 200
+    assert "Call Center Radar" in response.text

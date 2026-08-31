@@ -1,0 +1,51 @@
+services:
+  app:
+    build:
+      context: .
+    image: call-center-radar:poc
+    ports:
+      - "${CALL_RADAR_HOST_PORT:-8080}:8000"
+    environment:
+      CALL_RADAR_DATABASE_PATH: /app/data/call_radar.db
+      CALL_RADAR_UPLOAD_DIR: /app/data/uploads
+      CALL_RADAR_STATIC_DIR: /app/apps/web/dist
+      CALL_RADAR_SAMPLE_DATA_DIR: /app/sample-data/callradar-data
+      CALL_RADAR_OLLAMA_BASE_URL: http://ollama:11434
+      CALL_RADAR_OLLAMA_MODEL: qwen2.5:7b
+      CALL_RADAR_PROCESSING_WORKER_ENABLED: "true"
+      CALL_RADAR_MAX_UPLOAD_BYTES: "104857600"
+    volumes:
+      - call-radar-data:/app/data
+      - call-radar-whisper-cache:/root/.cache/huggingface
+    depends_on:
+      - ollama
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - call-radar-ollama:/root/.ollama
+
+  ollama-model:
+    image: ollama/ollama:latest
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      CALL_RADAR_OLLAMA_MODEL: qwen2.5:7b
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        until ollama list >/dev/null 2>&1; do
+          sleep 2
+        done
+        ollama pull "$${CALL_RADAR_OLLAMA_MODEL}"
+    depends_on:
+      - ollama
+    profiles:
+      - setup
+
+volumes:
+  call-radar-data:
+  call-radar-whisper-cache:
+  call-radar-ollama:
