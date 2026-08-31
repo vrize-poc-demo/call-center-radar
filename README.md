@@ -20,11 +20,6 @@ Install these first:
 - A laptop or desktop running macOS, Windows, or Linux.
 - Docker Desktop on macOS or Windows, or Docker Engine with Docker Compose on
   Linux.
-- At least 8 GB free disk space.
-- At least 8 GB system RAM. More RAM is better because the local LLM runs on
-  your machine.
-- Internet access for the first run only, so Docker can download images and the
-  local AI model.
 - This repository downloaded to your machine.
 
 You do not need to install Python, Node.js, FFmpeg, Ollama, or Whisper separately
