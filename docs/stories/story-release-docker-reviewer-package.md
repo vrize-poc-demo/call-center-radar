@@ -96,8 +96,8 @@ If Docker build fails, the likely cause is dependency download/network failure. 
 ## 5. Delivery Record
 
 - Branch: `codex/docker-reviewer-release`
-- Pull request: TBD
-- Commit(s): TBD
+- Pull request: [#118](https://github.com/vrize-poc-demo/call-center-radar/pull/118)
+- Commit(s): `6c15666`
 - Review result: Pending
 
 ### Change Log
