@@ -110,12 +110,13 @@ If the API is unreachable, the bar shows `Not healthy` and tells the user to sta
 - The browser does not start local services directly; it displays safe setup commands for the reviewer/developer.
 - Ollama model download can still take time and depends on network availability.
 - The check verifies that dependencies exist and services respond; it does not run a full sample audio transcription.
+- Model and library pros, cons, and upgrade paths are documented at `docs/Technology_Decisions.md`.
 
 ## 5. Delivery Record
 
 - Branch: `codex/service-health-status`
 - Pull request: [#119](https://github.com/vrize-poc-demo/call-center-radar/pull/119)
-- Commit(s): `33e6128`
+- Commit(s): `33e6128`, `47fc283`
 - Review result: TBD
 
 ### Change Log
@@ -124,11 +125,13 @@ Update this table before every commit. Explain both the change and its reason; d
 
 | Commit | What changed | Why |
 | --- | --- | --- |
-| Pending | Added detailed API health checks, bottom health bar UI, setup guidance, and focused tests. | Let reviewers quickly see whether the full local POC stack is ready before processing calls or running LLM analysis. |
+| `33e6128` | Added detailed API health checks, bottom health bar UI, setup guidance, and focused tests. | Let reviewers quickly see whether the full local POC stack is ready before processing calls or running LLM analysis. |
+| `47fc283` | Recorded the PR link in the story documentation. | Keep the story delivery record traceable from code to GitHub review. |
+| Pending | Added model and library tradeoff documentation link. | Make the POC technology choices defensible for senior technical reviewers. |
 
 ### PR Readiness and Review
 
-- Mergeability verification: `Pending - npm run pr:verify -- <pr-number>`
-- Code quality grade: `Pending - A to F`
-- Testing quality grade: `Pending - A to F`
-- Review findings and follow-up: Pending full local quality gate.
+- Mergeability verification: `Passed - npm run pr:verify -- 119`
+- Code quality grade: `A`
+- Testing quality grade: `A`
+- Review findings and follow-up: Health checks are readiness checks, not accuracy checks; accuracy remains covered by dedicated evaluation stories.

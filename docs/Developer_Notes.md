@@ -75,5 +75,6 @@ npm run precommit:install
 - Start from updated `development`, use a focused `feature/story-x.y-description` branch, and merge through a PR into `development`.
 
 Project scope, architecture, and delivery order remain in [`Implementation_Backlog_Plan.md`](Implementation_Backlog_Plan.md) and the [wiki documents](wiki/Home.md).
+Model, library, database, queue, and framework tradeoffs are recorded in [`Technology_Decisions.md`](Technology_Decisions.md), including pros, cons, free POC defaults, and upgrade paths for better accuracy or production readiness.
 
 All contributors must follow [`Engineering_Governance.md`](Engineering_Governance.md). Coding agents must also follow the repository-level instructions in [`AGENTS.md`](../AGENTS.md).

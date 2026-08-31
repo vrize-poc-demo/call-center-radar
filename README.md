@@ -122,6 +122,7 @@ Detailed planning lives in:
 - `docs/Implementation_Backlog_Plan.md`
 - `docs/wiki/Home.md`
 - `docs/wiki/Architecture-and-Delivery-Plan.md`
+- `docs/Technology_Decisions.md`
 - `docs/Git_Flow.md`
 
 ## Suggested Initial Scope
@@ -148,6 +149,8 @@ Stretch scope:
 - Analysis: free local Ollama LLM reasoning plus deterministic evidence validation
 - Validation: every displayed claim must resolve to real transcript evidence
 - Deployment: local demo first, lightweight hosting only where useful
+
+The full model and library rationale, including pros, cons, alternatives, and upgrade paths for better accuracy or production readiness, is documented in `docs/Technology_Decisions.md`.
 
 ## Local Transcription Setup
 
