@@ -114,8 +114,8 @@ If the API is unreachable, the bar shows `Not healthy` and tells the user to sta
 ## 5. Delivery Record
 
 - Branch: `codex/service-health-status`
-- Pull request: TBD
-- Commit(s): TBD
+- Pull request: [#119](https://github.com/vrize-poc-demo/call-center-radar/pull/119)
+- Commit(s): `33e6128`
 - Review result: TBD
 
 ### Change Log
