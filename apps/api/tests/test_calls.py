@@ -9,6 +9,12 @@ VALID_METADATA = b"""{
   "caller": {"metadata": {"first and last name": "Customer One"}}
 }"""
 
+VALID_METADATA_WITH_SID = b"""{
+  "sid": "sample",
+  "agent": {"metadata": {"agent_name": "Agent One"}},
+  "caller": {"metadata": {"first and last name": "Customer One"}}
+}"""
+
 
 class RecordingWorker:
     def __init__(self) -> None:
@@ -120,6 +126,42 @@ def test_register_call_rejects_invalid_metadata_without_creating_records(tmp_pat
     assert response.json()["detail"] == "Metadata must be valid JSON with agent and caller names."
     with app.state.database.connect() as connection:
         assert connection.execute("SELECT COUNT(*) FROM calls").fetchone()[0] == 0
+
+
+def test_register_call_rejects_metadata_that_does_not_match_audio_sid(tmp_path) -> None:
+    app = create_app(build_settings(tmp_path))
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/calls",
+            files={
+                "audio": ("other-call.mp3", b"demo audio", "audio/mpeg"),
+                "metadata": ("sample.json", VALID_METADATA_WITH_SID, "application/json"),
+            },
+        )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Metadata sid must match the selected audio filename."
+    with app.state.database.connect() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM calls").fetchone()[0] == 0
+
+
+def test_register_call_accepts_duplicate_copy_suffix_when_sid_matches(tmp_path) -> None:
+    settings = build_settings(tmp_path)
+    app = create_app(settings)
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/calls",
+            files={
+                "audio": ("sample 2.mp3", b"demo audio", "audio/mpeg"),
+                "metadata": ("sample 2.json", VALID_METADATA_WITH_SID, "application/json"),
+            },
+        )
+
+    assert response.status_code == 201
+    with app.state.database.connect() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM calls").fetchone()[0] == 1
 
 
 def test_register_call_rejects_files_over_the_configured_limit(tmp_path) -> None:

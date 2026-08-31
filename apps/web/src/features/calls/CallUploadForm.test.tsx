@@ -22,6 +22,20 @@ afterEach(() => {
 });
 
 describe("CallUploadForm", () => {
+  function metadataFile(callId: string) {
+    return new File(
+      [
+        JSON.stringify({
+          sid: callId,
+          agent: { metadata: { agent_name: "Agent" } },
+          caller: { metadata: { "first and last name": "Customer" } },
+        }),
+      ],
+      `${callId}.json`,
+      { type: "application/json" },
+    );
+  }
+
   it("starts processing after registration without waiting for transcription", async () => {
     vi.mocked(registerCall).mockResolvedValue({
       call_id: "call-1",
@@ -103,24 +117,78 @@ describe("CallUploadForm", () => {
       },
     });
 
-    fireEvent.change(screen.getByLabelText(/^Default agent name/), {
-      target: { value: "Agent" },
-    });
-    fireEvent.change(screen.getByLabelText(/^Default customer name/), {
-      target: { value: "Customer" },
+    fireEvent.change(screen.getByLabelText("Metadata files"), {
+      target: {
+        files: [metadataFile("call-1"), metadataFile("call-2")],
+      },
     });
 
+    await screen.findByText(/Ready pairs:\s*2\./);
     fireEvent.click(screen.getByRole("button", { name: "Upload batch" }));
 
     await waitFor(() => expect(registerCall).toHaveBeenCalledTimes(2));
     expect(processCall).toHaveBeenCalledTimes(2);
-    expect(screen.getByText("Registered and queued 2 calls.")).toBeTruthy();
+    expect(
+      screen.getByText("Registered and queued 2 calls; skipped 0."),
+    ).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Clear all data" }));
 
     await waitFor(() => expect(clearAllCallData).toHaveBeenCalledTimes(1));
     expect(
       screen.getByText("Cleared 2 stored calls and removed 4 uploaded files."),
+    ).toBeTruthy();
+  });
+
+  it("skips incomplete batch pairs before registration", async () => {
+    vi.mocked(registerCall).mockResolvedValue({
+      call_id: "call-1",
+      job_id: "job-1",
+      status: "queued",
+    });
+    vi.mocked(processCall).mockResolvedValue({
+      job_id: "job-1",
+      status: "queued",
+      audio_channels: null,
+      failure_reason: null,
+      transcript_turn_count: 0,
+    });
+
+    render(<CallUploadForm />);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Batch upload" }));
+    fireEvent.change(screen.getByLabelText("Audio files"), {
+      target: {
+        files: [
+          new File(["audio 1"], "matched-call.wav", { type: "audio/wav" }),
+          new File(["audio 2"], "audio-only.wav", { type: "audio/wav" }),
+        ],
+      },
+    });
+    fireEvent.change(screen.getByLabelText("Metadata files"), {
+      target: {
+        files: [metadataFile("matched-call"), metadataFile("metadata-only")],
+      },
+    });
+
+    await screen.findByText(/Ready pairs:\s*1\./);
+    expect(
+      screen.getByText(
+        "audio-only.wav: matching metadata file was not selected",
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        "metadata-only.json: matching audio file was not selected",
+      ),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Upload batch" }));
+
+    await waitFor(() => expect(registerCall).toHaveBeenCalledTimes(1));
+    expect(processCall).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByText("Registered and queued 1 call; skipped 2."),
     ).toBeTruthy();
   });
 });

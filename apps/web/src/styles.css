@@ -637,6 +637,23 @@ h1 {
   font-weight: 400;
 }
 
+.batch-skipped {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  color: #6b4b00;
+  background: #fff8dd;
+  border: 1px solid #e5c469;
+  border-radius: 8px;
+}
+
+.batch-skipped ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+}
+
 .upload-form button {
   padding: 11px 16px;
   color: #fff;
