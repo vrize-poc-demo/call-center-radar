@@ -16,6 +16,7 @@ from app.logging import bind_request_id, configure_logging, log_event, reset_req
 from app.migrator import migrate
 from app.pipeline import ProcessingPipeline
 from app.priority import router as priority_router
+from app.service_health import build_service_health
 from app.traceability import router as traceability_router
 from app.transcripts import router as transcripts_router
 from app.worker import DurableProcessingWorker
@@ -115,9 +116,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"service": "call-center-radar-api", "status": "ready"}
 
     @app.get("/api/health")
-    def health(request: Request) -> dict[str, str]:
-        request.app.state.database.check_connection()
-        return {"status": "ok", "database": "reachable"}
+    def health(request: Request) -> dict[str, object]:
+        return build_service_health(request.app)
 
     app.include_router(calls_router)
     app.include_router(customer_history_router)

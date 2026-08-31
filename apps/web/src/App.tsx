@@ -6,6 +6,7 @@ import { TodayDashboard } from "./features/dashboard/TodayDashboard";
 import { IssueRadar } from "./features/issue-radar/IssueRadar";
 import { AgentSummaryPage } from "./features/agents/AgentSummaryPage";
 import { CustomerJourney } from "./features/customer-journey/CustomerJourney";
+import { ServiceHealthStatusBar } from "./features/health/ServiceHealthStatusBar";
 import { GlobalProcessingQueue } from "./features/processing/GlobalProcessingQueue";
 
 function AppTopNav() {
@@ -30,6 +31,7 @@ function AppContent({ children }: { children: ReactNode }) {
     <div className="app-workspace-content">
       <AppTopNav />
       {children}
+      <ServiceHealthStatusBar />
     </div>
   );
 }

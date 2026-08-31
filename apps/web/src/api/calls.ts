@@ -1,5 +1,21 @@
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
+export type ServiceStatus = "healthy" | "degraded" | "unhealthy";
+
+export type ServiceHealthCheck = {
+  key: string;
+  label: string;
+  status: ServiceStatus;
+  detail: string;
+  action_label: string | null;
+  action_hint: string | null;
+};
+
+export type ServiceHealthReport = {
+  status: ServiceStatus;
+  services: ServiceHealthCheck[];
+};
+
 export type CallRegistration = {
   call_id: string;
   job_id: string;
@@ -215,6 +231,14 @@ export type IssueCategory = {
   representative_call_id: string;
   related_call_ids: string[];
 };
+
+export async function getServiceHealth(): Promise<ServiceHealthReport> {
+  const response = await fetch(`${apiBaseUrl}/api/health`);
+  if (!response.ok) {
+    throw new Error("Service health could not be loaded.");
+  }
+  return (await response.json()) as ServiceHealthReport;
+}
 
 export async function registerCall(
   formData: FormData,
