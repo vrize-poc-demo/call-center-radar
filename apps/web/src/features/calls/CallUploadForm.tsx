@@ -9,13 +9,44 @@ import {
 } from "../../api/calls";
 
 type BatchFileGroup = {
-  stem: string;
+  key: string;
   audioFile?: File;
-  metadataFile?: File;
+  metadataFile?: BatchMetadataFile;
 };
 
-function fileStem(file: File) {
-  return file.name.replace(/\.[^.]+$/, "");
+type BatchMetadataFile = {
+  file: File;
+  key: string;
+  error?: string;
+};
+
+type SkippedBatchFile = {
+  name: string;
+  reason: string;
+};
+
+function callFileKey(fileName: string) {
+  return fileName
+    .replace(/\.[^.]+$/, "")
+    .replace(/\s+2$/, "")
+    .trim();
+}
+
+function isAudioFile(file: File) {
+  return /\.(mp3|wav)$/i.test(file.name);
+}
+
+function isMetadataFile(file: File) {
+  return /\.json$/i.test(file.name);
+}
+
+function readFileText(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("File could not be read."));
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.readAsText(file);
+  });
 }
 
 export function CallUploadForm() {
@@ -31,7 +62,7 @@ export function CallUploadForm() {
   const [agentName, setAgentName] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [audioFiles, setAudioFiles] = useState<File[]>([]);
-  const [metadataFiles, setMetadataFiles] = useState<File[]>([]);
+  const [metadataFiles, setMetadataFiles] = useState<BatchMetadataFile[]>([]);
 
   async function populateNamesFromMetadata(
     event: ChangeEvent<HTMLInputElement>,
@@ -40,7 +71,7 @@ export function CallUploadForm() {
     if (!metadataFile) return;
 
     try {
-      const document = JSON.parse(await metadataFile.text()) as {
+      const document = JSON.parse(await readFileText(metadataFile)) as {
         agent?: { metadata?: { agent_name?: string } };
         caller?: { metadata?: { [key: string]: string | undefined } };
       };
@@ -60,32 +91,117 @@ export function CallUploadForm() {
     }
   }
 
-  const batchPairs = useMemo(() => {
+  const batchPlan = useMemo(() => {
     const groups = new Map<string, BatchFileGroup>();
+    const skipped: SkippedBatchFile[] = [];
 
     for (const audioFile of audioFiles) {
-      const stem = fileStem(audioFile);
-      const entry = groups.get(stem) ?? { stem };
+      if (!isAudioFile(audioFile)) {
+        skipped.push({
+          name: audioFile.name,
+          reason: "unsupported audio type",
+        });
+        continue;
+      }
+      const key = callFileKey(audioFile.name);
+      const entry = groups.get(key) ?? { key };
+      if (entry.audioFile) {
+        skipped.push({ name: audioFile.name, reason: "duplicate audio file" });
+        continue;
+      }
       entry.audioFile = audioFile;
-      groups.set(stem, entry);
+      groups.set(key, entry);
     }
 
     for (const metadataFile of metadataFiles) {
-      const stem = fileStem(metadataFile);
-      const entry = groups.get(stem) ?? { stem };
+      if (metadataFile.error) {
+        skipped.push({
+          name: metadataFile.file.name,
+          reason: metadataFile.error,
+        });
+        continue;
+      }
+      if (!isMetadataFile(metadataFile.file)) {
+        skipped.push({
+          name: metadataFile.file.name,
+          reason: "unsupported metadata type",
+        });
+        continue;
+      }
+      const entry = groups.get(metadataFile.key) ?? { key: metadataFile.key };
+      if (entry.metadataFile) {
+        skipped.push({
+          name: metadataFile.file.name,
+          reason: "duplicate metadata file",
+        });
+        continue;
+      }
       entry.metadataFile = metadataFile;
-      groups.set(stem, entry);
+      groups.set(metadataFile.key, entry);
     }
 
-    return audioFiles.map((audioFile) => {
-      const stem = fileStem(audioFile);
-      return groups.get(stem) ?? { stem, audioFile };
-    });
+    const pairs: Required<
+      Pick<BatchFileGroup, "audioFile" | "metadataFile">
+    >[] = [];
+    for (const entry of groups.values()) {
+      if (entry.audioFile && entry.metadataFile) {
+        pairs.push({
+          audioFile: entry.audioFile,
+          metadataFile: entry.metadataFile,
+        });
+      } else if (entry.audioFile) {
+        skipped.push({
+          name: entry.audioFile.name,
+          reason: "matching metadata file was not selected",
+        });
+      } else if (entry.metadataFile) {
+        skipped.push({
+          name: entry.metadataFile.file.name,
+          reason: "matching audio file was not selected",
+        });
+      }
+    }
+
+    return { pairs, skipped };
   }, [audioFiles, metadataFiles]);
 
+  async function readBatchMetadataFiles(files: File[]) {
+    const parsed = await Promise.all(
+      files.map(async (file) => {
+        try {
+          const document = JSON.parse(await readFileText(file)) as {
+            sid?: string;
+          };
+          const normalizedFileKey = callFileKey(file.name);
+          const sid =
+            typeof document.sid === "string" ? document.sid.trim() : "";
+          if (sid && sid !== normalizedFileKey) {
+            return {
+              file,
+              key: normalizedFileKey,
+              error: "metadata sid does not match filename",
+            };
+          }
+          return { file, key: sid || normalizedFileKey };
+        } catch {
+          return {
+            file,
+            key: callFileKey(file.name),
+            error: "metadata JSON could not be read",
+          };
+        }
+      }),
+    );
+    setMetadataFiles(parsed);
+  }
+
   async function handleBatchSubmit() {
-    if (!audioFiles.length) {
-      setError("Select at least one audio file to upload.");
+    if (!audioFiles.length && !metadataFiles.length) {
+      setError("Select audio files and matching metadata files to upload.");
+      return;
+    }
+    if (!batchPlan.pairs.length) {
+      setError("No complete audio and metadata pairs were found.");
       return;
     }
 
@@ -99,27 +215,10 @@ export function CallUploadForm() {
     const uploaded: CallRegistration[] = [];
 
     try {
-      for (const entry of batchPairs) {
-        if (!entry.audioFile) {
-          continue;
-        }
-
+      for (const entry of batchPlan.pairs) {
         const formData = new FormData();
         formData.append("audio", entry.audioFile);
-
-        if (entry.metadataFile) {
-          formData.append("metadata", entry.metadataFile);
-        } else {
-          const inferredAgent = agentName.trim();
-          const inferredCustomer = customerName.trim();
-          if (!inferredAgent || !inferredCustomer) {
-            throw new Error(
-              `Missing metadata for ${entry.stem}. Provide a JSON file or fill in the participant names.`,
-            );
-          }
-          formData.append("agent_name", inferredAgent);
-          formData.append("customer_name", inferredCustomer);
-        }
+        formData.append("metadata", entry.metadataFile.file);
 
         const registration = await registerCall(formData);
         uploaded.push(registration);
@@ -131,7 +230,7 @@ export function CallUploadForm() {
 
       setBatchResults(uploaded);
       setStatusMessage(
-        `Registered and queued ${uploaded.length} call${uploaded.length === 1 ? "" : "s"}.`,
+        `Registered and queued ${uploaded.length} call${uploaded.length === 1 ? "" : "s"}; skipped ${batchPlan.skipped.length}.`,
       );
       setAudioFiles([]);
       setMetadataFiles([]);
@@ -310,8 +409,9 @@ export function CallUploadForm() {
           <div className="upload-hint-block">
             <p className="field-hint">
               Select multiple recordings and the matching JSON metadata files.
-              Files are paired by filename, for example{" "}
-              <strong>call-1.wav</strong> with <strong>call-1.json</strong>.
+              Files are paired by metadata sid or normalized filename, for
+              example <strong>call-1.wav</strong> with{" "}
+              <strong>call-1.json</strong>.
             </p>
           </div>
           <label>
@@ -331,33 +431,34 @@ export function CallUploadForm() {
               accept="application/json,.json"
               multiple
               onChange={(event) =>
-                setMetadataFiles([...(event.currentTarget.files ?? [])])
+                void readBatchMetadataFiles([
+                  ...(event.currentTarget.files ?? []),
+                ])
               }
               type="file"
             />
           </label>
-          <label>
-            Default agent name
-            <input
-              maxLength={120}
-              onChange={(event) => setAgentName(event.target.value)}
-              type="text"
-              value={agentName}
-            />
-            <span className="field-hint">
-              Used only when an audio file does not have a matching metadata
-              file.
-            </span>
-          </label>
-          <label>
-            Default customer name
-            <input
-              maxLength={120}
-              onChange={(event) => setCustomerName(event.target.value)}
-              type="text"
-              value={customerName}
-            />
-          </label>
+          <p className="field-hint">
+            Ready pairs: {batchPlan.pairs.length}. Skipped files:{" "}
+            {batchPlan.skipped.length}.
+          </p>
+          {batchPlan.skipped.length ? (
+            <div className="batch-skipped" role="status">
+              <strong>Skipped before processing</strong>
+              <ul>
+                {batchPlan.skipped.slice(0, 8).map((item) => (
+                  <li key={`${item.name}-${item.reason}`}>
+                    {item.name}: {item.reason}
+                  </li>
+                ))}
+              </ul>
+              {batchPlan.skipped.length > 8 ? (
+                <p className="field-hint">
+                  {batchPlan.skipped.length - 8} more skipped files.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
           <div className="upload-form-actions">
             <button
               disabled={isSubmitting}

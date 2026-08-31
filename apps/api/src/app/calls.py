@@ -76,6 +76,14 @@ class UploadedCall:
     audio_path: Path
 
 
+@dataclass(frozen=True)
+class MetadataInfo:
+    agent_name: str
+    customer_name: str
+    payload: bytes
+    sid: str | None
+
+
 class CallRegistrationService:
     """Store a validated upload and create the initial queued job record."""
 
@@ -171,7 +179,23 @@ class CallRegistrationService:
         )
 
 
-def read_participant_names(metadata: UploadFile, max_upload_bytes: int) -> tuple[str, str, bytes]:
+def normalize_call_file_key(filename: str | None) -> str:
+    """Return the dataset pairing key, ignoring duplicate-copy suffixes."""
+    return Path(filename or "").stem.removesuffix(" 2").strip()
+
+
+def validate_metadata_audio_pair(audio: UploadFile, metadata_info: MetadataInfo) -> None:
+    if metadata_info.sid is None:
+        return
+    audio_key = normalize_call_file_key(audio.filename)
+    if audio_key != metadata_info.sid:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Metadata sid must match the selected audio filename.",
+        )
+
+
+def read_participant_names(metadata: UploadFile, max_upload_bytes: int) -> MetadataInfo:
     """Read the supported metadata file without retaining user-controlled names in logs."""
 
     extension = Path(metadata.filename or "").suffix.lower()
@@ -197,6 +221,8 @@ def read_participant_names(metadata: UploadFile, max_upload_bytes: int) -> tuple
         document = json.loads(payload)
         agent_name = document["agent"]["metadata"]["agent_name"].strip()
         customer_name = document["caller"]["metadata"]["first and last name"].strip()
+        raw_sid = document.get("sid")
+        sid = raw_sid.strip() if isinstance(raw_sid, str) and raw_sid.strip() else None
     except (AttributeError, KeyError, TypeError, UnicodeDecodeError, json.JSONDecodeError):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
@@ -213,7 +239,12 @@ def read_participant_names(metadata: UploadFile, max_upload_bytes: int) -> tuple
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Metadata participant names must be at most 120 characters.",
         )
-    return agent_name, customer_name, payload
+    if sid is not None and normalize_call_file_key(metadata.filename) not in {sid, ""}:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Metadata sid must match the metadata filename.",
+        )
+    return MetadataInfo(agent_name, customer_name, payload, sid)
 
 
 def normalize_participant_names(
@@ -401,9 +432,11 @@ async def register_call(
             agent_name, customer_name = normalize_participant_names(agent_name, customer_name)
             metadata_payload = None
         else:
-            agent_name, customer_name, metadata_payload = read_participant_names(
-                metadata, settings.max_upload_bytes
-            )
+            metadata_info = read_participant_names(metadata, settings.max_upload_bytes)
+            validate_metadata_audio_pair(audio, metadata_info)
+            agent_name = metadata_info.agent_name
+            customer_name = metadata_info.customer_name
+            metadata_payload = metadata_info.payload
         uploaded_call = service.register(
             audio,
             metadata_payload,
