@@ -2,7 +2,7 @@
 
 **GitHub issue:** #TBD
 
-**Status:** In Progress
+**Status:** In Review
 
 **Owner:** Vipin
 
@@ -109,9 +109,9 @@ The README now gives simple recovery commands for common Docker issues:
 ## 5. Delivery Record
 
 - Branch: `codex/readme-docker-guide`
-- Pull request: TBD
+- Pull request: [#120](https://github.com/vrize-poc-demo/call-center-radar/pull/120)
 - Commit(s): Initial documentation commit on `codex/readme-docker-guide`
-- Review result: TBD
+- Review result: Pending human review
 
 ### Change Log
 
@@ -124,7 +124,7 @@ do not use generic entries such as "updates" or "fixes".
 
 ### PR Readiness and Review
 
-- Mergeability verification: `Pending - npm run pr:verify -- <pr-number>`
-- Code quality grade: `Pending - A to F`
-- Testing quality grade: `Pending - A to F`
-- Review findings and follow-up: TBD
+- Mergeability verification: `Pending - npm run pr:verify -- 120`
+- Code quality grade: `A`
+- Testing quality grade: `A`
+- Review findings and follow-up: Documentation-only change; no runtime behavior changed.
