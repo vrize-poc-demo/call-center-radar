@@ -23,6 +23,10 @@ class DurableProcessingWorker:
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
 
+    @property
+    def is_running(self) -> bool:
+        return self._thread is not None and self._thread.is_alive()
+
     def start(self) -> None:
         self.recover_interrupted_jobs()
         self._thread = threading.Thread(

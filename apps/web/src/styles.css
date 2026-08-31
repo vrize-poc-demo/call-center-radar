@@ -25,6 +25,7 @@ body {
 
 .app-workspace-content {
   min-width: 0;
+  padding-bottom: 76px;
   overflow-x: hidden;
 }
 
@@ -151,6 +152,173 @@ body {
 .queue-heading > span {
   color: #536273;
   font-size: 0.85rem;
+}
+
+.service-health-shell {
+  position: fixed;
+  right: 24px;
+  bottom: 18px;
+  z-index: 5;
+  display: grid;
+  justify-items: end;
+  width: min(560px, calc(100vw - 48px));
+  gap: 10px;
+}
+
+.service-health-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: min(430px, 100%);
+  min-height: 44px;
+  padding: 9px 12px;
+  color: #17212b;
+  border: 1px solid #b8c7d2;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgb(23 33 43 / 14%);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.service-health-bar strong {
+  white-space: nowrap;
+}
+
+.service-health-bar span:not(.service-health-dot, .service-health-toggle) {
+  min-width: 0;
+  overflow: hidden;
+  color: #536273;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.service-health-toggle {
+  margin-left: auto;
+  color: #096b72;
+  font-size: 0.85rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.service-health-dot,
+.service-health-mini-dot {
+  flex: 0 0 auto;
+  border-radius: 999px;
+}
+
+.service-health-dot {
+  width: 12px;
+  height: 12px;
+}
+
+.service-health-healthy .service-health-dot,
+.service-health-mini-healthy {
+  background: #0f7a4f;
+}
+
+.service-health-degraded .service-health-dot,
+.service-health-mini-degraded {
+  background: #b76e00;
+}
+
+.service-health-unhealthy .service-health-dot,
+.service-health-mini-unhealthy {
+  background: #b42318;
+}
+
+.service-health-panel {
+  width: 100%;
+  max-height: min(560px, calc(100vh - 120px));
+  padding: 16px;
+  overflow: auto;
+  border: 1px solid #b8c7d2;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 16px 42px rgb(23 33 43 / 20%);
+}
+
+.service-health-panel-heading {
+  margin-bottom: 14px;
+}
+
+.service-health-panel h2,
+.service-health-panel p {
+  margin: 0;
+}
+
+.service-health-panel h2 {
+  font-size: 1rem;
+}
+
+.service-health-panel-heading p {
+  margin-top: 4px;
+  color: #536273;
+  font-size: 0.9rem;
+}
+
+.service-health-list {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.service-health-list li {
+  display: grid;
+  gap: 7px;
+  padding: 11px;
+  border: 1px solid #d8e2e7;
+  border-radius: 8px;
+  background: #f7f9fb;
+}
+
+.service-health-list li > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.service-health-list li > div:first-child span:last-child {
+  margin-left: auto;
+  color: #536273;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.service-health-mini-dot {
+  width: 9px;
+  height: 9px;
+}
+
+.service-health-list p {
+  color: #425266;
+  font-size: 0.9rem;
+}
+
+.service-health-action {
+  display: grid;
+  gap: 5px;
+}
+
+.service-health-action span {
+  color: #263646;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.service-health-action code {
+  display: block;
+  padding: 8px;
+  overflow-wrap: anywhere;
+  border: 1px solid #d8e2e7;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #17212b;
+  font-size: 0.82rem;
 }
 
 .queue-heading-actions > span {
@@ -1148,6 +1316,20 @@ h1 {
 
   .processing-queue-items li {
     grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .service-health-shell {
+    right: 12px;
+    bottom: 12px;
+    width: calc(100vw - 24px);
+  }
+
+  .service-health-bar {
+    width: 100%;
+  }
+
+  .service-health-panel {
+    max-height: min(520px, calc(100vh - 96px));
   }
 
   .dashboard-header,
