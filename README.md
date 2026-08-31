@@ -455,9 +455,3 @@ skipped items.
 - [Story Documentation](docs/stories/README.md): implementation notes for
   completed and in-progress stories.
 
-## Repository Note
-
-This repository is for the office POC effort. The current delivery focus is demo
-clarity, explainability, local/free execution, and reviewer confidence. It is not
-yet hardened for production scale, authentication, regulated retention, or
-multi-tenant hosting.
