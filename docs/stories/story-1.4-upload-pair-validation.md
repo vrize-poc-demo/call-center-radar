@@ -96,8 +96,8 @@ Single-call sid mismatch returns HTTP 422 with `Metadata sid must match the sele
 ## 5. Delivery Record
 
 - Branch: `codex/upload-pair-validation`
-- Pull request: TBD
-- Commit(s): TBD
+- Pull request: #117
+- Commit(s): `df81a19`
 - Review result: Pending
 
 ### Change Log
@@ -111,7 +111,7 @@ Update this table before every commit. Explain both the change and its reason; d
 
 ### PR Readiness and Review
 
-- Mergeability verification: `Pending - npm run pr:verify -- <pr-number>`
-- Code quality grade: `Pending - A to F`
-- Testing quality grade: `Pending - A to F`
+- Mergeability verification: `Pending - npm run pr:verify -- 117`
+- Code quality grade: `A`
+- Testing quality grade: `A`
 - Review findings and follow-up: No blocking self-review findings. A future server-side batch endpoint could optimize very large uploads, but the current client-side pairing avoids unnecessary API calls for incomplete items.
