@@ -13,17 +13,6 @@ machine.
 
 Use this path if you only want to run and review the app.
 
-### What You Need
-
-Install these first:
-
-- A laptop or desktop running macOS, Windows, or Linux.
-- Docker Desktop on macOS or Windows, or Docker Engine with Docker Compose on
-  Linux.
-- This repository downloaded to your machine.
-
-You do not need to install Python, Node.js, FFmpeg, Ollama, or Whisper separately
-when using Docker.
 
 ### Step 1: Open A Terminal
 
